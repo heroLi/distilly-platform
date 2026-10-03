@@ -1,0 +1,11 @@
+{
+  "upstream": "https://github.com/titanwings/distilly",
+  "local_remote": "https://github.com/heroLi/distilly.git",
+  "branch": "dot-skill",
+  "commit": "b830d3dcbde006370f141155795b89021e3a947b",
+  "vendored_files": {
+    "LICENSE": "4364a2b804d4c6e6c1ab47226c7b48b7364701e1827b83c600d0c4ba46d009ec",
+    "prompts/work_analyzer.md": "3429e688fbba0269fc3b43c5d66ea06cbfcd187015c8653a26a4c6f52080e92d"
+  },
+  "note": "Worker uses only the vendored work analyzer prompt; no runtime import from upstream checkout."
+}

@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: distilly
+      POSTGRES_USER: distilly
+      POSTGRES_PASSWORD: ${PLATFORM_DB_PASSWORD:?set PLATFORM_DB_PASSWORD}
+    volumes: ["db-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U distilly -d distilly"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports: ["127.0.0.1:8080:8080"]
+    environment:
+      PLATFORM_BIND: 0.0.0.0
+      PLATFORM_DB_URL: jdbc:postgresql://db:5432/distilly
+      PLATFORM_DB_USER: distilly
+      PLATFORM_DB_PASSWORD: ${PLATFORM_DB_PASSWORD}
+      PLATFORM_USERS: ${PLATFORM_USERS:?set PLATFORM_USERS}
+      PLATFORM_WORKER_TOKEN: ${PLATFORM_WORKER_TOKEN:?set PLATFORM_WORKER_TOKEN}
+      PLATFORM_DEMO: "false"
+    depends_on:
+      db: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    environment:
+      PLATFORM_API_URL: http://api:8080
+      PLATFORM_WORKER_TOKEN: ${PLATFORM_WORKER_TOKEN}
+      MODEL_MODE: gateway
+      MODEL_BASE_URL: ${MODEL_BASE_URL:?set MODEL_BASE_URL}
+      MODEL_NAME: ${MODEL_NAME:?set MODEL_NAME}
+      MODEL_API_KEY: ${MODEL_API_KEY:?set MODEL_API_KEY}
+      MODEL_JSON_MODE: ${MODEL_JSON_MODE:-false}
+    depends_on:
+      api: {condition: service_healthy}
+    restart: unless-stopped
+volumes:
+  db-data:

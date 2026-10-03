@@ -1,0 +1,376 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index a7d5565..94b5edd 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -52,3 +52,28 @@ jobs:
+         run: pip install ruff
+       - name: Run ruff (non-blocking for now)
+         run: ruff check tools/ || true
++
++  platform:
++    name: Platform API and Worker
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++      - uses: actions/setup-java@v4
++        with:
++          distribution: temurin
++          java-version: "17"
++          cache: maven
++      - uses: actions/setup-python@v5
++        with:
++          python-version: "3.11"
++      - name: Package and test API
++        run: mvn -B -ntp -f platform/server/pom.xml package
++      - uses: actions/setup-node@v4
++        with:
++          node-version: "22"
++      - name: Test question UI state and polling recovery
++        run: node platform/tests/question_ui_test.cjs
++      - name: Test Worker gateway protocol
++        run: python3 -m unittest discover -s platform/worker -p 'test_*.py'
++      - name: Verify full workflow and restart persistence
++        run: python3 platform/tests/e2e.py
+diff --git a/.gitignore b/.gitignore
+index 2415c02..0c9f17b 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -34,3 +34,9 @@ knowledge/
+ # OS
+ .DS_Store
+ Thumbs.db
++
++# Local transactions and platform runtime data
++.*.distilly.lock
++platform/.env
++platform/data/
++platform/server/target/
+diff --git a/README.md b/README.md
+index b529f9c..3ffdc7b 100644
+--- a/README.md
++++ b/README.md
+@@ -1,3 +1,5 @@
++> **Team sharing platform (v0.1):** A Spring Boot API, Python Worker and review/publish web interface are now available. Start with [platform/README.md](platform/README.md); see [verification](docs/platform/VERIFICATION.md) for tested behavior and deployment limitations.
++
+ <div align="center">
+ 
+ <img src="docs/social-preview-distilly-v7.png" alt="Distilly — Distill how they think into Person Profiles for Agents" width="100%">
+diff --git a/docs/lang/README_ZH.md b/docs/lang/README_ZH.md
+index 886c443..c20ef6c 100644
+--- a/docs/lang/README_ZH.md
++++ b/docs/lang/README_ZH.md
+@@ -1,3 +1,5 @@
++> **团队共享平台第一版：** 已新增 Spring Boot 服务端、Python Worker 与审核发布网页。请从[启动说明](../../platform/README.md)进入；需求、架构和[验收记录](../platform/VERIFICATION.md)已提供，内部部署边界见记录。
++
+ <div align="center">
+ 
+ <img src="../social-preview-distilly-v7.png" alt="Distilly — Distill how they think into Person Profiles for Agents" width="100%">
+diff --git a/prompts/merger.md b/prompts/merger.md
+index a63c25e..350ac9c 100644
+--- a/prompts/merger.md
++++ b/prompts/merger.md
+@@ -9,7 +9,7 @@
+ 
+ 你的任务是判断新内容应该更新哪个部分，并输出增量更新内容。
+ 
+-**原则：只追加增量，不覆盖已有结论。如有冲突，输出冲突提示让用户决定。**
++**原则：默认只追加增量，不覆盖已有结论。如有冲突，输出冲突提示让用户决定。writer 默认使用 append；仅当用户明确批准替换且输出完整章节时，使用 `--merge-mode replace`。Patch 使用实际 `##` 章节标题和新增正文，不把下面的说明标记写入 Patch。**
+ 
+ ---
+ 
+diff --git a/tests/test_skill_writer.py b/tests/test_skill_writer.py
+index df73834..3103c94 100644
+--- a/tests/test_skill_writer.py
++++ b/tests/test_skill_writer.py
+@@ -591,6 +591,7 @@ class SkillWriterTest(unittest.TestCase):
+                         "- 新的结构模板",
+                     ]
+                 ),
++                merge_mode="replace",
+                 persona_patch="\n".join(
+                     [
+                         "## Layer 2: Expression DNA",
+diff --git a/tools/skill_schema.py b/tools/skill_schema.py
+index 2ce7289..2e321b3 100644
+--- a/tools/skill_schema.py
++++ b/tools/skill_schema.py
+@@ -29,6 +29,7 @@ PRIMARY_ARTIFACTS = (
+     "work_skill.md",
+     "persona_skill.md",
+     "manifest.json",
++    "meta.json",
+ )
+ ARTIFACT_NAME_FILES = {
+     "combined_name": "SKILL.md",
+diff --git a/tools/skill_writer.py b/tools/skill_writer.py
+index cd0d693..b931d7d 100644
+--- a/tools/skill_writer.py
++++ b/tools/skill_writer.py
+@@ -17,6 +17,8 @@ import sys
+ from pathlib import Path
+ from typing import Optional
+ 
++from artifact_store import profile_lock, snapshot, next_version, write_transaction
++
+ from skill_presets import (
+     get_character_preset,
+     normalize_character,
+@@ -243,31 +245,35 @@ def write_artifacts(skill_dir: Path, meta: dict, work_content: str, persona_cont
+     artifacts = meta["artifacts"]
+     manifest = build_manifest(meta)
+ 
+-    (skill_dir / artifacts["work_doc"]).write_text(work_content, encoding="utf-8")
+-    (skill_dir / artifacts["persona_doc"]).write_text(persona_content, encoding="utf-8")
+-    (skill_dir / artifacts["combined_skill"]).write_text(
+-        render_combined_skill(meta, work_content, persona_content),
+-        encoding="utf-8",
+-    )
+-    (skill_dir / artifacts["work_skill"]).write_text(
+-        render_work_skill(meta, work_content),
+-        encoding="utf-8",
+-    )
+-    (skill_dir / artifacts["persona_skill"]).write_text(
+-        render_persona_skill(meta, persona_content),
+-        encoding="utf-8",
+-    )
+-    (skill_dir / artifacts["manifest"]).write_text(
+-        json.dumps(manifest, ensure_ascii=False, indent=2),
+-        encoding="utf-8",
+-    )
+-    (skill_dir / "meta.json").write_text(
+-        json.dumps(sync_legacy_fields(meta), ensure_ascii=False, indent=2),
+-        encoding="utf-8",
+-    )
++    contents = {
++        artifacts["work_doc"]: work_content,
++        artifacts["persona_doc"]: persona_content,
++        artifacts["combined_skill"]: render_combined_skill(meta, work_content, persona_content),
++        artifacts["work_skill"]: render_work_skill(meta, work_content),
++        artifacts["persona_skill"]: render_persona_skill(meta, persona_content),
++        artifacts["manifest"]: json.dumps(manifest, ensure_ascii=False, indent=2),
++        "meta.json": json.dumps(sync_legacy_fields(meta), ensure_ascii=False, indent=2),
++    }
++    if len(contents) != 7:
++        raise ValueError("artifact filenames must be distinct")
++    write_transaction(skill_dir, contents)
++
++
++def create_skill(base_dir: Path, slug: str, meta: dict, work_content: str, persona_content: str) -> Path:
++    slug = validate_slug(slug)
++    skill_dir = resolve_contained_child(base_dir, slug, "slug")
++    with profile_lock(skill_dir):
++        if skill_dir.exists():
++            raise FileExistsError(f"profile already exists: {slug}; use update")
++        try:
++            return _create_skill(base_dir, slug, meta, work_content, persona_content)
++        except Exception:
++            if skill_dir.exists():
++                shutil.rmtree(skill_dir)
++            raise
+ 
+ 
+-def create_skill(
++def _create_skill(
+     base_dir: Path,
+     slug: str,
+     meta: dict,
+@@ -279,7 +285,7 @@ def create_skill(
+     normalized_meta = enrich_skill_meta(meta, slug, meta.get("character"))
+     preset = get_character_preset(normalized_meta["character"])
+     skill_dir = base_dir / slug
+-    skill_dir.mkdir(parents=True, exist_ok=True)
++    skill_dir.mkdir(parents=True, exist_ok=False)
+ 
+     (skill_dir / "versions").mkdir(exist_ok=True)
+     for relative_path in preset.get("knowledge_dirs", ("docs", "messages", "emails")):
+@@ -303,19 +309,16 @@ def backup_current_artifacts(skill_dir: Path, version_name: str) -> None:
+         validate_path_segment(str(version_name), "version"),
+         "version",
+     )
+-    version_dir.mkdir(parents=True, exist_ok=True)
+-
+-    for filename in PRIMARY_ARTIFACTS:
+-        src = skill_dir / filename
+-        if src.exists():
+-            shutil.copy2(src, version_dir / filename)
++    snapshot(skill_dir, version_dir)
+ 
+ 
+ SECTION_HEADING_RE = re.compile(r"^##\s+.+$", re.MULTILINE)
+ 
+ 
+-def merge_markdown_patch(existing_content: str, patch_content: str) -> str:
+-    """Replace matching level-2 markdown sections, otherwise append the patch."""
++def merge_markdown_patch(existing_content: str, patch_content: str, *, mode="append") -> str:
++    """Append deltas by default; full section replacement is explicit."""
++    if mode not in {"append", "replace"}:
++        raise ValueError("invalid merge mode")
+     matches = list(SECTION_HEADING_RE.finditer(patch_content))
+     if not matches:
+         return existing_content + ("\n\n" if existing_content else "") + patch_content
+@@ -342,6 +345,13 @@ def merge_markdown_patch(existing_content: str, patch_content: str) -> str:
+             if next_section
+             else len(merged)
+         )
++        if mode == "append":
++            old_section = merged[section_start:section_end].strip()
++            additions = patch_section.split("\n", 1)[1].strip() if "\n" in patch_section else ""
++            if additions and additions not in old_section:
++                patch_section = old_section + "\n\n" + additions
++            else:
++                patch_section = old_section
+         merged = merged[:section_start].rstrip() + "\n\n" + patch_section + "\n\n" + merged[section_end:].lstrip()
+ 
+     if replaced_any:
+@@ -391,11 +401,20 @@ def normalize_corrections(correction: dict | list[dict] | None) -> list[dict]:
+     return []
+ 
+ 
+-def update_skill(
++def update_skill(skill_dir: Path, work_patch: Optional[str] = None,
++                 persona_patch: Optional[str] = None, correction=None, *, merge_mode="append") -> str:
++    if merge_mode not in {"append", "replace"}:
++        raise ValueError("merge_mode must be append or replace")
++    with profile_lock(skill_dir):
++        return _update_skill(skill_dir, work_patch, persona_patch, correction, merge_mode=merge_mode)
++
++
++def _update_skill(
+     skill_dir: Path,
+     work_patch: Optional[str] = None,
+     persona_patch: Optional[str] = None,
+     correction: Optional[dict | list[dict]] = None,
++    *, merge_mode: str = "append",
+ ) -> str:
+     """Update an existing skill, archive the previous version, and regenerate artifacts."""
+     meta_path = skill_dir / "meta.json"
+@@ -405,11 +424,7 @@ def update_skill(
+     )
+ 
+     current_version = meta.get("version", "v1")
+-    try:
+-        version_num = int(current_version.lstrip("v").split("_")[0]) + 1
+-    except ValueError:
+-        version_num = 2
+-    new_version = f"v{version_num}"
++    new_version = next_version(skill_dir, meta)
+ 
+     backup_current_artifacts(skill_dir, current_version)
+ 
+@@ -420,10 +435,10 @@ def update_skill(
+     persona_content = persona_path.read_text(encoding="utf-8") if persona_path.exists() else ""
+ 
+     if work_patch:
+-        work_content = merge_markdown_patch(work_content, work_patch)
++        work_content = merge_markdown_patch(work_content, work_patch, mode=merge_mode)
+ 
+     if persona_patch:
+-        persona_content = merge_markdown_patch(persona_content, persona_patch)
++        persona_content = merge_markdown_patch(persona_content, persona_patch, mode=merge_mode)
+     elif correction:
+         corrections = normalize_corrections(correction)
+         for item in corrections:
+@@ -558,6 +573,7 @@ def main() -> None:
+     parser.add_argument("--meta", help="Path to the metadata JSON file")
+     parser.add_argument("--work", help="Path to the work.md content file")
+     parser.add_argument("--persona", help="Path to the persona.md content file")
++    parser.add_argument("--merge-mode", choices=["append", "replace"], default="append", help="Append deltas by default; replace requires complete sections")
+     parser.add_argument("--work-patch", help="Path to a work.md patch file")
+     parser.add_argument("--persona-patch", help="Path to a persona.md patch file")
+     parser.add_argument("--correction-json", help="Path to a correction JSON file")
+@@ -693,7 +709,7 @@ def main() -> None:
+         else None
+     )
+ 
+-    new_version = update_skill(skill_dir, work_patch, persona_patch, correction)
++    new_version = update_skill(skill_dir, work_patch, persona_patch, correction, merge_mode=args.merge_mode)
+     print(f"Updated skill to {new_version}: {skill_dir}")
+     install_lines = install_generated_hosts(skill_dir, args, install_claude_skill)
+     if install_lines:
+diff --git a/tools/version_manager.py b/tools/version_manager.py
+index 353b8ef..4e71d63 100644
+--- a/tools/version_manager.py
++++ b/tools/version_manager.py
+@@ -12,8 +12,10 @@ import argparse
+ import json
+ import shutil
+ import sys
++import uuid
+ from datetime import datetime, timezone
+ from pathlib import Path
++from artifact_store import profile_lock, snapshot, write_transaction
+ 
+ from skill_presets import normalize_character, resolve_existing_storage_root
+ from skill_schema import (
+@@ -71,14 +73,15 @@ def list_versions(skill_dir: Path) -> list[dict]:
+ 
+ def backup_artifacts(skill_dir: Path, backup_dir: Path) -> None:
+     """Copy the current generated artifacts into a backup directory."""
+-    backup_dir.mkdir(parents=True, exist_ok=True)
+-    for filename in PRIMARY_ARTIFACTS:
+-        src = skill_dir / filename
+-        if src.exists():
+-            shutil.copy2(src, backup_dir / filename)
++    snapshot(skill_dir, backup_dir)
+ 
+ 
+ def rollback(skill_dir: Path, target_version: str) -> bool:
++    with profile_lock(skill_dir):
++        return _rollback(skill_dir, target_version)
++
++
++def _rollback(skill_dir: Path, target_version: str) -> bool:
+     """Restore a previously archived version."""
+     try:
+         versions_dir = resolve_versions_dir(skill_dir)
+@@ -111,26 +114,35 @@ def rollback(skill_dir: Path, target_version: str) -> bool:
+         return False
+     backup_artifacts(skill_dir, backup_dir)
+ 
+-    restored_files = []
++    archived_meta = version_dir / "meta.json"
++    if not archived_meta.is_file():
++        print("error: legacy snapshot has no metadata; cannot perform a complete rollback", file=sys.stderr)
++        return False
++    restored_meta = enrich_existing_skill_meta(json.loads(archived_meta.read_text(encoding="utf-8")), skill_dir)
++    contents = {}
+     for filename in PRIMARY_ARTIFACTS:
+-        src = version_dir / filename
+-        if src.exists():
+-            shutil.copy2(src, skill_dir / filename)
+-            restored_files.append(filename)
+-
+-    meta["lifecycle"]["version"] = f"{target_version}_restored"
+-    meta["lifecycle"]["updated_at"] = now_iso()
+-    meta["rollback_from"] = current_version
+-    meta_path.write_text(
+-        json.dumps(sync_legacy_fields(meta), ensure_ascii=False, indent=2),
+-        encoding="utf-8",
+-    )
+-
+-    print(f"rolled back to {target_version}: {', '.join(restored_files)}")
++        src = resolve_contained_child(version_dir, filename, "artifact filename")
++        if not src.is_file() or src.is_symlink():
++            print(f"error: incomplete snapshot: {filename}", file=sys.stderr)
++            return False
++        contents[filename] = src.read_text(encoding="utf-8")
++
++    restored_meta["lifecycle"]["version"] = f"{target_version}_restored_{uuid.uuid4().hex[:8]}"
++    restored_meta["lifecycle"]["updated_at"] = now_iso()
++    restored_meta["rollback_from"] = current_version
++    contents["meta.json"] = json.dumps(sync_legacy_fields(restored_meta), ensure_ascii=False, indent=2)
++    write_transaction(skill_dir, contents)
++
++    print(f"rolled back to {target_version}: {', '.join(contents)}")
+     return True
+ 
+ 
+ def backup_current_version(skill_dir: Path) -> bool:
++    with profile_lock(skill_dir):
++        return _backup_current_version(skill_dir)
++
++
++def _backup_current_version(skill_dir: Path) -> bool:
+     """Archive the current generated artifacts under versions/<version>/."""
+     meta_path = skill_dir / "meta.json"
+     if not meta_path.exists():

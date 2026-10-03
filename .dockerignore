@@ -1,0 +1,12 @@
+.git
+**/target
+**/__pycache__
+**/.env
+**/.venv
+data
+knowledge
+skills
+.distilly
+.colleague-skill
+
+upstream-patches

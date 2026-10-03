@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+data/
+server/target/
+__pycache__/
+*.py[cod]
+.DS_Store
+.venv/
