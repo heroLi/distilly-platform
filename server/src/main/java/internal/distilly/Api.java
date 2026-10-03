@@ -24,6 +24,7 @@ public class Api {
     @GetMapping("/api/projects/{p}/members") Object members(HttpServletRequest r,@PathVariable String p){return service.members(actor(r),p);}
     @PutMapping("/api/projects/{p}/members") void member(HttpServletRequest r,@PathVariable String p,@RequestBody Map<String,Object>b){service.member(actor(r),p,field(b,"user_id",100),field(b,"role",10));}
     @GetMapping("/api/projects/{p}/materials") Object materials(HttpServletRequest r,@PathVariable String p){return service.materials(actor(r),p);}
+    @GetMapping("/api/projects/{p}/{type:materials|jobs|archived-jobs}/page") Object listPage(HttpServletRequest r,@PathVariable String p,@PathVariable String type,@RequestParam(defaultValue="1") int page,@RequestParam(defaultValue="10") int size,@RequestParam(defaultValue="") String q,@RequestParam(defaultValue="") String status){return service.listPage(actor(r),p,type,page,size,q,status);}
     @GetMapping("/api/materials/{m}") Object material(HttpServletRequest r,@PathVariable String m){return service.material(actor(r),m);}
     @PostMapping("/api/projects/{p}/materials") Object upload(HttpServletRequest r,@PathVariable String p,@RequestParam MultipartFile file)throws Exception{
         byte[] bytes=file.getBytes();if(bytes.length>1048576)throw PlatformService.error(413,"file_too_large");

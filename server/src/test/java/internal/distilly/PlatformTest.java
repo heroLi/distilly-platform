@@ -33,6 +33,25 @@ class PlatformTest {
         return Map.of("claims",List.of(Map.of("section","接口规范","text","接口设计应校验幂等键。","evidence",List.of(Map.of("material_id",material,"chunk_id",chunk.get("chunk_id"),"quote","必须校验幂等键")))));
     }
     String candidate(){service.distill("editor",profile,List.of(material));var job=service.claim();return (String)service.complete((String)job.get("id"),(String)job.get("lease_token"),output(job)).get("version_id");}
+    @Test void paginationSearchAndRoleScopes()throws Exception{
+        for(int i=0;i<205;i++)service.distill("editor",profile,List.of(material));
+        var first=service.listPage("owner",project,"jobs",1,100,"接口","QUEUED");
+        var third=service.listPage("owner",project,"jobs",3,100,"editor","QUEUED");
+        assertEquals(205L,first.get("total"));assertEquals(100,((List<?>)first.get("items")).size());assertEquals(5,((List<?>)third.get("items")).size());
+        assertEquals(0L,service.listPage("viewer",project,"jobs",1,10,"","").get("total"));
+        assertEquals(0L,service.listPage("owner",project,"jobs",1,10,"' OR 1=1 --","").get("total"));
+        assertThrows(ResponseStatusException.class,()->service.listPage("owner",project,"jobs",0,10,"",""));
+        assertThrows(ResponseStatusException.class,()->service.listPage("owner",project,"jobs",1,101,"",""));
+        service.upload("owner",project,"100%_ready.md","测试材料");
+        assertEquals(1L,service.listPage("editor",project,"materials",1,5,"%_","").get("total"));
+        assertThrows(ResponseStatusException.class,()->service.listPage("viewer",project,"materials",1,10,"",""));
+        mvc.perform(get("/api/projects/"+project+"/jobs/page").param("page","3").param("size","100").header("Authorization","Bearer demo-owner")).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(205)).andExpect(jsonPath("$.items.length()").value(5));
+    }
+    @Test void archivedPaginationRespectsCreator(){
+        String id=(String)service.distill("owner",profile,List.of(material)).get("id");service.controlJob("owner",id,"stop");service.deleteJob("owner",id);
+        assertEquals(1L,service.listPage("owner",project,"archived-jobs",1,10,"","").get("total"));
+        assertEquals(0L,service.listPage("editor",project,"archived-jobs",1,10,"","").get("total"));
+    }
     @Test void deletionIsRecoverableAndChecksActiveJobs(){
         assertThrows(ResponseStatusException.class,()->service.deleteProfile("editor",profile));
         service.distill("editor",profile,List.of(material));

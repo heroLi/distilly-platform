@@ -67,6 +67,24 @@ public class PlatformService {
         if(db.queryForObject("SELECT COUNT(*) FROM job WHERE profile_id=? AND status IN ('QUEUED','RUNNING','PAUSED')",Integer.class,f)>0)throw error(409,"profile_has_active_jobs");
         db.update("INSERT INTO profile_archive VALUES (?,?)",f,now());audit(p,actor,"PROFILE_DELETED",f);}
     @Transactional public void restoreProfile(String actor,String f){var rows=db.queryForList("SELECT project_id FROM profile WHERE id=?",f);if(rows.isEmpty())throw error(404,"not_found");String p=(String)rows.get(0).get("project_id");require(actor,p,"OWNER");db.update("DELETE FROM profile_archive WHERE profile_id=?",f);audit(p,actor,"PROFILE_RESTORED",f);}
+    public Map<String,Object> listPage(String actor,String p,String type,int page,int size,String q,String status){
+        String r=role(actor,p);
+        if(page<1||page>100000||size<1||size>100||q.length()>160)throw error(422,"invalid_pagination");
+        boolean material=type.equals("materials"), archived=type.equals("archived-jobs");
+        if(material)require(actor,p,"OWNER","EDITOR");
+        var args=new ArrayList<Object>();args.add(p);
+        String from=material?" FROM material j WHERE j.project_id=?":" FROM job j JOIN profile f ON f.id=j.profile_id WHERE j.project_id=? AND j.id "+(archived?"IN":"NOT IN")+" (SELECT job_id FROM job_archive)";
+        if(!material&&!r.equals("OWNER")&&(archived||r.equals("VIEWER"))){from+=" AND j.creator=?";args.add(actor);}
+        if(!material&&r.equals("VIEWER"))from+=" AND j.kind='ANSWER'";
+        if(!q.isBlank()){String pattern="%"+q.toLowerCase(Locale.ROOT).replace("!","!!").replace("%","!%").replace("_","!_")+"%";
+            from+=" AND (LOWER("+(material?"j.filename":"f.title")+") LIKE ? ESCAPE '!' OR LOWER(j.creator) LIKE ? ESCAPE '!' OR LOWER(j.id) LIKE ? ESCAPE '!')";args.add(pattern);args.add(pattern);args.add(pattern);}
+        if(!material&&!status.isBlank()){from+=" AND j.status=?";args.add(status);}
+        long total=db.queryForObject("SELECT COUNT(*)"+from,Long.class,args.toArray());
+        args.add(size);args.add((page-1)*size);
+        var rows=db.queryForList("SELECT "+(material?"j.id,j.filename,j.creator,j.created_at":"j.id")+from+" ORDER BY j.created_at DESC,j.id DESC LIMIT ? OFFSET ?",args.toArray());
+        if(!material)rows=rows.stream().map(x->{var out=jobView(actor,(String)x.get("id"));out.put("profile_title",db.queryForObject("SELECT title FROM profile WHERE id=?",String.class,out.get("profile_id")));return out;}).toList();
+        return Map.of("items",rows,"total",total,"page",page,"size",size);
+    }
     public List<Map<String,Object>> jobs(String actor,String p){String r=role(actor,p);return db.queryForList("SELECT j.id FROM job j WHERE j.project_id=? AND j.id NOT IN (SELECT job_id FROM job_archive)"+(r.equals("VIEWER")?" AND j.kind='ANSWER' AND j.creator=?":"")+" ORDER BY j.created_at DESC LIMIT 200",r.equals("VIEWER")?new Object[]{p,actor}:new Object[]{p}).stream().map(x->{var out=job(actor,(String)x.get("id"));out.put("profile_title",db.queryForObject("SELECT title FROM profile WHERE id=?",String.class,out.get("profile_id")));return out;}).toList();}
     @Transactional public void progress(String j,String token,int completed){
         heartbeat(j,token);var row=one("job",j);int total=row.get("kind").equals("DISTILL")?items(decode(row.get("payload")).get("chunks")).size():1;
