@@ -1,0 +1,91 @@
+.dockerignore
+  s_42cf41d109532c::t_b1c2846143cbd5 1-12
+.env.example
+  s_42cf41d109532c::t_1f6d7785c14a7d 1-9
+.github/workflows/ci.yml
+  s_42cf41d109532c::t_6c21547d7d35f3 1-22
+.gitignore
+  s_42cf41d109532c::t_6ca1a197897e3f 1-9
+AGENTS.md
+  s_42cf41d109532c::t_412b049ae815ce 1-8
+README.md
+  s_42cf41d109532c::t_82e146fa28c92c 1-114
+compose.yaml
+  s_42cf41d109532c::t_67d528afa5597b 1-52
+docs/ARCHITECTURE.md
+  s_42cf41d109532c::t_7a89e15ecdc03f 1-61
+docs/PROGRESS.md
+  s_42cf41d109532c::t_849da887019522 1-23
+docs/REQUIREMENTS.md
+  s_42cf41d109532c::t_cabb253ada0285 1-56
+docs/UPSTREAM_UPGRADE.md
+  s_42cf41d109532c::t_cf274ec68a39cb 1-19
+docs/VERIFICATION.md
+  s_42cf41d109532c::t_d9e5cc1d6e3667 1-67
+examples/release-review.md
+  s_42cf41d109532c::t_304a0684ab0e54 1-6
+run_local.py
+  s_42cf41d109532c::t_fb83618d4ed30f 1-92
+server/Dockerfile
+  s_42cf41d109532c::t_52560d5a395a8b 1-14
+server/pom.xml
+  s_42cf41d109532c::t_745f0962f7a4fe 1-15
+server/src/main/java/internal/distilly/Api.java
+  s_42cf41d109532c::t_968d15e6a3f626 1-72
+server/src/main/java/internal/distilly/Application.java
+  s_42cf41d109532c::t_d5e77cca02e5fc 1-9
+server/src/main/java/internal/distilly/Auth.java
+  s_42cf41d109532c::t_905e1029f97470 1-73
+server/src/main/java/internal/distilly/PlatformService.java
+  s_42cf41d109532c::t_02669f097011a5 1-179
+server/src/main/resources/application.properties
+  s_42cf41d109532c::t_49901df3f73b46 1-16
+server/src/main/resources/schema.sql
+  s_42cf41d109532c::t_099c1143f345e7 1-14
+server/src/main/resources/static/app.js
+  s_42cf41d109532c::t_a2842bb132402d 1-87
+server/src/main/resources/static/index.html
+  s_42cf41d109532c::t_01701dbb27b827 1-15
+server/src/main/resources/static/style.css
+  s_42cf41d109532c::t_f7c9353ed50565 1-9
+server/src/test/java/internal/distilly/PlatformTest.java
+  s_42cf41d109532c::t_2047b0d205a36f 1-160
+server/src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker
+  s_42cf41d109532c::t_5372501aeafd68 1
+tests/e2e.py
+  s_42cf41d109532c::t_51c59c12ccfd78 1-173
+tests/question_ui_test.cjs
+  s_42cf41d109532c::t_31f2053b0db9d5 1-43
+upstream-patches/local-integrity.patch
+  s_42cf41d109532c::t_bd03f8b0e4264a 1-498
+upstream-patches/original-worktree.patch
+  s_42cf41d109532c::t_7f94dc43669808 1-376
+vendor/distilly/LICENSE
+  s_42cf41d109532c::t_1ccd93feed47b2 1-21
+vendor/distilly/UPSTREAM.json
+  s_42cf41d109532c::t_e50050d5ed73e3 1-11
+vendor/distilly/prompts/work_analyzer.md
+  s_42cf41d109532c::t_fc37c90c1907a4 1-181
+worker/Dockerfile
+  s_42cf41d109532c::t_47d496b9508362 1-8
+worker/test_worker.py
+  s_42cf41d109532c::t_b660283ba74857 1-65
+worker/worker.py
+  s_42cf41d109532c::t_c1bcdd7f954eb8 1-209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "5bfb48a952eb2e5a8b4e5106107f2bd1a80355b4",
+  "prompts": {},
+  "sessions": {
+    "s_42cf41d109532c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fd0b-42b2-78f2-bbcf-cd86c1e04bb9",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "lixiao167 <lixiao167@jd.com>"
+    }
+  }
+}
