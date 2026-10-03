@@ -1,0 +1,23 @@
+docs/PROGRESS.md
+  s_42cf41d109532c::t_b59dea94e1441e 24-29
+docs/VERIFICATION.md
+  s_42cf41d109532c::t_2da56d04ddbaf2 68-73
+server/src/test/java/internal/distilly/PlatformTest.java
+  s_42cf41d109532c::t_af98f8c61b0535 36-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "33986a37f9b35fc22862f773e7bc757095103de6",
+  "prompts": {},
+  "sessions": {
+    "s_42cf41d109532c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fd0b-42b2-78f2-bbcf-cd86c1e04bb9",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "lixiao167 <lixiao167@jd.com>"
+    }
+  }
+}
