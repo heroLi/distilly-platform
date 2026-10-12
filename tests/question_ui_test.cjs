@@ -21,6 +21,8 @@ const context = vm.createContext({
   loadTasks:async()=>{throw Error('task list unavailable');},
   refreshCurrent:async()=>{throw Error('audit unavailable');}
 });
+context.window=context.window||{};vm.runInContext(fs.readFileSync('server/src/main/resources/static/ui-read-scope.js','utf8'),context);context.UiReadScope=context.window.UiReadScope;
+vm.runInContext("const workspaceReads=UiReadScope.create(()=>[typeof token==='undefined'?'':token,typeof project==='undefined'?'':project,typeof role==='undefined'?'':role]);",context);
 vm.runInContext(source.slice(source.indexOf('function questionState('),source.indexOf("bind('login-form'")),context);
 vm.runInContext(source.slice(source.indexOf("bind('question-form'"),source.indexOf("bind('download'")),context);
 (async()=>{
@@ -39,5 +41,20 @@ vm.runInContext(source.slice(source.indexOf("bind('question-form'"),source.index
   assert.match(elements.answer.textContent,/c1/);
   assert.equal(interval,null);
   for(const terminal of ['PAUSED','CANCELLED']){status=terminal;await handler();assert.equal(elements['question-submit'].disabled,false);assert.equal(interval,null,'paused/stopped questions must stop polling');}
-  console.log('PASS: empty question, submission feedback, duplicate guard, polling recovery, answer survives task/audit failure');
+  // Drive real HTTP error decoding through the actual form handler.
+  context.token='fixture-token';context.AbortController=AbortController;context.FormData=class {};
+  context.setTimeout=()=>1;context.clearTimeout=()=>{};
+  vm.runInContext(source.slice(source.indexOf('const errors='),source.indexOf('function node(')),context);
+  context.window={};context.TypeError=TypeError;vm.runInContext(fs.readFileSync('server/src/main/resources/static/platform-request.js','utf8'),context);context.PlatformRequest=context.window.PlatformRequest;
+  vm.runInContext(source.slice(source.indexOf('async function api('),source.indexOf('function bind(')),context);
+  for(const [code,label] of [['user_active_task_limit',/未结束任务已达到上限/],['user_task_submission_rate_limit',/提交过于频繁/],['platform_task_submission_rate_limit',/系统任务提交较多/]]){
+    context.fetch=async()=>({ok:false,status:429,json:async()=>({error:code})});
+    elements.question.value='额度恢复后再提交的原始问题';
+    await assert.rejects(handler,label);
+    assert.match(elements['question-status'].textContent,label);
+    assert.equal(elements.question.value,'额度恢复后再提交的原始问题');
+    assert.equal(elements['question-submit'].disabled,false);
+    assert.equal(interval,null,'rejected admission must not start polling');
+  }
+  console.log('PASS: empty question, submission feedback, duplicate guard, polling recovery, answer survives task/audit failure, admission rejection retains input');
 })().catch(error=>{console.error(error);process.exitCode=1;});

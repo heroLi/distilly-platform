@@ -1,114 +1,121 @@
-# Distilly 团队经验共享平台（第一版）
+# Distilly 虚拟人生成平台
 
-这是独立的本地共享平台项目，包含 Spring Boot API、Python Worker 和网页。只蒸馏工作经验，不自动读取会话或模拟员工性格。
-需求、数据权限与验收定义见 [需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施进度](docs/PROGRESS.md)。
+当前开发入口：[实施总纲](docs/PROJECT_BLUEPRINT.md) · [统一设计与交互](docs/DESIGN_SYSTEM.md) · [2026-10-08 审查](docs/PROJECT_REVIEW_2026-10-08.md)。
 
-## 本地体验
+[Hindsight 与 VoiceStudio 接入方案](docs/HINDSIGHT_VOICESTUDIO_PLAN.md)（2026-10-10）设计长期关系记忆检索、人物专属声音及统一语音回复；当前为待实现方案，含固定上游版本、接口差异、许可记录与验收门槛。
 
-要求 Java 17+、Maven 3.9、Python 3.11+。Worker 无第三方 Python 依赖。需要安装的组件请使用公司批准的工具渠道。
+基于 Distilly `dot-skill` 的 Persona 分析与生成流程，创建具有稳定人格、情感表达、持续对话和用户关系记忆的虚拟人。支持朋友式陪伴、原创角色、授权材料人物和工作伙伴。
 
-从 distilly-platform 项目根目录运行：
+同级 `distilly-platform-jd` 面向共享工作知识库和工作 Skill；本项目以虚拟人的创建、调试、发布和交流为核心。同平台的「虚拟经历台」位于 `/knowledge.html`，与人物工作室共用登录和当前工作空间；历史经验主题在界面改称「知识专题」，原数据与API保留。
+
+## 当前可用功能
+
+- 人物模板与编辑；`relationship`、`celebrity`、`colleague` 三类上游提示词，两阶段分析和生成。
+- 授权材料选取、来源短片段校验、原创设定与推断区分；候选预览、人工纠正、审核发布、不可变版本与切换。
+- 私有多轮交流、固定人格版本、相关确认记忆与经历来源筛选、统一保守文本预算、情感状态及变化原因；模型 SSE 回复增量，网页每两秒获取最新内容。
+- 待确认关系记忆、确认、纠正、不采用、删除和关闭；按人物及用户隔离。记忆变化会停止仍在使用旧记忆的回应。
+- 浏览器声音选择、朗读、语气语速调整、打断与麦克风输入；可配置模型语音合成及音频文件转写。
+- 上传人物形象、配置模型生成形象、图片交流；形象随情感及朗读进行轻量动画。
+- 同工作空间共享已发布知识，每个人物配置可读知识专题，交流按问题检索并显示专题与版本来源；不把知识写成亲身经历。
+- 工作空间与成员角色、任务记录、失败重试、停止、人物归档恢复、已发布 Persona Skill 导出。
+- H2 / PostgreSQL 持久性、独立 Worker 凭证、租约恢复、幂等完成、追加式数据库迁移、容器配置与 CI。
+
+“有人的感情”表现为人格、情绪表达和关系上下文，平台不宣称虚拟人具有真实主观感受。当前轻量动画不包含三维建模、真人级视频驱动或模型生成的精确口型。
+
+## 后端代码结构
+
+Spring Boot 按工作空间、材料、知识、人物、人格资产、交流、记忆、媒体和任务划分模块，模块内采用 Controller / DTO / Service / Domain / Repository 分层。结构、依赖和开发规则见 [Spring Boot 代码结构](docs/SPRING_BOOT_STRUCTURE.md)。
+
+## 启动
+
+本项目本地启动与预览统一固定为 **18080**：人物工作室 `http://127.0.0.1:18080/`，虚拟经历台 `http://127.0.0.1:18080/knowledge.html`。`run_local.py` 默认使用此端口，Docker 也映射到同一地址；端口被占用时排查占用，不自动换端口。端到端测试使用固定独立端口：虚拟人18082/18083、知识18084/18085。
+
+需要 Java 17+、Maven、Python 3.11+。Worker 使用标准库。
 
 ```bash
 mvn -B -ntp -f server/pom.xml package
-python3 run_local.py --demo
+python3 run_local.py --demo --port 18080
 ```
 
-如果默认 java 是 Java 8，设置 `JAVA_BIN` 指向已安装的 Java 17+ 可执行文件。
-本机已验证 Maven 使用 Java 25；可用 `JAVA_BIN=/opt/homebrew/opt/openjdk/bin/java python3 run_local.py --demo`（其他机器使用自身路径）。
-打开 http://127.0.0.1:8080。令牌为 `demo-owner`、`demo-editor`、`demo-viewer`。
-演示必须通过 `--demo` 显式开启，模型是可核验证据的简单模拟实现，不能用来评价实际蒸馏质量。
+打开 http://127.0.0.1:18080。演示账号令牌为 `demo-owner`、`demo-editor`、`demo-viewer`；默认演示模型仅验证流程。
 
-1. owner 创建项目，添加 editor / viewer 成员。
-2. 上传 UTF-8 `.md` / `.txt`，勾选材料，创建经验主题。
-3. 生成候选经验，查看每条知识的原文依据。
-4. owner 批准发布；viewer 可查看、提问、下载 Work-only Skill。
-5. 追加材料生成新候选；已批准历史版本可切换为当前版本。
-
-停止：Ctrl+C，同时停止 API 与 Worker。H2 数据保存在 `data/`，不进 Git。
-
-## 接真实模型
-
-不带 `--demo` 启动时，必须配置 `PLATFORM_USERS`、独立 `PLATFORM_WORKER_TOKEN`、`MODEL_BASE_URL`、`MODEL_NAME`、`MODEL_API_KEY`。
-格式见 `.env.example`。`run_local.py` 自动读取 `.env` 的 KEY=value 配置，也可通过 `--env-file` 指定；进程环境优先。配置文件作为数据解析，不作为脚本执行。
-个人令牌与 Worker 凭证至少 32 个字符，分别生成。个人令牌在服务端只保存 SHA-256 哈希。
-模型网关协议是 POST `{MODEL_BASE_URL}/chat/completions`，Bearer 密钥、messages 输入，返回 `choices[0].message.content`，其中 content 必须是 JSON 字符串。
-不支持的网关需增加适配器，不会自动退化成模拟模型。默认要求 HTTPS；本地协议测试才显式启用 `MODEL_ALLOW_HTTP=true`。
-
-### DeepSeek 配置
-
-用户选择 DeepSeek。2026-10-03 通过官方 `/models` 实际查询本次账号可用 `deepseek-flash`、`deepseek-v4-pro`，并使用 `deepseek-flash` 通过端到端验证。其他账号以自身模型列表为准。
-`.env.example` 已设置官方地址 `https://api.deepseek.com/v1`、`MODEL_NAME=deepseek-flash`、`MODEL_JSON_MODE=true`；Worker 向 `/chat/completions` 请求 `response_format={"type":"json_object"}`，同时校验 JSON 结构和原文证据。
-协议参考 [DeepSeek 官方文档](https://api-docs.deepseek.com/)。公司内部 DeepSeek 网关可替换地址和模型名。
-API Key 只放 Worker 环境，不能进入材料、Git 或客户端。当前按用户要求保存到本地 `.env`（权限600，Git忽略）；不得提交到版本库。
-
-已在环境变量配置密钥后，可运行真实模型验收（会调用模型，材料为脚本内虚构内容）：
+已有真实文本模型 `.env` 配置时，允许本机演示账号使用真实模型：
 
 ```bash
-python3 tests/e2e.py --real-model
+JAVA_BIN=/opt/homebrew/opt/openjdk/bin/java python3 run_local.py --demo --demo-model gateway --port 18080
 ```
 
-## 验证命令
+其他机器用自己的 Java 17+ 路径。正式个人令牌模式不带 `--demo`：
 
 ```bash
+python3 run_local.py --port 18080
+```
+
+启动器将构建 JAR 复制到临时运行目录，避免后续构建覆盖正在加载的文件；停止后清理副本。启动器读取 `.env` 的 KEY=value，进程环境优先，不执行配置内容。正式模式需要 `PLATFORM_USERS`、独立 `PLATFORM_WORKER_TOKEN` 和文本模型配置；演示仅监听本机，不作为企业登录机制。
+
+## 从创建到交流
+
+1. 登录并新建工作空间；负责人可为已配置账号添加成员。
+2. 创建虚拟人，选择模板、人物类型，填写背景、性格、表达、关系和边界。
+3. 进入虚拟经历台的「人格生成」，创建独立人格设定；材料在「材料管理」上传 UTF-8 `.md` / `.txt`，确认建模授权后可选择多份材料（最多20份、共60000字符），也可直接按原创设定生成。
+4. 查看人格、分析和材料依据，可编辑为新候选；负责人审核发布后选择虚拟人绑定，也可回人物工作室选择已发布人格绑定。
+5. 到虚拟经历台发布知识专题，在人物工作室勾选人物可读的专题并保存；切换模块无需重复登录。
+6. 一个人格可以绑定多个虚拟人；绑定固定来源版本，后续人格发布不自动更换绑定。已有交流固定原版本，新交流使用新绑定。
+7. 在交流界面发送文字或图片，确认值得保留的候选记忆；到声音与形象设置浏览器或模型媒体能力。
+
+记忆删除移除长期检索项，既有聊天消息仍保留；删除本次交流会移除消息和源自这段交流的记忆。备份中的历史副本须依备份保留策略清理。
+
+## 模型与媒体配置
+
+完整字段见 [.env.example](.env.example)，接口与请求格式见 [媒体接入](docs/MEDIA_GATEWAYS.md)。密钥仅在本地 `.env` 或服务端环境，不进入浏览器、Git、材料或日志。
+
+| 能力 | 配置 | 未配置行为 |
+|---|---|---|
+| 人格 / 文字交流 | MODEL_BASE_URL、MODEL_NAME、MODEL_API_KEY | 正式模式启动拒绝；显式 mock 演示可验证流程 |
+| 形象生成 | IMAGE_BASE_URL、IMAGE_MODEL、IMAGE_API_KEY | 任务明确失败；本地上传仍可使用 |
+| 语音合成 / 转写 | SPEECH_BASE_URL、SPEECH_API_KEY、TTS_MODEL / ASR_MODEL | 模型语音任务明确失败；浏览器语音仍可使用 |
+| 图片理解 | VISION_BASE_URL、VISION_MODEL、VISION_API_KEY | 带图片交流明确失败，不悄悄忽略图片 |
+
+文本网关支持 Chat Completions + JSON；不兼容 `stream=true` 时设 `MODEL_STREAMING=false`。浏览器语音依其支持和权限，部分识别服务会向浏览器供应商传输音频，仅用户点击授权后开始。
+
+## 验证
+
+```bash
+mvn -B -ntp -f server/pom.xml package
 python3 -m unittest discover -s worker -p 'test_*.py'
-mvn -B -ntp -f server/pom.xml package
+node --check server/src/main/resources/static/persona.js
 node tests/question_ui_test.cjs
-python3 tests/e2e.py
+node tests/persona_login_test.cjs
+node tests/platform_session_test.cjs
+JAVA_BIN=/opt/homebrew/opt/openjdk/bin/java python3 tests/persona_e2e.py
+JAVA_BIN=/opt/homebrew/opt/openjdk/bin/java python3 tests/e2e.py
 ```
 
-e2e 需要 Java 17+（可设 JAVA_BIN）以及本机回环网络权限。它启动真实 Java API、Python Worker 与本地 HTTP 模型测试网关；验证上传、蒸馏、审核、发布、问答、下载、权限拒绝和重启持久性，退出后自动清理进程和临时数据。
-HTTP 测试网关验证接口协议与工作流，不证明企业模型回答质量。DeepSeek 已用虚构材料验证真实链路；其他网关、业务质量与 SSO 需要独立验证。
+`persona_e2e.py` 默认使用真实 Java API、Python Worker 和 HTTP 测试网关，覆盖三类人物、SSE、记忆隐私、图像 / 视觉 / 语音协议、发布、重启与删除；不会使用个人材料。
+设置文本模型环境变量后，`python3 tests/persona_e2e.py --real-model` 使用虚构人物验证真实文本模型；媒体依然使用测试网关，不能据此声称真实媒体质量已验收。
 
-## 容器试点
+已完成本地验证，具体证据与限制见 [虚拟人验收](docs/PERSONA_VERIFICATION.md)。真实媒体供应商、麦克风识别效果、音质及形象质量尚待实际配置验证。企业 SSO、配额、计费、生产规模、多实例迁移和三维 / 视频数字人未实现。
 
-复制 `.env.example` 为 `.env`，配置真实独立密钥、用户及模型地址，随后从独立项目根目录执行：
+## 部署与升级
+
+复制 `.env.example` 为 `.env`，配置真实独立凭证与模型，再执行：
 
 ```bash
-docker compose --env-file .env config
+docker compose --env-file .env config --quiet
 docker compose --env-file .env up --build -d
-docker compose logs --tail=100 api worker
 ```
 
-三个服务：API、Worker、PostgreSQL；数据库不暴露宿主端口，API 默认只绑定宿主回环。内部入口通过已有 HTTPS 反向代理接入，不直接开放演示账号。
-API `/health` 仅表示服务可用；Worker 完成测试任务才能验证模型链路。
-企业 SSO 未接入。第一版仅使用预配置个人令牌，不能将客户端 user_id 或未验证的 HTTP 身份头当作登录身份。
+API、Worker、PostgreSQL 三服务；仅 API 暴露宿主回环端口，正式入口使用已有 HTTPS 代理。当前环境未运行 Docker / PostgreSQL 验收。
+H2 停止服务后备份 `data/`；PostgreSQL 使用 `pg_dump`。首次应用人物迁移前备份，单 API 执行迁移后再扩容，不修改已应用的 `migrations/V*.sql`。恢复时用独立空库检查版本和人物发布指针。
 
-## 备份与恢复
+[需求](docs/REQUIREMENTS.md) · [架构](docs/ARCHITECTURE.md) · [进度](docs/PROGRESS.md) · [上游升级](docs/UPSTREAM_UPGRADE.md) · [历史工作知识验收](docs/VERIFICATION.md)
 
-PostgreSQL 定期使用 `pg_dump` 备份整个 distilly 数据库（包括材料、候选、发布版本和审计），备份放在受权限控制的存储中。
-恢复前停止 API 与 Worker，在独立空数据库运行 `pg_restore` / SQL 恢复，确认项目、版本与发布指针后再切换。
-H2 本地模式停止 API 后复制 `data/`；不要在线复制正在写入的数据库文件。
-不将 `.env`、访问令牌、模型密钥或备份加入 Git。
+[工作空间与知识互通架构](docs/WORKSPACE_KNOWLEDGE_ARCHITECTURE.md)说明人物专题绑定、权限、检索、来源和登录共享。
 
-## 已知边界
+[蒸馏知识全流程复核与持续优化方案](docs/KNOWLEDGE_DISTILLATION_REVIEW_2026-10-09.md)记录上传、任务、候选、审核、发布的现场检查及后续验收门槛。
 
-第一版限制单文件 1 MiB、任务材料 200k 字符、300 条知识。材料按 6000 字符切块；问答最多选择 40 条、40k 字符的工作知识，超过范围明确说明缺口。
-追加知识采用去重追加，自动冲突判断与逐条修改尚未实现；审核者对冲突候选应拒绝，并补充明确材料。
-采用数据库租约和最多三次自动尝试，网络失败可重试；未实现 token 配额、复杂退避或模型成本看板。
-版本内容不可变，审核和发布有事务与基础版本检查。真实模型的语义可靠性仍需负责人审核与业务评测。
-配置用户列表用于启动时配置/轮换令牌；从列表移除账号会在重启后撤销其令牌，并保留历史成员与审计记录。退出演示模式也会撤销未配置的演示账号。项目成员角色可由 OWNER 在网页调整。
-数据库初始化是 v0.1 建表脚本；以后升级表结构应先增加 Flyway/Liquibase 迁移，不能直接修改线上建表脚本。
+[文字人格与相关经历稳定性（2026-10-12）](docs/TEXT_CONTEXT_VERIFICATION_2026-10-12.md)记录本轮实现、上下文配置及合成验证；真实人物说话方式和长期体验仍需人工评估。
 
-本次测试证据与未验证项见 [验收记录](docs/VERIFICATION.md)。
+任务准入默认每用户32个未结束任务、每用户60次/分钟、单API进程总计120次/分钟；可分别配置PLATFORM_MAX_ACTIVE_TASKS_PER_USER、PLATFORM_TASK_SUBMISSIONS_PER_MINUTE、PLATFORM_TOTAL_TASK_SUBMISSIONS_PER_MINUTE，0关闭对应限制。暂停占用名额，取消不退已提交频率，人工重试/恢复仍受原创建者额度约束。窗口随API重启清零，不能视为持久用量或人民币费用上限。详情见[任务准入限制](docs/TASK_ADMISSION_LIMITS_2026-10-12.md)。
 
-## 后台管理更新（2026-10-03）
-
-左侧菜单分为经验管理、材料管理、生成任务、项目设置和操作记录，右侧展示所选功能。
-材料管理上传并勾选材料；生成任务选择主题、提交任务，列表每3秒刷新，支持状态筛选、失败重试和打开结果。
-进度由Worker每完成一段材料向服务端上报，校验保存前最多95%，落库成功后100%；不估算模型生成中的token进度。
-OWNER可删除主题，删除停止共享且保留历史版本，可从已删除主题恢复；排队/运行任务未完成时拒绝删除。原材料与审计不随主题删除。
-新增profile_archive/job_progress表使用幂等建表初始化，兼容现有H2文件数据；生产环境仍需纳入正式数据库迁移管理。
-
-项目已独立于上游，目录分工和升级流程见 [UPSTREAM_UPGRADE.md](docs/UPSTREAM_UPGRADE.md)。
-
-当前本机真实模型启动：`JAVA_BIN=/opt/homebrew/opt/openjdk/bin/java python3 run_local.py --port 8089`。
-
-## 角色与任务控制
-
-“成员与角色”展示负责人OWNER、编辑者EDITOR、阅读者VIEWER及权限，侧栏展示当前项目角色。负责人可以设置已配置账号的项目角色，不能修改自己的角色。
-负责人可管理全部项目任务；编辑者/阅读者只能暂停、继续、停止、删除、恢复自己提交的任务，阅读者仅能访问自己的问答任务。
-排队或执行中的任务可暂停；已暂停任务可继续（从头重新执行，尝试次数和进度重置）或停止。停止后不能继续；要再次执行需新建任务。
-暂停/停止立即使后台租约失效，旧Worker的进度、完成写入都被拒绝。已发出的HTTP模型请求不保证即时取消，可能继续产生费用；单Worker需等当前请求结束或超时后才领取新任务。
-已完成、失败、已停止任务可以删除，使用可恢复归档；从“已删除的历史任务”恢复只恢复列表记录，不自动执行，也不改变原状态。删除任务不删除材料、候选或发布版本。
-已暂停任务仍可继续，因此不能直接删除，须先停止；其所属经验主题也不能删除。状态改变时服务端检查权限和状态，避免旧Worker结果覆盖。
+文字模型各阶段有显式输出token上限，参数可选max_tokens/max_completion_tokens、temperature可省略；截断为MODEL_OUTPUT_LIMIT，不生成半截候选或版本。旧蒸馏断点指纹需与新生成设置一致，详见[输出预算与协议](docs/MODEL_OUTPUT_BOUNDS_2026-10-12.md)。

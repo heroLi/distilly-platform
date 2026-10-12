@@ -2,6 +2,7 @@ FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /build
 COPY server/pom.xml pom.xml
 COPY server/src src
+COPY tests/fixtures tests/fixtures
 RUN mvn -B -ntp package
 
 FROM eclipse-temurin:17-jre

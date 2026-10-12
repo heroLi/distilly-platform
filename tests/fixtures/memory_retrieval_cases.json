@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "scope": "confirmed relationship-memory lexical recall; no real-person imitation score",
+  "memories": [
+    {
+      "id": "qingdao_trip",
+      "body": "用户去年去过青岛旅行。"
+    },
+    {
+      "id": "qingdao_photo",
+      "body": "用户记录过青岛海边拍照。"
+    },
+    {
+      "id": "beijing_walk",
+      "body": "用户喜欢在北京公园安静散步。"
+    },
+    {
+      "id": "beijing_airport",
+      "body": "用户曾在北京机场等车。"
+    },
+    {
+      "id": "coffee_negative",
+      "body": "用户不喜欢喝咖啡。"
+    },
+    {
+      "id": "coffee_weekend",
+      "body": "用户只在周末喝咖啡。"
+    },
+    {
+      "id": "cafe_seat",
+      "body": "用户选择咖啡店座位时喜欢靠窗。"
+    },
+    {
+      "id": "night_walk",
+      "body": "用户讨厌雨天夜晚散步。"
+    },
+    {
+      "id": "english_walk",
+      "body": "User prefers quiet walks in the park."
+    },
+    {
+      "id": "english_vacation",
+      "body": "User described a vacation."
+    },
+    {
+      "id": "english_coffee",
+      "body": "User does not drink coffee."
+    },
+    {
+      "id": "private_paris",
+      "body": "用户去过巴黎旅行。",
+      "scope": "other_user"
+    },
+    {
+      "id": "other_paris",
+      "body": "用户去过巴黎旅行。",
+      "scope": "other_persona"
+    },
+    {
+      "id": "pending_paris",
+      "body": "用户去过巴黎旅行。",
+      "status": "PENDING"
+    },
+    {
+      "id": "rejected_paris",
+      "body": "用户去过巴黎旅行。",
+      "status": "REJECTED"
+    },
+    {
+      "id": "chengdu_bike",
+      "body": "用户在成都骑车。"
+    },
+    {
+      "id": "chengdu_station",
+      "body": "用户在成都火车站等车。"
+    },
+    {
+      "id": "hangzhou_swim",
+      "body": "用户去年在杭州游泳。"
+    },
+    {
+      "id": "hangzhou_photo",
+      "body": "用户在杭州海边拍照。"
+    },
+    {
+      "id": "english_tea",
+      "body": "User likes green tea."
+    }
+  ],
+  "cases": [
+    {
+      "id": "unknown_city",
+      "query": "巴黎旅行",
+      "expected_ids": [],
+      "gate": true
+    },
+    {
+      "id": "city_and_activity",
+      "query": "青岛旅行",
+      "expected_ids": [
+        "qingdao_trip"
+      ],
+      "gate": true
+    },
+    {
+      "id": "specific_photo",
+      "query": "青岛海边拍照",
+      "expected_ids": [
+        "qingdao_photo"
+      ],
+      "gate": true
+    },
+    {
+      "id": "park_not_airport",
+      "query": "北京公园散步",
+      "expected_ids": [
+        "beijing_walk"
+      ],
+      "gate": true
+    },
+    {
+      "id": "night_not_generic_walk",
+      "query": "夜晚散步",
+      "expected_ids": [
+        "night_walk"
+      ],
+      "gate": true
+    },
+    {
+      "id": "drink_not_cafe_seat",
+      "query": "喝咖啡的偏好",
+      "expected_ids": [
+        "coffee_negative",
+        "coffee_weekend"
+      ],
+      "gate": true
+    },
+    {
+      "id": "broad_coffee",
+      "query": "咖啡",
+      "expected_ids": [
+        "coffee_negative",
+        "coffee_weekend",
+        "cafe_seat"
+      ],
+      "gate": true
+    },
+    {
+      "id": "english_exact_words",
+      "query": "quiet walks",
+      "expected_ids": [
+        "english_walk"
+      ],
+      "gate": true
+    },
+    {
+      "id": "english_no_substring",
+      "query": "cat",
+      "expected_ids": [],
+      "gate": true
+    },
+    {
+      "id": "negative_fact_is_relevant",
+      "query": "coffee preference",
+      "expected_ids": [
+        "english_coffee"
+      ],
+      "gate": true
+    },
+    {
+      "id": "unknown_city_date",
+      "query": "巴黎见面日期",
+      "expected_ids": [],
+      "gate": true
+    },
+    {
+      "id": "conversational_framing",
+      "query": "我们去哪里安静散步呢？",
+      "expected_ids": [
+        "beijing_walk"
+      ],
+      "gate": true
+    },
+    {
+      "id": "reordered_terms",
+      "query": "安静 散步 北京 公园",
+      "expected_ids": [
+        "beijing_walk"
+      ],
+      "gate": true
+    },
+    {
+      "id": "generic_without_topic",
+      "query": "这个事情怎么样？",
+      "expected_ids": [],
+      "gate": true
+    },
+    {
+      "id": "overview",
+      "query": "你记得我什么？",
+      "expected_ids": [
+        "coffee_negative",
+        "coffee_weekend",
+        "cafe_seat",
+        "night_walk",
+        "english_walk",
+        "english_vacation",
+        "english_coffee",
+        "chengdu_bike",
+        "chengdu_station",
+        "hangzhou_swim",
+        "hangzhou_photo",
+        "english_tea"
+      ],
+      "gate": true
+    },
+    {
+      "id": "semantic_alias_gap",
+      "query": "青岛摄影",
+      "expected_ids": [
+        "qingdao_photo"
+      ],
+      "gate": false
+    },
+    {
+      "id": "english_inflection_gap",
+      "query": "quiet walking",
+      "expected_ids": [
+        "english_walk"
+      ],
+      "gate": false
+    },
+    {
+      "id": "cross_language_gap",
+      "query": "喜欢coffee",
+      "expected_ids": [
+        "coffee_negative",
+        "coffee_weekend",
+        "cafe_seat",
+        "english_coffee"
+      ],
+      "gate": false
+    },
+    {
+      "id": "variant_bike",
+      "query": "成都骑车",
+      "expected_ids": [
+        "chengdu_bike"
+      ],
+      "gate": true,
+      "additional_variant": true
+    },
+    {
+      "id": "variant_swim",
+      "query": "杭州游泳",
+      "expected_ids": [
+        "hangzhou_swim"
+      ],
+      "gate": true,
+      "additional_variant": true
+    },
+    {
+      "id": "variant_unknown_city",
+      "query": "悉尼骑车",
+      "expected_ids": [],
+      "gate": true,
+      "additional_variant": true
+    },
+    {
+      "id": "variant_english",
+      "query": "green tea",
+      "expected_ids": [
+        "english_tea"
+      ],
+      "gate": true,
+      "additional_variant": true
+    },
+    {
+      "id": "negated_overview_is_not_consent",
+      "query": "不要告诉我你记得我什么，聊聊火星。",
+      "expected_ids": [],
+      "gate": true
+    }
+  ]
+}

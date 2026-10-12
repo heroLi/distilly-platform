@@ -1,0 +1,22 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+function element(tag,text){return {tag,textContent:text||'',children:[],dataset:{},isConnected:true,append(...children){this.children.push(...children);},setAttribute(){},addEventListener(){},querySelectorAll(){return this.children;}};}
+const source=fs.readFileSync('server/src/main/resources/static/app.js','utf8');
+const context=vm.createContext({Set,node:element,role:'OWNER'});
+vm.runInContext(source.slice(source.indexOf('function candidateDelta('),source.indexOf('async function loadVersions(')),context);
+const old={id:'old',section:'历史',text:'已审核知识',evidence:[]},fresh={id:'fresh',section:'新增',text:'需要审核的新知识',evidence:[]};
+const base={id:'base',content:{claims:[old]}},candidate={id:'candidate',base_id:'base',status:'CANDIDATE',created_at:0,content:{claims:[old,fresh]}};
+context.candidate=candidate;context.versions=[candidate,base];
+const card=vm.runInContext('versionCard(candidate,versions,"base",()=>{})',context);
+const walk=n=>[n,...n.children.flatMap(walk)],all=walk(card),text=all.map(n=>n.textContent).join(' ');
+assert.match(text,/本次新增知识（1 条）/);assert.match(text,/继承的已审核知识（1 条/);
+const inherited=all.find(n=>n.tag==='details');assert.ok(inherited);assert.notEqual(inherited.open,true);assert.ok(walk(inherited).some(n=>n.textContent==='已审核知识'));
+assert.ok(card.children.some(n=>walk(n).some(n=>n.textContent==='需要审核的新知识')&&n.tag==='div'));
+assert.equal(all.find(n=>n.textContent==='批准并发布').disabled,false);
+const stale=vm.runInContext('versionCard(candidate,versions,"changed",()=>{})',context);
+assert.equal(walk(stale).find(n=>n.textContent==='批准并发布').disabled,true);
+assert.equal(walk(stale).find(n=>n.textContent==='拒绝候选').disabled,false);
+const missing=vm.runInContext('versionCard(candidate,[candidate],"base",()=>{})',context);
+assert.match(walk(missing).map(n=>n.textContent).join(' '),/无法可靠区分增量/);
+context.role='EDITOR';const editor=vm.runInContext('versionCard(candidate,versions,"base",()=>{})',context);
+assert.equal(walk(editor).some(n=>n.textContent==='批准并发布'),false);
+console.log('PASS: candidate delta, collapsed inherited claims, missing base, stale publication and editor review boundary');

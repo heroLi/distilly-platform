@@ -1,0 +1,1 @@
+ALTER TABLE persona_job ADD COLUMN partial_reply VARCHAR(12000) NOT NULL DEFAULT '';

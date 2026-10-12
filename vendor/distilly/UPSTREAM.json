@@ -5,7 +5,14 @@
   "commit": "b830d3dcbde006370f141155795b89021e3a947b",
   "vendored_files": {
     "LICENSE": "4364a2b804d4c6e6c1ab47226c7b48b7364701e1827b83c600d0c4ba46d009ec",
-    "prompts/work_analyzer.md": "3429e688fbba0269fc3b43c5d66ea06cbfcd187015c8653a26a4c6f52080e92d"
+    "prompts/work_analyzer.md": "3429e688fbba0269fc3b43c5d66ea06cbfcd187015c8653a26a4c6f52080e92d",
+    "prompts/persona_builder.md": "1823c73dbd718a35900f11016cc92edca6b0d91add9f2495f9f895a0019f7f7d",
+    "prompts/persona_analyzer.md": "1ed2bbc7d101f25bf4a7d20c2ff4e8dcfc95dd3122a0cf3ab96e9c3c8310d083",
+    "prompts/celebrity/persona_builder.md": "f0f0cd9f6b4877a99684191ea8782cb6cd2f41363f89a2f49f39a4e5ca7911e6",
+    "prompts/celebrity/persona_analyzer.md": "e01432e9decfe67c5104573a8d89982cca0ad080d23ba30c80b8c1445f52185e",
+    "prompts/relationship/persona_builder.md": "e6c3a989c2165635bf0de30b051f4fd0099e3635d8d04332a6382d7cd810f38d",
+    "prompts/relationship/intake.md": "11ed01ad302e2d7f66936e2120bb5baf4647574f2b5433bc2a7e30591f94c070",
+    "prompts/relationship/persona_analyzer.md": "5f130ba5dfb51e630b9cfa270d9494ab882edbc3f7581654c5865fb89e4c7905"
   },
-  "note": "Worker uses only the vendored work analyzer prompt; no runtime import from upstream checkout."
+  "note": "Fixed dot-skill commit. Work analyzer retained; Persona analyzer/builder for relationship, celebrity and colleague vendored with MIT license. Platform adapters enforce JSON contracts and isolate runtime memory."
 }

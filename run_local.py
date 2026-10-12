@@ -4,8 +4,10 @@ import argparse
 import os
 import re
 import signal
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 from pathlib import Path
@@ -13,7 +15,8 @@ from pathlib import Path
 root = Path(__file__).resolve().parent
 parser = argparse.ArgumentParser()
 parser.add_argument("--demo", action="store_true", help="Explicitly enable local demonstration users and mock model")
-parser.add_argument("--port", type=int, default=8080)
+parser.add_argument("--demo-model", choices=("mock","gateway"), default="mock", help="With --demo, optionally use the configured real model; loopback test accounts remain explicit")
+parser.add_argument("--port", type=int, default=18080)
 parser.add_argument("--env-file", type=Path, default=root / ".env", help="Local KEY=value configuration; process environment takes precedence")
 args = parser.parse_args()
 env = dict(os.environ)
@@ -30,7 +33,11 @@ env["PLATFORM_PORT"] = str(args.port)
 env["PLATFORM_BIND"] = "127.0.0.1"
 env["PLATFORM_API_URL"] = f"http://127.0.0.1:{args.port}"
 if args.demo:
-    env.update(PLATFORM_DEMO="true", MODEL_MODE="mock", PLATFORM_WORKER_TOKEN="local-demo-worker-token-32-characters-long")
+    env.update(PLATFORM_DEMO="true", MODEL_MODE=args.demo_model, PLATFORM_WORKER_TOKEN="local-demo-worker-token-32-characters-long")
+    if args.demo_model == "gateway":
+        for name in ("MODEL_BASE_URL", "MODEL_NAME", "MODEL_API_KEY"):
+            if not env.get(name):
+                parser.error(f"Missing {name} for gateway demo")
 else:
     env["PLATFORM_DEMO"] = "false"
     env["MODEL_MODE"] = "gateway"
@@ -53,6 +60,7 @@ if not env.get("PLATFORM_DB_URL"):
     env["PLATFORM_DB_PASSWORD"] = ""
 processes = []
 stopping = False
+runtime = tempfile.TemporaryDirectory(prefix="distilly-local-runtime-")
 
 
 def stop(*_):
@@ -63,7 +71,10 @@ def stop(*_):
 for sig in (signal.SIGINT, signal.SIGTERM):
     signal.signal(sig, stop)
 try:
-    processes.append(subprocess.Popen([java, "-jar", str(jar)], cwd=root, env=env))
+    # Spring Boot loads nested classes lazily. Never run a JAR Maven may overwrite.
+    runtime_jar = Path(runtime.name) / jar.name
+    shutil.copy2(jar, runtime_jar)
+    processes.append(subprocess.Popen([java, "-jar", str(runtime_jar)], cwd=root, env=env))
     deadline = time.monotonic() + 30
     while time.monotonic() < deadline and not stopping:
         if processes[0].poll() is not None:
@@ -76,7 +87,7 @@ try:
     else:
         raise RuntimeError("API startup timed out")
     processes.append(subprocess.Popen([sys.executable, str(root / "worker/worker.py")], cwd=root, env=env))
-    print(f"Open {env['PLATFORM_API_URL']} ({'DEMO / mock model' if args.demo else 'configured gateway'})", flush=True)
+    print(f"Open {env['PLATFORM_API_URL']} ({'DEMO / ' + args.demo_model + ' model' if args.demo else 'configured gateway'})", flush=True)
     while not stopping:
         if any(p.poll() is not None for p in processes):
             raise RuntimeError("API or Worker exited")
@@ -90,3 +101,4 @@ finally:
             except subprocess.TimeoutExpired:
                 p.kill()
                 p.wait()
+    runtime.cleanup()

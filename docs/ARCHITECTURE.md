@@ -1,61 +1,74 @@
-# 第一版架构与接口约定
+# 虚拟人生成平台架构
 
-## 技术决策
+当前开发入口：[实施总纲](PROJECT_BLUEPRINT.md) · [统一设计与交互](DESIGN_SYSTEM.md) · [2026-10-08 审查](PROJECT_REVIEW_2026-10-08.md)。
 
-Spring Boot API + Python Worker + 单页静态前端。API 是数据与权限的唯一入口；Worker 不直接写数据库。
-API 使用 JDBC，开发用 H2 文件数据库，容器试点用 PostgreSQL。第一版短文本直接保存数据库，避免数据库与对象存储双写；超过本版容量后引入对象存储适配器。
-任务队列使用数据库租约，领取采用条件更新；任务完成通过租约 token 与状态进行幂等检查。
-不依赖 Redis 或浏览器进程。模型推理由公司的 HTTP 模型网关提供，采用 Chat Completions 兼容协议；配置模型地址、名称、密钥和超时。
+日期：2026-10-04。状态：文字人格、记忆、情感对话与多媒体适配已实现，本地验收见 PERSONA_VERIFICATION.md；现有 API 与表结构见 [历史工作知识架构](LEGACY_WORK_ARCHITECTURE.md)。
+
+## 现有基线与复用范围
+
+现有 Spring Boot API、Python Worker、静态网页、H2/PostgreSQL、任务租约和审核发布机制可作为基础。
+现有 ProfileVersion 是工作知识版本，ANSWER 是知识问答；不能直接宣称它们已经支持人物、关系记忆或情感运行时。
+首阶段沿用一个 API 和一个 Worker；先明确模块边界，无需立即拆为多个独立服务。
+
+## 已实现模块
+
+- 人物管理：人物设定、授权来源、人格版本、模板与发布指针。
+- 对话运行时：固定人格版本，装配短期上下文、用户关系记忆与情感状态，生成流式回复。
+- 记忆管理：候选记忆、用户确认、检索、纠正和删除；按项目、人物、用户隔离。
+- 情感状态：记录情绪、强度、触发上下文及更新时间，跨轮次有连续变化；输出可供文字、声音和形象使用。
+- 生成 Worker：材料分析、人格候选生成与结构校验；处理形象、语音和转写任务。
+- 媒体适配：语音识别、语音合成、图像理解、形象生成协议已实现，轻量动画由浏览器驱动；真实媒体供应商仍待验证。
 
 ```mermaid
 flowchart LR
- U[浏览器 / 用户令牌] --> A[Spring Boot API]
- A --> D[(H2 / PostgreSQL)]
- W[Python Worker] -->|独立 Worker 凭证领取与提交| A
- W --> M[模型网关]
- A -->|创建问答任务| D
+  U[创建与交流界面] --> A[Spring Boot API]
+  A --> P[人物与版本管理]
+  A --> R[对话运行时]
+  R --> C[上下文与隔离记忆]
+  R --> E[情感状态]
+  R --> M[模型适配]
+  A --> W[生成任务 / Python Worker]
+  W --> M
+  P --> D[(数据库)]
+  C --> D
+  E --> D
+  W --> V[语音与视觉适配]
 ```
 
-## 数据对象
+## 数据对象与存储
 
-- User：身份与令牌哈希；ProjectMember：项目、用户、角色。
-- Material：项目、文件名、正文、摘要 hash、作者、创建时间。
-- Profile：项目、标题、published_version_id。
-- ProfileVersion：Profile、不可变内容 JSON、Work Markdown、基础发布版本、候选/批准/拒绝状态、审核记录、来源 ID 集合。
-- Job：DISTILL / ANSWER；project/profile、输入快照、基础版本、状态、租约 token、租约截止、尝试次数、结果、错误、创建人。
-- Audit：项目、操作者、动作、资源、时间。无原材料或密钥正文。
+Persona / PersonaVersion：人物身份、设定、来源类型、授权材料引用、不可变版本和发布状态。
+Conversation / Message：项目、人物、用户、固定人格版本、消息与运行状态。
+Memory：所属项目、人物和用户、内容、来源消息或材料、时间、确认状态与删除状态。
+EmotionState：会话情绪、强度、触发依据、更新时间和状态版本。
+MediaAsset：后续阶段的声音、图像、形象资产及授权信息。
+人物、版本、交流、消息、记忆及任务已对应persona_*表；情感状态保存于交流与回复JSON，媒体以受限data URL保存于人物、消息或私有任务结果，MediaAsset独立对象存储尚未引入。migrations/V001至V005为追加迁移，由persona_schema_version记录，保留旧工作知识数据。
 
-## 状态与并发
+## 对话与生成流程
 
-Job：QUEUED → RUNNING → SUCCEEDED / FAILED；租约到期重新领取，超过最大 attempt 转 FAILED。人工 retry 只对 FAILED 生效。
-Version：CANDIDATE → APPROVED / REJECTED。发布时检查当前指针等于候选 base_version；否则 409，需重新蒸馏。
-批准历史版本可用于回滚；下载和问答只使用固定已批准版本。问答任务固定版本，不随之后发布变化。
+人物创建 → 手工设定或授权材料分析 → 人格候选 → 编辑与预览 → 发布不可变版本。
+用户输入 → 服务端鉴权 → 固定人格版本 → 获取隔离记忆与上下文 → 更新情感状态 → 生成回复 → 保存交互 → 提议候选记忆 → 用户确认。
+人物配置与用户关系状态分开存储；共享人物发布不会携带个人对话和关系记忆。
+媒体阶段通过统一的语气和情绪输出协调文本、声音及表情；延迟、失败降级与打断机制需在接入时验证。
 
-## Worker 分析与验证
+## 实施顺序与接口边界
 
-材料按字符分块，标记 material_id/chunk_id。分块模型返回 claims JSON；逐条校验章节、长度、证据 ID 和原文引用，去重后与基础版本知识合并。
-Work-only Markdown 由经过验证的 claims 渲染，带引用标识；不将模型生成的任意 frontmatter 或工具指令作为产物执行。
-第一版追加只新增去重后的条目，不自动改写已有事实。冲突由审核者拒绝或退回补充材料；结构化 replace/retire 后续扩展。
-模型调用不携带任何本机宿主的账号、会话或文件路径。
+先完成文字人物的数据迁移、创建编辑、预览对话、记忆管理和版本发布，再扩展语音与视觉。
+现有工作知识 API 保留兼容；人物、对话、记忆使用独立契约、鉴权和表结构，保留旧接口及数据语义。
+现有令牌、Worker 凭证、租约、审计与模型密钥管理继续有效。对话通过Worker解析模型SSE并提交受租约保护的增量，浏览器每两秒取回；完整结果校验后写入正式消息。记忆按用户/人物检索最近30条已确认项，历史上下文最近24条。企业SSO、多媒体对象存储、向量检索和成本配额仍待实现。
 
-## 接口分组
+## 已实现入口与协议
 
-- /api/me、/api/projects、/api/projects/{id}/members
-- /api/projects/{id}/materials：上传与列表（OWNER/EDITOR）
-- /api/projects/{id}/profiles：目录，按角色过滤候选信息
-- /api/profiles/{id}/distill：提交材料 ID 集合
-- /api/profiles/{id}/versions、/api/versions/{id}/review、/api/profiles/{id}/rollback
-- /api/profiles/{id}/download、/api/profiles/{id}/questions
-- /api/jobs/{id}、/api/jobs/{id}/retry、/api/projects/{id}/audit
-- /internal/jobs/claim、/internal/jobs/{id}/complete、/internal/jobs/{id}/fail：独立 Worker 权限
+Spring Boot 的 persona、personality、conversation、memory、media、task 模块分别管理人物、人格资产、私有交流、记忆、媒体和任务，模块内采用 Controller / Service / Repository 分层；worker/persona.py包装固定上游提示词与媒体接口，不导入上游脚本执行人物资料中的命令。
+/api/projects/{p}/personas 与 /api/personas/{id}负责目录和设定；generate、versions/{v}/revise、review、rollback、export、restore完成生命周期。
+/api/personas/{id}/conversations、/api/conversations/{id}/messages以及memories、memory、speech、image、avatar负责互动与媒体。
+/internal/persona-jobs/claim及heartbeat/delta/complete/fail只允许独立Worker凭证。CHAT/TTS/ASR任务仅提交者可读，负责人权限不扩大到私人关系数据。
+人物管理页面为默认/，旧工作知识页面为/knowledge.html。服务仍以单API + 单Worker为本地验证基线；先备份并用单实例执行迁移，再评估扩容。
 
-Worker 用短租约与超时受控模型调用，领取结果包含任务所需的最小数据。用户 API 返回 401/403/404/409/422 等明确错误，不返回内部异常或凭证。
+## 工作空间知识互通
 
-## 部署边界
+人物工作室与虚拟经历台已共享登录和工作空间；人物通过独立绑定读取同空间已发布知识专题，回答保存来源。V004为追加迁移。详见[互通架构](WORKSPACE_KNOWLEDGE_ARCHITECTURE.md)。
 
-平台代码位于独立 distilly-platform 仓库的 server/、worker/；上游开源创建器位于同级 distilly 仓库。平台仅复用 vendor 中固定版本的工作分析提示词。Spring Boot 3.5 / Java 17+，Python 3.11+。
-容器配置采用 API、Worker、PostgreSQL 三服务；只暴露 API 端口。测试模式必须显式启用；真实模型模式缺少配置时启动失败。
-试点采用单 API、单 Worker，先以两个任务并发以下验证；水平扩容通过租约和数据库事务保障。
-企业接入前需配置 HTTPS、个人令牌或 SSO、数据库备份与网关；没有企业连接信息时不宣称已完成这些验证。
+## Spring Boot 实现结构
 
-参考：[Spring Boot 3.5 系统要求](https://docs.spring.io/spring-boot/3.5/system-requirements.html)。
+现有集中式接口和业务类已拆为业务模块，配置、认证、异常处理和迁移独立组织。具体目录、依赖方向和开发规则见 [Spring Boot 代码结构](SPRING_BOOT_STRUCTURE.md)。

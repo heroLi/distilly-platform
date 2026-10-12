@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+"""One regression entry point. --e2e runs synthetic HTTP fixtures on fixed test ports."""
+import argparse
+from pathlib import Path
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser()
+parser.add_argument('--e2e', action='store_true', help='Also run both synthetic API/Worker end-to-end flows')
+args = parser.parse_args()
+commands = [
+    [sys.executable, 'tests/architecture_check.py'],
+    ['mvn', '-B', '-ntp', '-f', 'server/pom.xml', 'package'],
+    [sys.executable, '-m', 'unittest', 'discover', '-s', 'worker', '-p', 'test_*.py'],
+]
+commands.extend(['node', '--check', str(path.relative_to(ROOT))]
+                for path in sorted((ROOT / 'server/src/main/resources/static').glob('*.js')))
+commands.extend(['node', str(path.relative_to(ROOT))] for path in sorted((ROOT / 'tests').glob('*_test.cjs')))
+if args.e2e:
+    commands.extend([[sys.executable, 'tests/persona_e2e.py'], [sys.executable, 'tests/e2e.py']])
+commands.append(['git', 'diff', '--check'])
+for command in commands:
+    print('RUN:', ' '.join(command), flush=True)
+    result = subprocess.run(command, cwd=ROOT)
+    if result.returncode:
+        sys.exit(result.returncode)
+print('PASS: all selected checks')

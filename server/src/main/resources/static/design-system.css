@@ -1,0 +1,90 @@
+/* Shared tokens and controls. Page styles own layout; this file owns appearance. */
+:root {
+    --ink: #252e31;
+    --muted: #697775;
+    --accent: #176759;
+    --accent-hover: #0c5045;
+    --soft: #edf4ef;
+    --paper: #f8f8f3;
+    --line: #dce4dc;
+    --white: #fff;
+    --danger: #a24742;
+    --radius-control: 9px;
+    --radius-panel: 16px;
+    --space-panel: 24px;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--paper);
+}
+
+button, input, select, textarea { font: inherit; }
+button {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    color: var(--ink);
+    background: var(--white);
+    padding: 10px 15px;
+    cursor: pointer;
+}
+button:hover { background: var(--soft); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.primary { color: var(--white); background: var(--accent); border-color: var(--accent); }
+button.primary:hover { background: var(--accent-hover); }
+button.danger { color: var(--danger); background: var(--white); border-color: var(--line); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.muted { color: var(--muted); }
+.panel, .card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    padding: var(--space-panel);
+}
+input:not([type=checkbox]):not([type=range]), select, textarea {
+    border-color: var(--line);
+    border-radius: var(--radius-control);
+    color: var(--ink);
+    background: var(--white);
+}
+input[type=checkbox], input[type=range], progress { accent-color: var(--accent); }
+:is(button, a, input, select, textarea, summary, [role=tabpanel]):focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+}
+.badge, .role-badge, .tags span { background: var(--soft); color: var(--accent); border-radius: 6px; }
+.sidebar nav button:is(.selected, .active) { background: var(--soft); color: var(--accent); font-weight: 650; }
+.platform-header {
+    min-height: 76px;
+    height: auto;
+    padding: 16px 36px;
+    gap: 20px;
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+}
+.platform-brand { display: flex; align-items: center; gap: 12px; color: var(--accent); font-size: 32px; font-weight: 750; }
+.platform-brand > span { color: var(--ink); font-size: 20px; margin: 0; font-weight: 750; }
+.platform-brand small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
+dialog, .experience-dialog {
+    color: var(--ink);
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    padding: var(--space-panel);
+    max-height: 90vh;
+    box-shadow: 0 16px 80px #16372d33;
+}
+dialog::backdrop, .experience-dialog::backdrop { background: #172e2660; backdrop-filter: blur(3px); }
+dialog.modal-overlay { width: min(680px, calc(100vw - 28px)); inset: 0; margin: auto; overflow: auto; background: var(--white); display: block; }
+dialog.modal-overlay:not([open]) { display: none; }
+dialog.modal-overlay > .modal { width: 100%; max-width: none; max-height: none; border: 0; box-shadow: none; padding: 0; }
+.notice, div#message[role=status] { background: var(--accent); border-radius: var(--radius-control); }
+div#message[role=status].error { background: var(--danger); }
+@media (max-width: 760px) {
+    :root { --space-panel: 18px; }
+    .platform-header { padding: 12px 18px; min-height: 68px; flex-wrap: wrap; }
+    .platform-brand > span { display: block; font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

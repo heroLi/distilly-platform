@@ -16,7 +16,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: mvn -B -ntp -f server/pom.xml package
-      - run: python3 -m unittest discover -s worker -p 'test_*.py'
-      - run: node tests/question_ui_test.cjs
-      - run: python3 tests/e2e.py
+      - run: python3 scripts/verify.py --e2e
