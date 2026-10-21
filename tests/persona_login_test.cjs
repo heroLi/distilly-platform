@@ -6,7 +6,7 @@ const source = fs.readFileSync('server/src/main/resources/static/persona.js', 'u
 class Button { constructor(){this.disabled=false;this.id='login-submit';} }
 const button=new Button(), elements={}, saved=new Map();
 for(const id of ['login-status','token','identity','model-mode','login','workspace','logout','login-form'])elements[id]={textContent:'',value:'',hidden:id==='workspace'||id==='logout'};
-let mode='stalled', aborted=0, projectFailure=false;
+let mode='stalled', aborted=0, projectFailure=false, identity={id:'owner',demo:true,model_mode:'gateway'};
 const pending=signal=>new Promise((_,reject)=>signal.addEventListener('abort',()=>{aborted++;reject(Error('aborted'));},{once:true}));
 const context=vm.createContext({
   window:{},state:{token:'',me:null,timer:null}, $:id=>elements[id],
@@ -21,7 +21,7 @@ const context=vm.createContext({
     if(mode==='body-stalled')return {ok:true,text:()=>pending(options.signal)};
     if(mode==='offline')throw new TypeError('network failure');
     if(mode==='rejected'||mode==='form-rejected')return mode==='form-rejected'?{ok:true,text:async()=>JSON.stringify({error:'authentication_required'})}:{ok:false,json:async()=>({error:'authentication_required'})};
-    return {ok:true,text:async()=>JSON.stringify({id:'owner',demo:true,model_mode:'gateway'})};
+    return {ok:true,text:async()=>JSON.stringify(identity)};
   }
 });
 context.window=context.window||{};vm.runInContext(fs.readFileSync('server/src/main/resources/static/ui-read-scope.js','utf8'),context);context.UiReadScope=context.window.UiReadScope;
@@ -39,5 +39,11 @@ const submit=()=>elements['login-form'].onsubmit({type:'submit',submitter:button
   mode='form-rejected';await submit();assert.match(elements['login-status'].textContent,/令牌无效/);assert.equal(button.disabled,false);
   mode='valid';projectFailure=true;await submit();assert.equal(elements.workspace.hidden,true);assert.equal(saved.size,0);assert.match(elements['login-status'].textContent,/工作空间/);
   projectFailure=false;await submit();assert.equal(elements.workspace.hidden,false);assert.equal(elements.login.hidden,true);assert.equal(elements.identity.textContent,'owner');assert.equal(saved.get('persona-token'),'demo-owner');assert.equal(button.disabled,false);
+  for(const demo of [true,false])for(const model_mode of ['gateway','mock',undefined]){
+    identity={id:'owner',demo,model_mode};await submit();
+    assert.doesNotMatch(elements['model-mode'].textContent,/真实模型交流|已配置模型/);
+    assert.match(elements['model-mode'].textContent,/后台执行状态以任务为准/);
+    assert.match(elements['model-mode'].textContent,/真实文字出口仍关闭/);
+  }
   console.log('PASS: stalled headers/body abort, offline feedback, invalid token cleanup, bootstrap failure, retry without refresh');
 })().catch(error=>{console.error(error);process.exitCode=1;});

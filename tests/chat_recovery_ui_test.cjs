@@ -14,6 +14,7 @@ function setup(status='FAILED'){
  for(const status of [null,'QUEUED','RUNNING','FAILED','CANCELLED','SUCCEEDED']){
   h=setup(status);assert.equal(h.e.stop.hidden,!['QUEUED','RUNNING'].includes(status));assert.equal(h.e.retry.hidden,status!=='FAILED');assert.equal(h.e.refresh.disabled,!status);
   if(status==='FAILED')assert.match(h.e.status.textContent,/失败.*显式重试/);if(status==='CANCELLED')assert.match(h.e.status.textContent,/已停止/);count++;
+  if(status==='QUEUED'){assert.match(h.e.status.textContent,/尚未确认后台领取/);assert.doesNotMatch(h.e.status.textContent,/后台不可用|后台已离线/);}
  }
  h=setup();let release;h.set((path,body)=>body?new Promise(resolve=>release=resolve):turn('QUEUED'));
  const first=h.e.retry.onclick();await h.e.retry.onclick();await h.e.refresh.onclick();assert.equal(h.calls.length,1);assert.equal(h.e.retry.disabled,true);release();await first;

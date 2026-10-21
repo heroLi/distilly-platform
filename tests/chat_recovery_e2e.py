@@ -23,7 +23,7 @@ TOKEN = 'chat-recovery-synthetic-worker-token-32-characters'
 SOURCE = '合成人格资料：表达简洁，先核对来源，再回答问题，不编造人物亲历。'
 
 
-def run(output, baseline=False):
+def run(output, baseline=False, observe_readiness_gap=False):
     output = output.resolve(); output.mkdir(parents=True, exist_ok=True)
     safe = {key: value for key, value in os.environ.items() if key in (
         'HOME', 'LANG', 'LC_ALL', 'TMPDIR', 'PATH', 'JAVA_HOME', 'JAVA_BIN', 'MAVEN_OPTS', 'MAVEN_ARGS')}
@@ -37,15 +37,18 @@ def run(output, baseline=False):
         with socket.socket() as sock:
             sock.bind(('127.0.0.1', 0)); port = sock.getsockname()[1]
         base = f'http://127.0.0.1:{port}'
-        env = dict(safe, PLATFORM_DEMO='true', PLATFORM_WORKER_TOKEN=TOKEN, MODEL_MODE='mock',
+        # API mode is informational and deliberately differs from the actual
+        # mock Worker. Neither a successful login nor this field proves egress.
+        env = dict(safe, PLATFORM_DEMO='true', PLATFORM_WORKER_TOKEN=TOKEN, MODEL_MODE='gateway',
                    PLATFORM_PORT=str(port), PLATFORM_BIND='127.0.0.1', PLATFORM_API_URL=base,
                    PLATFORM_DB_URL='jdbc:h2:file:' + str(folder / 'db') + ';DATABASE_TO_LOWER=TRUE',
                    PLATFORM_DB_USER='sa', PLATFORM_DB_PASSWORD='')
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
-        def launch(name, command):
+        def launch(name, command, mock_worker=False):
             log = (output / (name + '.log')).open('w'); logs.append(log)
-            process = subprocess.Popen(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
+            child_env = dict(env, MODEL_MODE='mock') if mock_worker else env
+            process = subprocess.Popen(command, cwd=ROOT, env=child_env, stdout=log, stderr=subprocess.STDOUT)
             processes.append(process); return process
 
         def stop(process):
@@ -84,7 +87,7 @@ def run(output, baseline=False):
             wait(healthy); result['default_jvm_startup_seconds']=round(time.monotonic()-started,3)
             project=api('/api/projects',{'title':'合成聊天恢复'})['id']
             person=api(f'/api/projects/{project}/personas',{'name':'合成聊天伙伴','family':'colleague','origin':'original','consent':False})['id']
-            worker=launch('mock-worker',[sys.executable,str(ROOT/'worker/worker.py')])
+            worker=launch('mock-worker',[sys.executable,str(ROOT/'worker/worker.py')],mock_worker=True)
             generated=api(f'/api/personas/{person}/generate',{'material_ids':[]})
             job=wait(lambda: (lambda j:j if j['status']=='SUCCEEDED' else None)(api('/api/persona-jobs/'+generated['id'])))
             api(f"/api/personas/{person}/versions/{job['result']['version_id']}/review",{'approve':True});stop(worker)
@@ -96,11 +99,11 @@ def run(output, baseline=False):
                         assert response.status==expected;raw=response.read();return json.loads(raw) if raw else None
                 except urllib.error.HTTPError as error:
                     assert error.code==expected,('internal fixture status',error.code,expected);error.close();return None
-            def failed_turn(text):
+            def failed_turn(text, code='MODEL_CONFIGURATION_ERROR'):
                 j=api(f'/api/conversations/{conversation}/messages',{'message':text})
                 claimed=internal('/internal/persona-jobs/claim',{})
                 assert claimed['id']==j['id']
-                internal('/internal/persona-jobs/'+j['id']+'/fail',{'lease_token':claimed['lease_token'],'code':'MODEL_CONFIGURATION_ERROR'})
+                internal('/internal/persona-jobs/'+j['id']+'/fail',{'lease_token':claimed['lease_token'],'code':code})
                 assert api('/api/persona-jobs/'+j['id'])['status']=='FAILED'
                 return j
             failed=failed_turn('合成首轮失败')
@@ -120,6 +123,11 @@ def run(output, baseline=False):
                     page.goto(base+f'/?workspace={project}&persona={person}#chat',wait_until='networkidle')
                     page.locator('#token').fill('demo-owner');page.locator('#login-form button').click()
                     page.locator('#messages .bubble.user').wait_for()
+                    if observe_readiness_gap:
+                        assert api('/api/me')['model_mode']=='gateway' and worker.poll() is not None
+                        assert '真实模型交流' in page.locator('#model-mode').inner_text()
+                        shot('baseline-false-model-ready');result['status']='OBSERVED_GAP'
+                        result['checks'].append('API gateway metadata plus successful login claims real-model chat while actual mock Worker is stopped and no real provider exists');return
                     if baseline:
                         assert page.locator('#chat-status').inner_text()==''
                         assert page.locator('[data-panel="chat"] [data-job="retry"]').count()==0
@@ -128,6 +136,9 @@ def run(output, baseline=False):
                         shot('baseline-failure-invisible-in-chat');result['status']='OBSERVED_GAP'
                         result['checks'].append('failed current turn has empty chat status and no visible retry; existing retry exists only in hidden Studio task log');return
                     result['stage']='visible failure and explicit lost-ack retry'
+                    assert '后台执行状态以任务为准' in page.locator('#model-mode').inner_text()
+                    assert '真实文字出口仍关闭' in page.locator('#model-mode').inner_text()
+                    assert '可交流' not in page.locator('[data-person="'+person+'"] small').inner_text()
                     page.locator('#chat-status').filter(has_text='本次回应失败').wait_for()
                     assert page.locator('#chat-retry').is_visible();assert page.locator('#chat-stop').is_hidden()
                     page.locator('#message').fill('未发送的合成草稿')
@@ -145,8 +156,10 @@ def run(output, baseline=False):
                     assert api('/api/persona-jobs/'+failed['id'])['status']=='QUEUED'
                     page.locator('#chat-refresh').click()
                     page.locator('#chat-status').filter(has_text='排队中').wait_for()
+                    assert '尚未确认后台领取' in page.locator('#chat-status').inner_text()
                     assert page.locator('#message').input_value()=='未发送的合成草稿'
                     assert len(api('/api/conversations/'+conversation)['messages'])==1
+                    shot('queued-background-unconfirmed')
                     result['checks'].append('failed current turn is visible in chat; explicit retry reuses same job and original user message; lost committed response requires GET recheck without auto repost and preserves draft')
                     result['stage']='cancel partial reply, duplicate click and late completion'
                     claimed=internal('/internal/persona-jobs/claim',{});assert claimed['id']==failed['id']
@@ -161,7 +174,7 @@ def run(output, baseline=False):
                     result['checks'].append('running partial reply can be stopped in chat; duplicate clicks issue one cancel; temporary reply disappears, cancelled turn stays cancelled and late completion is409')
                     result['stage']='continue through actual mock Worker'
                     page.locator('#message').fill('合成停止后继续交流');page.locator('#send').click()
-                    worker=launch('resumed-mock-worker',[sys.executable,str(ROOT/'worker/worker.py')])
+                    worker=launch('resumed-mock-worker',[sys.executable,str(ROOT/'worker/worker.py')],mock_worker=True)
                     page.locator('#messages .bubble.assistant').wait_for(timeout=20000);stop(worker)
                     assert '模拟' in page.locator('#messages .bubble.assistant').inner_text()
                     assert len(api('/api/conversations/'+conversation)['messages'])==3
@@ -170,11 +183,24 @@ def run(output, baseline=False):
                     failed_turn('合成刷新后仍可恢复')
                     page.locator('#chat-status').filter(has_text='本次回应失败').wait_for(timeout=10000)
                     page.reload(wait_until='networkidle');page.locator('#chat-status').filter(has_text='本次回应失败').wait_for()
-                    page.goto(base+'/knowledge.html',wait_until='networkidle');page.go_back(wait_until='networkidle')
+                    page.goto(base+'/knowledge.html',wait_until='networkidle')
+                    page.locator('#workspace').wait_for(state='visible')
+                    assert '后台执行状态以任务为准' in page.locator('#mode').inner_text()
+                    assert '真实文字出口仍关闭' in page.locator('#mode').inner_text()
+                    page.go_back(wait_until='networkidle')
                     page.locator('#chat-status').filter(has_text='本次回应失败').wait_for()
                     result['native_return_pageshow_persisted']=page.evaluate('()=>window.syntheticPageShow')
                     shot('failure-after-page-return')
                     result['checks'].append('server-persisted failed current-turn status and explicit retry survive full reload and native navigation away/back; no auto retry')
+                    result['stage']='synthetic closed-egress failure remains distinct after refresh'
+                    failed_turn('合成关闭出口状态',code='MODEL_BUDGET_NOT_VERIFIED')
+                    page.locator('#chat-status').filter(has_text='真实文字调用已关闭').wait_for(timeout=10000)
+                    count=len(api('/api/conversations/'+conversation)['messages'])
+                    page.reload(wait_until='networkidle')
+                    page.locator('#chat-status').filter(has_text='真实文字调用已关闭').wait_for()
+                    assert len(api('/api/conversations/'+conversation)['messages'])==count
+                    shot('closed-egress-distinct-from-queue')
+                    result['checks'].append('API gateway metadata does not claim real-model availability; stopped Worker leaves queued task explicitly unclaimed, while synthetic MODEL_BUDGET_NOT_VERIFIED remains a distinct closed-egress failure after reload; no call or automatic retry')
                     result['stage']='old read response after switching conversations'
                     held=[]
                     page.route(base+'/api/conversations/'+conversation,lambda route:held.append(route),times=1)
@@ -213,5 +239,6 @@ def run(output, baseline=False):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--baseline',action='store_true')
+    parser.add_argument('--observe-readiness-gap',action='store_true')
     parser.add_argument('--output',type=Path,default=ROOT/'server/target/chat-recovery-e2e')
-    args=parser.parse_args();run(args.output,args.baseline)
+    args=parser.parse_args();run(args.output,args.baseline,args.observe_readiness_gap)
