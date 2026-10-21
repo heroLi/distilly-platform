@@ -75,9 +75,20 @@ public class PersonalityService {
             throw error(422, "personality_not_published");
         if (repository.countActiveGenerations(targetId) > 0)
             throw error(409, "persona_generation_busy");
+        // Repeating a confirmed binding (e.g. after losing its HTTP response) must
+        // not mint another version/audit. Authorization and asset checks stay above.
+        var definition = json.decode(targetPersona.get("definition"));
+        if (targetPersona.get("published_id") != null) {
+            var current = resources.one("persona_version", targetPersona.get("published_id").toString());
+            if (targetId.equals(current.get("persona_id")) && "APPROVED".equals(current.get("status"))
+                    && sourceId.equals(current.get("source_personality_id"))
+                    && versionId.equals(current.get("source_personality_version_id"))
+                    && definition.equals(json.decode(current.get("content")).get("definition")))
+                return personaService.detail(actorId, targetId);
+        }
         String bound = id();
         var content = json.decode(versionRow.get("content"));
-        content.put("definition", json.decode(targetPersona.get("definition")));
+        content.put("definition", definition);
         content.put("binding",
                 Map.of("personality_id", sourceId, "version_id", versionId, "name", sourcePersona.get("name")));
         repository.insertBoundVersion(bound, targetId, targetPersona.get("published_id"), json.encode(content), actorId,
