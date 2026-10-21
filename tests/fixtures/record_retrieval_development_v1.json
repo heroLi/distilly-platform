@@ -1,0 +1,1400 @@
+{
+  "dataset_id": "RECORD_RETRIEVAL_DEVELOPMENT_V1",
+  "split": "development",
+  "historical_corpus_restored": false,
+  "description": "84 fresh synthetic development cases for current selected APPROVED workspace record-card retrieval. Not private-memory evaluation, not a restored historical corpus, and not model quality acceptance. Development answers may guide diagnosis but must not be copied into retrieval rules.",
+  "expectation_policy": {
+    "positive": "Return all and only relevant authorized current record keys; source text and source/version identity must remain traceable.",
+    "negation": "Relevant negative/prohibited records must retain their exact text. Returning a card does not affirm the proposition.",
+    "strict_entity_date": "Where a lookup names an exact identifier/date, records for another identifier/date are hard negatives.",
+    "no_match": "Allowed reads without a relevant source must use the fixed insufficient-record response.",
+    "permission": "Selected, published same-workspace working knowledge is shared to authorized readers; foreign/unselected/unpublished records are excluded; non-members receive denied access.",
+    "known_probe_reference": "The separately preserved four-pair FRESH_NARROW_SYNTHETIC_PROBES_V1 baseline is not replaced or restored by this dataset."
+  },
+  "cases": [
+    {
+      "id": "dev-001",
+      "family": "dev_literal",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成棱镜索引每晚保存一份快照。"
+        }
+      ],
+      "question": "棱镜索引",
+      "expected_keys": [
+        "d1"
+      ]
+    },
+    {
+      "id": "dev-002",
+      "family": "dev_literal",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成白栎流程规定必须执行回执校验。"
+        }
+      ],
+      "question": "回执校验",
+      "expected_keys": [
+        "d1"
+      ]
+    },
+    {
+      "id": "dev-003",
+      "family": "dev_literal",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成织线队列启用了慢速重放。"
+        }
+      ],
+      "question": "慢速重放",
+      "expected_keys": [
+        "d1"
+      ]
+    },
+    {
+      "id": "dev-004",
+      "family": "dev_literal",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成设备编号为 DEV-LANTERN-42。"
+        }
+      ],
+      "question": "设备编号",
+      "expected_keys": [
+        "d1"
+      ]
+    },
+    {
+      "id": "dev-005",
+      "family": "dev_literal",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成文档的版本标记是 draft-seven。"
+        }
+      ],
+      "question": "版本标记",
+      "expected_keys": [
+        "d1"
+      ]
+    },
+    {
+      "id": "dev-006",
+      "family": "dev_literal",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic harbor object stores a checksum before transfer."
+        }
+      ],
+      "question": "checksum",
+      "expected_keys": [
+        "d1"
+      ]
+    },
+    {
+      "id": "dev-007",
+      "family": "dev_literal",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic candle stream stores the last offset."
+        }
+      ],
+      "question": "offset",
+      "expected_keys": [
+        "d1"
+      ]
+    },
+    {
+      "id": "dev-008",
+      "family": "dev_literal",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic linen export includes a digest."
+        }
+      ],
+      "question": "digest",
+      "expected_keys": [
+        "d1"
+      ]
+    },
+    {
+      "id": "dev-009",
+      "family": "dev_literal",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic marble procedure permits a rollback."
+        }
+      ],
+      "question": "rollback",
+      "expected_keys": [
+        "d1"
+      ]
+    },
+    {
+      "id": "dev-010",
+      "family": "dev_literal",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic fern worker sends a heartbeat every cycle."
+        }
+      ],
+      "question": "heartbeat",
+      "expected_keys": [
+        "d1"
+      ]
+    },
+    {
+      "id": "dev-011",
+      "family": "dev_orthographic",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic rule uses ｑｕｅｕｅ as the field label."
+        }
+      ],
+      "question": "queue",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Compatibility normalization is lexical; original source spelling must remain unchanged."
+    },
+    {
+      "id": "dev-012",
+      "family": "dev_orthographic",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic object records digest before publication."
+        }
+      ],
+      "question": "ｄｉｇｅｓｔ",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Compatibility normalization is lexical; original source spelling must remain unchanged."
+    },
+    {
+      "id": "dev-013",
+      "family": "dev_orthographic",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic worker claims batch tasks."
+        }
+      ],
+      "question": "ＢＡＴＣＨ",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Compatibility normalization is lexical; original source spelling must remain unchanged."
+    },
+    {
+      "id": "dev-014",
+      "family": "dev_orthographic",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic document spells the stage as ﬂow."
+        }
+      ],
+      "question": "flow",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Compatibility normalization is lexical; original source spelling must remain unchanged."
+    },
+    {
+      "id": "dev-015",
+      "family": "dev_orthographic",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic module name is oﬃce."
+        }
+      ],
+      "question": "office",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Compatibility normalization is lexical; original source spelling must remain unchanged."
+    },
+    {
+      "id": "dev-016",
+      "family": "dev_orthographic",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成序号为 1234，不能复用。"
+        }
+      ],
+      "question": "１２３４",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Compatibility normalization is lexical; original source spelling must remain unchanged."
+    },
+    {
+      "id": "dev-017",
+      "family": "dev_orthographic",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic phase marker is Ⅳ."
+        }
+      ],
+      "question": "IV",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Compatibility normalization is lexical; original source spelling must remain unchanged."
+    },
+    {
+      "id": "dev-018",
+      "family": "dev_orthographic",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic endpoint label is API7."
+        }
+      ],
+      "question": "ＡＰＩ７",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Compatibility normalization is lexical; original source spelling must remain unchanged."
+    },
+    {
+      "id": "dev-019",
+      "family": "dev_orthographic",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic setting is ｒｅｔｒｙ　ｄｅｌａｙ."
+        }
+      ],
+      "question": "retry delay",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Compatibility normalization is lexical; original source spelling must remain unchanged."
+    },
+    {
+      "id": "dev-020",
+      "family": "dev_orthographic",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic archive keeps one snapshot."
+        }
+      ],
+      "question": "ｓｎａｐｓｈｏｔ",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Compatibility normalization is lexical; original source spelling must remain unchanged."
+    },
+    {
+      "id": "dev-021",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic art label belongs to the drawing module."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic cart label belongs to the transport module."
+        }
+      ],
+      "question": "art",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-022",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic pin field is a short fixture identifier."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic spin field describes a rotating fixture."
+        }
+      ],
+      "question": "pin",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-023",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic log collector retains one report."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic catalog collector retains a product listing."
+        }
+      ],
+      "question": "log",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-024",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic rate parameter belongs to a scheduler."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic generate parameter selects a build stage."
+        }
+      ],
+      "question": "rate",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-025",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic red indicator means manual review."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic credit indicator belongs to a sample account."
+        }
+      ],
+      "question": "red",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-026",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic tax field is an accounting fixture."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic syntax field belongs to a parser."
+        }
+      ],
+      "question": "tax",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-027",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic tea tag marks an example drink."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic team tag marks an example group."
+        }
+      ],
+      "question": "tea",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-028",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic port field is a network fixture."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic support field stores an operation label."
+        }
+      ],
+      "question": "port",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-029",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic amp field is a laboratory fixture."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic stamp field stores a seal label."
+        }
+      ],
+      "question": "amp",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-030",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic api label identifies an interface fixture."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic capital label identifies a sample category."
+        }
+      ],
+      "question": "api",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-031",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic key field contains a placeholder identifier."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic monkey label is an unrelated animal tag."
+        }
+      ],
+      "question": "key",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-032",
+      "family": "dev_word_boundary",
+      "category": "word_boundary",
+      "documents": [
+        {
+          "key": "exact",
+          "text": "Synthetic car tag identifies a sample vehicle."
+        },
+        {
+          "key": "embedded",
+          "text": "Synthetic carpet tag identifies a sample furnishing."
+        }
+      ],
+      "question": "car",
+      "expected_keys": [
+        "exact"
+      ],
+      "note": "A shorter Latin token embedded in another word is not a lexical match."
+    },
+    {
+      "id": "dev-033",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic procedure stores one policy for review."
+        }
+      ],
+      "question": "policies",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-034",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic inventory contains several boxes."
+        }
+      ],
+      "question": "box",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-035",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic parser registers one class."
+        }
+      ],
+      "question": "classes",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-036",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic handler counts retries."
+        }
+      ],
+      "question": "retry",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-037",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic handler accepts one request."
+        }
+      ],
+      "question": "requests",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-038",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic worker finishes tasks."
+        }
+      ],
+      "question": "task",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-039",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic auditor writes one report."
+        }
+      ],
+      "question": "reports",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-040",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic queue contains batches."
+        }
+      ],
+      "question": "batch",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-041",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic sample collection contains one movie."
+        }
+      ],
+      "question": "movies",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-042",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic rack contains batteries."
+        }
+      ],
+      "question": "battery",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-043",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic mailbox stores one message."
+        }
+      ],
+      "question": "messages",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-044",
+      "family": "dev_morphology",
+      "category": "morphology",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic register lists fictional companies."
+        }
+      ],
+      "question": "company",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Target is a bounded English inflection lookup, not general semantic equivalence."
+    },
+    {
+      "id": "dev-045",
+      "family": "dev_han_paraphrase",
+      "category": "han_paraphrase",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成松塔资料每天进行一次备份。"
+        }
+      ],
+      "question": "副本",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh semantic-topic target; a bounded lexical matcher may legitimately remain unable to retrieve it. Do not delete this case to inflate results."
+    },
+    {
+      "id": "dev-046",
+      "family": "dev_han_paraphrase",
+      "category": "han_paraphrase",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成纸船请求必须先排队。"
+        }
+      ],
+      "question": "等候",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh semantic-topic target; a bounded lexical matcher may legitimately remain unable to retrieve it. Do not delete this case to inflate results."
+    },
+    {
+      "id": "dev-047",
+      "family": "dev_han_paraphrase",
+      "category": "han_paraphrase",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成石阶任务允许人工取消。"
+        }
+      ],
+      "question": "撤销",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh semantic-topic target; a bounded lexical matcher may legitimately remain unable to retrieve it. Do not delete this case to inflate results."
+    },
+    {
+      "id": "dev-048",
+      "family": "dev_han_paraphrase",
+      "category": "han_paraphrase",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成羽环资料采用文本上传。"
+        }
+      ],
+      "question": "传入",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh semantic-topic target; a bounded lexical matcher may legitimately remain unable to retrieve it. Do not delete this case to inflate results."
+    },
+    {
+      "id": "dev-049",
+      "family": "dev_han_paraphrase",
+      "category": "han_paraphrase",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成风铃记录写明该模块出现故障。"
+        }
+      ],
+      "question": "异常",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh semantic-topic target; a bounded lexical matcher may legitimately remain unable to retrieve it. Do not delete this case to inflate results."
+    },
+    {
+      "id": "dev-050",
+      "family": "dev_han_paraphrase",
+      "category": "han_paraphrase",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成月盘发布前需要负责人审批。"
+        }
+      ],
+      "question": "审核",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh semantic-topic target; a bounded lexical matcher may legitimately remain unable to retrieve it. Do not delete this case to inflate results."
+    },
+    {
+      "id": "dev-051",
+      "family": "dev_cross_language",
+      "category": "cross_language",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic thistle action is backup."
+        }
+      ],
+      "question": "备份",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh cross-language target is retained even if no-model lexical processing cannot solve it."
+    },
+    {
+      "id": "dev-052",
+      "family": "dev_cross_language",
+      "category": "cross_language",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic pebble action uses a queue."
+        }
+      ],
+      "question": "队列",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh cross-language target is retained even if no-model lexical processing cannot solve it."
+    },
+    {
+      "id": "dev-053",
+      "family": "dev_cross_language",
+      "category": "cross_language",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic copper fixture contains an invoice."
+        }
+      ],
+      "question": "发票",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh cross-language target is retained even if no-model lexical processing cannot solve it."
+    },
+    {
+      "id": "dev-054",
+      "family": "dev_cross_language",
+      "category": "cross_language",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic ribbon fixture records a timeout."
+        }
+      ],
+      "question": "超时",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh cross-language target is retained even if no-model lexical processing cannot solve it."
+    },
+    {
+      "id": "dev-055",
+      "family": "dev_cross_language",
+      "category": "cross_language",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic lattice action is archive."
+        }
+      ],
+      "question": "归档",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh cross-language target is retained even if no-model lexical processing cannot solve it."
+    },
+    {
+      "id": "dev-056",
+      "family": "dev_cross_language",
+      "category": "cross_language",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic ember fixture records a quota."
+        }
+      ],
+      "question": "配额",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Fresh cross-language target is retained even if no-model lexical processing cannot solve it."
+    },
+    {
+      "id": "dev-057",
+      "family": "dev_negation",
+      "category": "negation",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成批次澄石未启用自动重试。"
+        }
+      ],
+      "question": "自动重试",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Negated or prohibited facts are relevant records. Preserve their original wording; retrieval is not an affirmative answer."
+    },
+    {
+      "id": "dev-058",
+      "family": "dev_negation",
+      "category": "negation",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic Quartz rollback is not enabled."
+        }
+      ],
+      "question": "rollback",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Negated or prohibited facts are relevant records. Preserve their original wording; retrieval is not an affirmative answer."
+    },
+    {
+      "id": "dev-059",
+      "family": "dev_negation",
+      "category": "negation",
+      "documents": [
+        {
+          "key": "purple",
+          "text": "合成设备紫轮未完成校准。"
+        },
+        {
+          "key": "green",
+          "text": "合成设备青盘已完成校准。"
+        }
+      ],
+      "question": "紫轮校准",
+      "expected_keys": [
+        "purple"
+      ],
+      "note": "Negated or prohibited facts are relevant records. Preserve their original wording; retrieval is not an affirmative answer."
+    },
+    {
+      "id": "dev-060",
+      "family": "dev_negation",
+      "category": "negation",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成仓库沐风禁止公网传输。"
+        }
+      ],
+      "question": "公网传输",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Negated or prohibited facts are relevant records. Preserve their original wording; retrieval is not an affirmative answer."
+    },
+    {
+      "id": "dev-061",
+      "family": "dev_negation",
+      "category": "negation",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic row delta has no signed receipt."
+        }
+      ],
+      "question": "signed receipt",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Negated or prohibited facts are relevant records. Preserve their original wording; retrieval is not an affirmative answer."
+    },
+    {
+      "id": "dev-062",
+      "family": "dev_negation",
+      "category": "negation",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成流程乙栏不允许跳过复核。"
+        }
+      ],
+      "question": "跳过复核",
+      "expected_keys": [
+        "d1"
+      ],
+      "note": "Negated or prohibited facts are relevant records. Preserve their original wording; retrieval is not an affirmative answer."
+    },
+    {
+      "id": "dev-063",
+      "family": "dev_entity_date",
+      "category": "entity_date",
+      "documents": [
+        {
+          "key": "old-date",
+          "text": "合成星桥验收日期为 2031-04-08。"
+        }
+      ],
+      "question": "2032-04-08 星桥",
+      "expected_keys": [],
+      "note": "Strict lookup requires the requested entity/date identifier. A record for a different identifier is a hard negative, even if other terms overlap."
+    },
+    {
+      "id": "dev-064",
+      "family": "dev_entity_date",
+      "category": "entity_date",
+      "documents": [
+        {
+          "key": "other-id",
+          "text": "合成设备 DEV-Z17 校准完成。"
+        }
+      ],
+      "question": "DEV-Z71 校准",
+      "expected_keys": [],
+      "note": "Strict lookup requires the requested entity/date identifier. A record for a different identifier is a hard negative, even if other terms overlap."
+    },
+    {
+      "id": "dev-065",
+      "family": "dev_entity_date",
+      "category": "entity_date",
+      "documents": [
+        {
+          "key": "different-entity",
+          "text": "Synthetic Cedar project requires approval."
+        }
+      ],
+      "question": "Juniper approval",
+      "expected_keys": [],
+      "note": "Strict lookup requires the requested entity/date identifier. A record for a different identifier is a hard negative, even if other terms overlap."
+    },
+    {
+      "id": "dev-066",
+      "family": "dev_entity_date",
+      "category": "entity_date",
+      "documents": [
+        {
+          "key": "wrong-bin",
+          "text": "Synthetic storage label is bin73."
+        }
+      ],
+      "question": "bin37",
+      "expected_keys": [],
+      "note": "Strict lookup requires the requested entity/date identifier. A record for a different identifier is a hard negative, even if other terms overlap."
+    },
+    {
+      "id": "dev-067",
+      "family": "dev_entity_date",
+      "category": "entity_date",
+      "documents": [
+        {
+          "key": "wrong-name",
+          "text": "合成红砂存储采用离线介质。"
+        }
+      ],
+      "question": "蓝砂存储",
+      "expected_keys": [],
+      "note": "Strict lookup requires the requested entity/date identifier. A record for a different identifier is a hard negative, even if other terms overlap."
+    },
+    {
+      "id": "dev-068",
+      "family": "dev_entity_date",
+      "category": "entity_date",
+      "documents": [
+        {
+          "key": "date-a",
+          "text": "Synthetic receipt is dated 2038-11-09."
+        }
+      ],
+      "question": "2038-11-19 receipt",
+      "expected_keys": [],
+      "note": "Strict lookup requires the requested entity/date identifier. A record for a different identifier is a hard negative, even if other terms overlap."
+    },
+    {
+      "id": "dev-069",
+      "family": "dev_entity_date",
+      "category": "entity_date",
+      "documents": [
+        {
+          "key": "target",
+          "text": "合成榆湾复核规定必须两人确认。"
+        },
+        {
+          "key": "other",
+          "text": "合成杉湾复核规定只需一人确认。"
+        }
+      ],
+      "question": "榆湾复核",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "Strict lookup requires the requested entity/date identifier. A record for a different identifier is a hard negative, even if other terms overlap."
+    },
+    {
+      "id": "dev-070",
+      "family": "dev_entity_date",
+      "category": "entity_date",
+      "documents": [
+        {
+          "key": "c7",
+          "text": "Synthetic sensor-c7 stores a local reading."
+        },
+        {
+          "key": "c70",
+          "text": "Synthetic sensor-c70 stores a remote reading."
+        }
+      ],
+      "question": "sensor-c7",
+      "expected_keys": [
+        "c7"
+      ],
+      "note": "Strict lookup requires the requested entity/date identifier. A record for a different identifier is a hard negative, even if other terms overlap."
+    },
+    {
+      "id": "dev-071",
+      "family": "dev_unrelated",
+      "category": "unrelated",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成桌面记录说明标签打印速度。"
+        }
+      ],
+      "question": "冰川迁移",
+      "expected_keys": [],
+      "note": "No relevant authorized source exists; return the fixed insufficient-record response."
+    },
+    {
+      "id": "dev-072",
+      "family": "dev_unrelated",
+      "category": "unrelated",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic label orchard belongs to a sample archive."
+        }
+      ],
+      "question": "ravenstone",
+      "expected_keys": [],
+      "note": "No relevant authorized source exists; return the fixed insufficient-record response."
+    },
+    {
+      "id": "dev-073",
+      "family": "dev_unrelated",
+      "category": "unrelated",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "合成排班记录规定每周轮换值守。"
+        }
+      ],
+      "question": "火山测绘",
+      "expected_keys": [],
+      "note": "No relevant authorized source exists; return the fixed insufficient-record response."
+    },
+    {
+      "id": "dev-074",
+      "family": "dev_unrelated",
+      "category": "unrelated",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "Synthetic fixture concerns a quartz ledger."
+        }
+      ],
+      "question": "velvet-comet",
+      "expected_keys": [],
+      "note": "No relevant authorized source exists; return the fixed insufficient-record response."
+    },
+    {
+      "id": "dev-075",
+      "family": "dev_permission",
+      "category": "permission",
+      "documents": [
+        {
+          "key": "foreign",
+          "text": "合成桐墨计划仅存在于另一工作空间。",
+          "scope": "foreign"
+        }
+      ],
+      "question": "桐墨计划",
+      "expected_keys": []
+    },
+    {
+      "id": "dev-076",
+      "family": "dev_permission",
+      "category": "permission",
+      "documents": [
+        {
+          "key": "unselected",
+          "text": "合成银堤规则已经审核但没有被此人物选中。",
+          "selected": false
+        }
+      ],
+      "question": "银堤规则",
+      "expected_keys": []
+    },
+    {
+      "id": "dev-077",
+      "family": "dev_permission",
+      "category": "permission",
+      "documents": [
+        {
+          "key": "candidate",
+          "text": "合成雾环期限只存在于未审核候选。",
+          "published": false
+        }
+      ],
+      "question": "雾环期限",
+      "expected_keys": []
+    },
+    {
+      "id": "dev-078",
+      "family": "dev_permission",
+      "category": "permission",
+      "documents": [
+        {
+          "key": "shared",
+          "text": "合成芦镜验收的已审核共享记录允许同空间阅读者查看。"
+        }
+      ],
+      "question": "芦镜验收",
+      "expected_keys": [
+        "shared"
+      ],
+      "note": "Same-workspace published selected working knowledge is shared, not private memory."
+    },
+    {
+      "id": "dev-079",
+      "family": "dev_permission",
+      "category": "permission",
+      "documents": [
+        {
+          "key": "current",
+          "text": "合成临河参数记录值为人工设置。"
+        },
+        {
+          "key": "foreign",
+          "text": "合成临河参数的其他空间记录含不同值。",
+          "scope": "foreign"
+        }
+      ],
+      "question": "临河参数",
+      "expected_keys": [
+        "current"
+      ]
+    },
+    {
+      "id": "dev-080",
+      "family": "dev_permission",
+      "category": "permission",
+      "documents": [
+        {
+          "key": "current",
+          "text": "合成碧塔配额已经审核且选中。"
+        },
+        {
+          "key": "not-selected",
+          "text": "合成碧塔配额另一条记录没有选中。",
+          "selected": false
+        }
+      ],
+      "question": "碧塔配额",
+      "expected_keys": [
+        "current"
+      ]
+    },
+    {
+      "id": "dev-081",
+      "family": "dev_permission",
+      "category": "permission",
+      "documents": [
+        {
+          "key": "published",
+          "text": "合成静岭回执的已发布记录必须保留。"
+        },
+        {
+          "key": "draft",
+          "text": "合成静岭回执候选记录尚未审核。",
+          "published": false
+        }
+      ],
+      "question": "静岭回执",
+      "expected_keys": [
+        "published"
+      ]
+    },
+    {
+      "id": "dev-082",
+      "family": "dev_permission",
+      "category": "permission",
+      "documents": [
+        {
+          "key": "not-member",
+          "text": "合成云桅流程属于没有给此阅读者授权的空间。"
+        }
+      ],
+      "question": "云桅流程",
+      "expected_keys": [],
+      "expect_access": "denied",
+      "note": "Non-member access must be denied, rather than showing an empty success."
+    },
+    {
+      "id": "dev-083",
+      "family": "dev_permission",
+      "category": "permission",
+      "documents": [
+        {
+          "key": "foreign-only",
+          "text": "合成铜页档案在其他空间已发布。",
+          "scope": "foreign"
+        },
+        {
+          "key": "local-unrelated",
+          "text": "合成本空间只有标签轮换记录。"
+        }
+      ],
+      "question": "铜页档案",
+      "expected_keys": []
+    },
+    {
+      "id": "dev-084",
+      "family": "dev_permission",
+      "category": "permission",
+      "documents": [
+        {
+          "key": "not-selected",
+          "text": "合成稻舟审核在本空间尚未选中。",
+          "selected": false
+        },
+        {
+          "key": "foreign",
+          "text": "合成稻舟审核在其他空间已选中。",
+          "scope": "foreign"
+        }
+      ],
+      "question": "稻舟审核",
+      "expected_keys": []
+    }
+  ]
+}

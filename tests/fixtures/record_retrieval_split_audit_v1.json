@@ -1,0 +1,110 @@
+{
+  "audit_id": "RECORD_RETRIEVAL_SPLIT_AUDIT_V1",
+  "development": {
+    "path": "tests/fixtures/record_retrieval_development_v1.json",
+    "sha256": "ffe7f4ee3015d56bd34721b65fa46452525acbd272e272c4232cc7924daa6424",
+    "cases": 84
+  },
+  "holdout": {
+    "path": "tests/fixtures/record_retrieval_holdout_v1.json",
+    "sha256": "46ea671ae9bf7e563b713cd120831d2d95c2559ae36d1dce5fa6030577bf342f",
+    "cases": 80,
+    "primary_denominator": 80
+  },
+  "exact_duplicate_query_case_ids": [
+    "ho-010",
+    "ho-022",
+    "ho-025",
+    "ho-026",
+    "ho-027",
+    "ho-029",
+    "ho-031"
+  ],
+  "exact_duplicate_query_pairs": [
+    {
+      "holdout_case_id": "ho-010",
+      "development_case_ids": [
+        "dev-015"
+      ]
+    },
+    {
+      "holdout_case_id": "ho-022",
+      "development_case_ids": [
+        "dev-035"
+      ]
+    },
+    {
+      "holdout_case_id": "ho-025",
+      "development_case_ids": [
+        "dev-021"
+      ]
+    },
+    {
+      "holdout_case_id": "ho-026",
+      "development_case_ids": [
+        "dev-024"
+      ]
+    },
+    {
+      "holdout_case_id": "ho-027",
+      "development_case_ids": [
+        "dev-025"
+      ]
+    },
+    {
+      "holdout_case_id": "ho-029",
+      "development_case_ids": [
+        "dev-023"
+      ]
+    },
+    {
+      "holdout_case_id": "ho-031",
+      "development_case_ids": [
+        "dev-028"
+      ]
+    }
+  ],
+  "overlapping_family_holdout_case_ids": [
+    "ho-010",
+    "ho-019",
+    "ho-020",
+    "ho-022",
+    "ho-025",
+    "ho-026",
+    "ho-027",
+    "ho-029",
+    "ho-031"
+  ],
+  "counts": {
+    "development_cases": 84,
+    "holdout_primary_cases": 80,
+    "exact_duplicate_query_holdout_cases": 7,
+    "nfkc_casefold_duplicate_query_holdout_cases": 7,
+    "exact_duplicate_document_texts": 0,
+    "nfkc_casefold_duplicate_document_texts": 0,
+    "identified_concrete_family_overlap_holdout_cases": 9,
+    "same_lexical_transformation_pair_cases": 7,
+    "same_query_lexeme_with_new_boundary_distractor_cases": 2,
+    "supplemental_cases_without_identified_family_overlap": 71,
+    "overlap_by_holdout_category": {
+      "orthographic": 1,
+      "morphological_paraphrase": 3,
+      "latin_boundary_negative": 5
+    }
+  },
+  "method": {
+    "exact_query": "完整query逐Unicode码点比较，并另查NFKC+casefold后重复。",
+    "source": "完整document.text逐码点比较及NFKC+casefold比较；不把通用模板相同视为完整正文相同。",
+    "family": "冻结后人工检查具体词汇及其词形/正字/边界干扰变体；同属大类别不计作具体家族泄漏。"
+  },
+  "limitations": [
+    "两集独立编写且冻结后才审查，但80项保留集并非全部具体家族隔离，不能宣称全部完全未见。",
+    "80项仍是保留集主分母，不删除、替换或重划原问题；71项仅可作补充结果，不能取代80项主结果。",
+    "71项意为未识别到具体家族重叠，不是对所有潜在语义相关性或统计独立性的证明。",
+    "这是新建合成记录卡语料，不是遗失历史样本、私人记忆路径、真实模型质量或生产分布的复验。",
+    "审查未运行检索、未看产品实现，未依据分数调整任何案例或规则。"
+  ],
+  "datasets_modified": false,
+  "retrieval_executed_during_audit": false,
+  "contains_query_or_answer_text": false
+}

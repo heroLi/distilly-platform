@@ -1,0 +1,1757 @@
+{
+  "dataset_id": "RECORD_RETRIEVAL_INDEPENDENT_HOLDOUT_V1",
+  "split": "holdout",
+  "historical_corpus_restored": false,
+  "description": "独立创建的冻结合成保留集，仅评当前人格选中、同空间、当前已审核工作资料的记录卡检索；不是缺失历史语料、私人记忆或真实模型质量复验。",
+  "frozen_before_algorithm_evaluation": true,
+  "expectation_protocol": {
+    "expected_keys": "所有相关且可访问的原文记录；多余返回为误召回，遗漏为漏召回；拒绝访问用 expect_access=denied。",
+    "negation": "相关否定和冲突原文可返回，须原样保留；检索命中不等于肯定事实或自动消解冲突。",
+    "unmatched": "expected_keys为空且允许访问时，应返回空记录卡和固定资料不足提示，不生成事实答案。",
+    "scope": "同空间共享的已选已审核资料对有权VIEWER可读；非成员、foreign、unselected和unpublished不得被扩大读取。",
+    "failure_policy": "按类别保留所有失败，不能依据保留题面添加查询-答案或翻译映射；曝光后不得继续作为未见保留集。"
+  },
+  "cases": [
+    {
+      "id": "ho-001",
+      "family": "holdout_v1_literal_1",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：hazelquay。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：stoneharbor。"
+        }
+      ],
+      "question": "hazelquay",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-002",
+      "family": "holdout_v1_literal_2",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：mistforge。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：stoneharbor。"
+        }
+      ],
+      "question": "mistforge",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-003",
+      "family": "holdout_v1_literal_3",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：amberkeel。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：stoneharbor。"
+        }
+      ],
+      "question": "amberkeel",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-004",
+      "family": "holdout_v1_literal_4",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：duskplate。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：stoneharbor。"
+        }
+      ],
+      "question": "duskplate",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-005",
+      "family": "holdout_v1_literal_5",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：coralvane。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：stoneharbor。"
+        }
+      ],
+      "question": "coralvane",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-006",
+      "family": "holdout_v1_literal_6",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：ivoryspur。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：stoneharbor。"
+        }
+      ],
+      "question": "ivoryspur",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-007",
+      "family": "holdout_v1_literal_7",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：tundrawick。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：stoneharbor。"
+        }
+      ],
+      "question": "tundrawick",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-008",
+      "family": "holdout_v1_literal_8",
+      "category": "literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：saffronbay。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：stoneharbor。"
+        }
+      ],
+      "question": "saffronbay",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-009",
+      "family": "holdout_v1_presentation_1",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：ＺＥＰＨＹＲ８。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：zircon。"
+        }
+      ],
+      "question": "zephyr8",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-010",
+      "family": "holdout_v1_presentation_2",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：oﬃce。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：zircon。"
+        }
+      ],
+      "question": "office",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-011",
+      "family": "holdout_v1_presentation_3",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：ﬂume。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：zircon。"
+        }
+      ],
+      "question": "flume",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-012",
+      "family": "holdout_v1_presentation_4",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：ｔｉｄｅ。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：zircon。"
+        }
+      ],
+      "question": "tide",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-013",
+      "family": "holdout_v1_presentation_5",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：𝕨𝕒𝕣𝕗。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：zircon。"
+        }
+      ],
+      "question": "warf",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-014",
+      "family": "holdout_v1_presentation_6",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：ａｒｃｈｉｖｅ ①。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：zircon。"
+        }
+      ],
+      "question": "archive 1",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-015",
+      "family": "holdout_v1_presentation_7",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：Ｐａｔｈ＿７。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：zircon。"
+        }
+      ],
+      "question": "path_7",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-016",
+      "family": "holdout_v1_presentation_8",
+      "category": "orthographic",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：㍿。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：zircon。"
+        }
+      ],
+      "question": "株式会社",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-017",
+      "family": "holdout_v1_plural_1",
+      "category": "morphological_paraphrase",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：cats。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：cobalt。"
+        }
+      ],
+      "question": "cat",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "仅规则复数词形等价预期，不代表一般句意改写。"
+    },
+    {
+      "id": "ho-018",
+      "family": "holdout_v1_plural_2",
+      "category": "morphological_paraphrase",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：bottle。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：cobalt。"
+        }
+      ],
+      "question": "bottles",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "仅规则复数词形等价预期，不代表一般句意改写。"
+    },
+    {
+      "id": "ho-019",
+      "family": "holdout_v1_plural_3",
+      "category": "morphological_paraphrase",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：policies。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：cobalt。"
+        }
+      ],
+      "question": "policy",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "仅规则复数词形等价预期，不代表一般句意改写。"
+    },
+    {
+      "id": "ho-020",
+      "family": "holdout_v1_plural_4",
+      "category": "morphological_paraphrase",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：box。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：cobalt。"
+        }
+      ],
+      "question": "boxes",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "仅规则复数词形等价预期，不代表一般句意改写。"
+    },
+    {
+      "id": "ho-021",
+      "family": "holdout_v1_plural_5",
+      "category": "morphological_paraphrase",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：brushes。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：cobalt。"
+        }
+      ],
+      "question": "brush",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "仅规则复数词形等价预期，不代表一般句意改写。"
+    },
+    {
+      "id": "ho-022",
+      "family": "holdout_v1_plural_6",
+      "category": "morphological_paraphrase",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：class。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：cobalt。"
+        }
+      ],
+      "question": "classes",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "仅规则复数词形等价预期，不代表一般句意改写。"
+    },
+    {
+      "id": "ho-023",
+      "family": "holdout_v1_plural_7",
+      "category": "morphological_paraphrase",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：queries。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：cobalt。"
+        }
+      ],
+      "question": "query",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "仅规则复数词形等价预期，不代表一般句意改写。"
+    },
+    {
+      "id": "ho-024",
+      "family": "holdout_v1_plural_8",
+      "category": "morphological_paraphrase",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：reply。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：cobalt。"
+        }
+      ],
+      "question": "replies",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "仅规则复数词形等价预期，不代表一般句意改写。"
+    },
+    {
+      "id": "ho-025",
+      "family": "holdout_v1_boundary_1",
+      "category": "latin_boundary_negative",
+      "documents": [
+        {
+          "key": "unrelated",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：cart。"
+        }
+      ],
+      "question": "art",
+      "expected_keys": [],
+      "note": "较短词不是较长词中任意子串的同义词；应无匹配澄清。"
+    },
+    {
+      "id": "ho-026",
+      "family": "holdout_v1_boundary_2",
+      "category": "latin_boundary_negative",
+      "documents": [
+        {
+          "key": "unrelated",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：irate。"
+        }
+      ],
+      "question": "rate",
+      "expected_keys": [],
+      "note": "较短词不是较长词中任意子串的同义词；应无匹配澄清。"
+    },
+    {
+      "id": "ho-027",
+      "family": "holdout_v1_boundary_3",
+      "category": "latin_boundary_negative",
+      "documents": [
+        {
+          "key": "unrelated",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：credit。"
+        }
+      ],
+      "question": "red",
+      "expected_keys": [],
+      "note": "较短词不是较长词中任意子串的同义词；应无匹配澄清。"
+    },
+    {
+      "id": "ho-028",
+      "family": "holdout_v1_boundary_4",
+      "category": "latin_boundary_negative",
+      "documents": [
+        {
+          "key": "unrelated",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：organization。"
+        }
+      ],
+      "question": "organ",
+      "expected_keys": [],
+      "note": "较短词不是较长词中任意子串的同义词；应无匹配澄清。"
+    },
+    {
+      "id": "ho-029",
+      "family": "holdout_v1_boundary_5",
+      "category": "latin_boundary_negative",
+      "documents": [
+        {
+          "key": "unrelated",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：catalog。"
+        }
+      ],
+      "question": "log",
+      "expected_keys": [],
+      "note": "较短词不是较长词中任意子串的同义词；应无匹配澄清。"
+    },
+    {
+      "id": "ho-030",
+      "family": "holdout_v1_boundary_6",
+      "category": "latin_boundary_negative",
+      "documents": [
+        {
+          "key": "unrelated",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：spring。"
+        }
+      ],
+      "question": "ring",
+      "expected_keys": [],
+      "note": "较短词不是较长词中任意子串的同义词；应无匹配澄清。"
+    },
+    {
+      "id": "ho-031",
+      "family": "holdout_v1_boundary_7",
+      "category": "latin_boundary_negative",
+      "documents": [
+        {
+          "key": "unrelated",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：report。"
+        }
+      ],
+      "question": "port",
+      "expected_keys": [],
+      "note": "较短词不是较长词中任意子串的同义词；应无匹配澄清。"
+    },
+    {
+      "id": "ho-032",
+      "family": "holdout_v1_boundary_8",
+      "category": "latin_boundary_negative",
+      "documents": [
+        {
+          "key": "unrelated",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：planet。"
+        }
+      ],
+      "question": "plan",
+      "expected_keys": [],
+      "note": "较短词不是较长词中任意子串的同义词；应无匹配澄清。"
+    },
+    {
+      "id": "ho-033",
+      "family": "holdout_v1_han_1",
+      "category": "han_literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：渡口已经登记。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：山丘已经登记。"
+        }
+      ],
+      "question": "渡口",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-034",
+      "family": "holdout_v1_han_2",
+      "category": "han_literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：样机已经登记。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：山丘已经登记。"
+        }
+      ],
+      "question": "样机",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-035",
+      "family": "holdout_v1_han_3",
+      "category": "han_literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：霜灯已经登记。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：山丘已经登记。"
+        }
+      ],
+      "question": "霜灯",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-036",
+      "family": "holdout_v1_han_4",
+      "category": "han_literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：铜门已经登记。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：山丘已经登记。"
+        }
+      ],
+      "question": "铜门",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-037",
+      "family": "holdout_v1_han_5",
+      "category": "han_literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：梨园已经登记。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：山丘已经登记。"
+        }
+      ],
+      "question": "梨园",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-038",
+      "family": "holdout_v1_han_6",
+      "category": "han_literal",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：集装已经登记。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：山丘已经登记。"
+        }
+      ],
+      "question": "集装",
+      "expected_keys": [
+        "target"
+      ]
+    },
+    {
+      "id": "ho-039",
+      "family": "holdout_v1_polarity_1",
+      "category": "negation_traceability",
+      "documents": [
+        {
+          "key": "affirmative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG01 批次通过检验。"
+        },
+        {
+          "key": "negative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG01 批次没有通过检验。"
+        }
+      ],
+      "question": "HZNEG01 状态核对",
+      "expected_keys": [
+        "affirmative",
+        "negative"
+      ],
+      "note": "同一标识的相反原文均相关，须保留原文及否定，不得据问题把否定改写成肯定或替用户裁定冲突。"
+    },
+    {
+      "id": "ho-040",
+      "family": "holdout_v1_polarity_2",
+      "category": "negation_traceability",
+      "documents": [
+        {
+          "key": "affirmative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG02 航次已经延期。"
+        },
+        {
+          "key": "negative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG02 航次没有延期。"
+        }
+      ],
+      "question": "HZNEG02 状态核对",
+      "expected_keys": [
+        "affirmative",
+        "negative"
+      ],
+      "note": "同一标识的相反原文均相关，须保留原文及否定，不得据问题把否定改写成肯定或替用户裁定冲突。"
+    },
+    {
+      "id": "ho-041",
+      "family": "holdout_v1_polarity_3",
+      "category": "negation_traceability",
+      "documents": [
+        {
+          "key": "affirmative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG03 样本需要加热。"
+        },
+        {
+          "key": "negative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG03 样本不需要加热。"
+        }
+      ],
+      "question": "HZNEG03 状态核对",
+      "expected_keys": [
+        "affirmative",
+        "negative"
+      ],
+      "note": "同一标识的相反原文均相关，须保留原文及否定，不得据问题把否定改写成肯定或替用户裁定冲突。"
+    },
+    {
+      "id": "ho-042",
+      "family": "holdout_v1_polarity_4",
+      "category": "negation_traceability",
+      "documents": [
+        {
+          "key": "affirmative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG04 装置允许启动。"
+        },
+        {
+          "key": "negative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG04 装置禁止启动。"
+        }
+      ],
+      "question": "HZNEG04 状态核对",
+      "expected_keys": [
+        "affirmative",
+        "negative"
+      ],
+      "note": "同一标识的相反原文均相关，须保留原文及否定，不得据问题把否定改写成肯定或替用户裁定冲突。"
+    },
+    {
+      "id": "ho-043",
+      "family": "holdout_v1_polarity_5",
+      "category": "negation_traceability",
+      "documents": [
+        {
+          "key": "affirmative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG05 the parcel arrived。"
+        },
+        {
+          "key": "negative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG05 the parcel did not arrive。"
+        }
+      ],
+      "question": "HZNEG05 状态核对",
+      "expected_keys": [
+        "affirmative",
+        "negative"
+      ],
+      "note": "同一标识的相反原文均相关，须保留原文及否定，不得据问题把否定改写成肯定或替用户裁定冲突。"
+    },
+    {
+      "id": "ho-044",
+      "family": "holdout_v1_polarity_6",
+      "category": "negation_traceability",
+      "documents": [
+        {
+          "key": "affirmative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG06 the switch is enabled。"
+        },
+        {
+          "key": "negative",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZNEG06 the switch is not enabled。"
+        }
+      ],
+      "question": "HZNEG06 状态核对",
+      "expected_keys": [
+        "affirmative",
+        "negative"
+      ],
+      "note": "同一标识的相反原文均相关，须保留原文及否定，不得据问题把否定改写成肯定或替用户裁定冲突。"
+    },
+    {
+      "id": "ho-045",
+      "family": "holdout_v1_date_1",
+      "category": "entity_date_hard_negative",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE01 日期 2028-04-17，检修点为北侧。"
+        },
+        {
+          "key": "wrong_date",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE01 日期 2028-04-18，检修点为南侧。"
+        },
+        {
+          "key": "wrong_entity",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZOTHER01 日期 2028-04-17，检修点为东侧。"
+        }
+      ],
+      "question": "HZDATE01 2028-04-17",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "复合实体及日期问题预期精确关联；仅部分词重合不足以当作匹配，未解决的误召回应单独报告。"
+    },
+    {
+      "id": "ho-046",
+      "family": "holdout_v1_date_2",
+      "category": "entity_date_hard_negative",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE02 日期 2028-04-17，检修点为北侧。"
+        },
+        {
+          "key": "wrong_date",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE02 日期 2028-04-18，检修点为南侧。"
+        },
+        {
+          "key": "wrong_entity",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZOTHER02 日期 2028-04-17，检修点为东侧。"
+        }
+      ],
+      "question": "HZDATE02 2028-04-17",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "复合实体及日期问题预期精确关联；仅部分词重合不足以当作匹配，未解决的误召回应单独报告。"
+    },
+    {
+      "id": "ho-047",
+      "family": "holdout_v1_date_3",
+      "category": "entity_date_hard_negative",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE03 日期 2028-04-17，检修点为北侧。"
+        },
+        {
+          "key": "wrong_date",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE03 日期 2028-04-18，检修点为南侧。"
+        },
+        {
+          "key": "wrong_entity",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZOTHER03 日期 2028-04-17，检修点为东侧。"
+        }
+      ],
+      "question": "HZDATE03 2028-04-17",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "复合实体及日期问题预期精确关联；仅部分词重合不足以当作匹配，未解决的误召回应单独报告。"
+    },
+    {
+      "id": "ho-048",
+      "family": "holdout_v1_date_4",
+      "category": "entity_date_hard_negative",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE04 日期 2028-04-17，检修点为北侧。"
+        },
+        {
+          "key": "wrong_date",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE04 日期 2028-04-18，检修点为南侧。"
+        },
+        {
+          "key": "wrong_entity",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZOTHER04 日期 2028-04-17，检修点为东侧。"
+        }
+      ],
+      "question": "HZDATE04 2028-04-17",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "复合实体及日期问题预期精确关联；仅部分词重合不足以当作匹配，未解决的误召回应单独报告。"
+    },
+    {
+      "id": "ho-049",
+      "family": "holdout_v1_date_5",
+      "category": "entity_date_hard_negative",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE05 日期 2028-04-17，检修点为北侧。"
+        },
+        {
+          "key": "wrong_date",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE05 日期 2028-04-18，检修点为南侧。"
+        },
+        {
+          "key": "wrong_entity",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZOTHER05 日期 2028-04-17，检修点为东侧。"
+        }
+      ],
+      "question": "HZDATE05 2028-04-17",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "复合实体及日期问题预期精确关联；仅部分词重合不足以当作匹配，未解决的误召回应单独报告。"
+    },
+    {
+      "id": "ho-050",
+      "family": "holdout_v1_date_6",
+      "category": "entity_date_hard_negative",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE06 日期 2028-04-17，检修点为北侧。"
+        },
+        {
+          "key": "wrong_date",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZDATE06 日期 2028-04-18，检修点为南侧。"
+        },
+        {
+          "key": "wrong_entity",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZOTHER06 日期 2028-04-17，检修点为东侧。"
+        }
+      ],
+      "question": "HZDATE06 2028-04-17",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "复合实体及日期问题预期精确关联；仅部分词重合不足以当作匹配，未解决的误召回应单独报告。"
+    },
+    {
+      "id": "ho-051",
+      "family": "holdout_v1_unrelated_1",
+      "category": "unrelated_abstention",
+      "documents": [
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：海盐。"
+        }
+      ],
+      "question": "杏核",
+      "expected_keys": [],
+      "note": "无相关记录应返回空卡片和固定资料不足提示，不能生成答案。"
+    },
+    {
+      "id": "ho-052",
+      "family": "holdout_v1_unrelated_2",
+      "category": "unrelated_abstention",
+      "documents": [
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：毛毡。"
+        }
+      ],
+      "question": "珊瑚",
+      "expected_keys": [],
+      "note": "无相关记录应返回空卡片和固定资料不足提示，不能生成答案。"
+    },
+    {
+      "id": "ho-053",
+      "family": "holdout_v1_unrelated_3",
+      "category": "unrelated_abstention",
+      "documents": [
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：木舟。"
+        }
+      ],
+      "question": "萤石",
+      "expected_keys": [],
+      "note": "无相关记录应返回空卡片和固定资料不足提示，不能生成答案。"
+    },
+    {
+      "id": "ho-054",
+      "family": "holdout_v1_unrelated_4",
+      "category": "unrelated_abstention",
+      "documents": [
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：quartz。"
+        }
+      ],
+      "question": "lute",
+      "expected_keys": [],
+      "note": "无相关记录应返回空卡片和固定资料不足提示，不能生成答案。"
+    },
+    {
+      "id": "ho-055",
+      "family": "holdout_v1_unrelated_5",
+      "category": "unrelated_abstention",
+      "documents": [
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：willow。"
+        }
+      ],
+      "question": "fennec",
+      "expected_keys": [],
+      "note": "无相关记录应返回空卡片和固定资料不足提示，不能生成答案。"
+    },
+    {
+      "id": "ho-056",
+      "family": "holdout_v1_unrelated_6",
+      "category": "unrelated_abstention",
+      "documents": [
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：granite。"
+        }
+      ],
+      "question": "tamarind",
+      "expected_keys": [],
+      "note": "无相关记录应返回空卡片和固定资料不足提示，不能生成答案。"
+    },
+    {
+      "id": "ho-057",
+      "family": "holdout_v1_translation_1",
+      "category": "cross_language_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：bicycle。"
+        }
+      ],
+      "question": "自行车",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "跨语言目标预期；没有翻译/编码器时可失败，但必须计入未解决而非删题或把配对写入规则。"
+    },
+    {
+      "id": "ho-058",
+      "family": "holdout_v1_translation_2",
+      "category": "cross_language_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：library。"
+        }
+      ],
+      "question": "图书馆",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "跨语言目标预期；没有翻译/编码器时可失败，但必须计入未解决而非删题或把配对写入规则。"
+    },
+    {
+      "id": "ho-059",
+      "family": "holdout_v1_translation_3",
+      "category": "cross_language_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：refund。"
+        }
+      ],
+      "question": "退款",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "跨语言目标预期；没有翻译/编码器时可失败，但必须计入未解决而非删题或把配对写入规则。"
+    },
+    {
+      "id": "ho-060",
+      "family": "holdout_v1_translation_4",
+      "category": "cross_language_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：printer。"
+        }
+      ],
+      "question": "打印机",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "跨语言目标预期；没有翻译/编码器时可失败，但必须计入未解决而非删题或把配对写入规则。"
+    },
+    {
+      "id": "ho-061",
+      "family": "holdout_v1_translation_5",
+      "category": "cross_language_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：warehouse。"
+        }
+      ],
+      "question": "仓库",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "跨语言目标预期；没有翻译/编码器时可失败，但必须计入未解决而非删题或把配对写入规则。"
+    },
+    {
+      "id": "ho-062",
+      "family": "holdout_v1_translation_6",
+      "category": "cross_language_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：recipe。"
+        }
+      ],
+      "question": "食谱",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "跨语言目标预期；没有翻译/编码器时可失败，但必须计入未解决而非删题或把配对写入规则。"
+    },
+    {
+      "id": "ho-063",
+      "family": "holdout_v1_meaning_1",
+      "category": "semantic_paraphrase_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：友善。"
+        }
+      ],
+      "question": "和善",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "语义配对目标预期，保留失败；不能以该保留题面作检索字典。"
+    },
+    {
+      "id": "ho-064",
+      "family": "holdout_v1_meaning_2",
+      "category": "semantic_paraphrase_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：疲倦。"
+        }
+      ],
+      "question": "累了",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "语义配对目标预期，保留失败；不能以该保留题面作检索字典。"
+    },
+    {
+      "id": "ho-065",
+      "family": "holdout_v1_meaning_3",
+      "category": "semantic_paraphrase_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：迅速。"
+        }
+      ],
+      "question": "很快",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "语义配对目标预期，保留失败；不能以该保留题面作检索字典。"
+    },
+    {
+      "id": "ho-066",
+      "family": "holdout_v1_meaning_4",
+      "category": "semantic_paraphrase_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：维修。"
+        }
+      ],
+      "question": "修理",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "语义配对目标预期，保留失败；不能以该保留题面作检索字典。"
+    },
+    {
+      "id": "ho-067",
+      "family": "holdout_v1_meaning_5",
+      "category": "semantic_paraphrase_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：价廉。"
+        }
+      ],
+      "question": "便宜",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "语义配对目标预期，保留失败；不能以该保留题面作检索字典。"
+    },
+    {
+      "id": "ho-068",
+      "family": "holdout_v1_meaning_6",
+      "category": "semantic_paraphrase_unresolved",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：消息。"
+        }
+      ],
+      "question": "信息",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "语义配对目标预期，保留失败；不能以该保留题面作检索字典。"
+    },
+    {
+      "id": "ho-069",
+      "family": "holdout_v1_scope_current_vs_foreign",
+      "category": "permission_scope",
+      "documents": [
+        {
+          "key": "shared",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE01 当前共享资料。",
+          "scope": "current"
+        },
+        {
+          "key": "foreign",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE01 其他空间资料。",
+          "scope": "foreign"
+        }
+      ],
+      "question": "HZSCOPE01",
+      "expected_keys": [
+        "shared"
+      ]
+    },
+    {
+      "id": "ho-070",
+      "family": "holdout_v1_scope_foreign_only",
+      "category": "permission_scope",
+      "documents": [
+        {
+          "key": "foreign",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE02 其他空间资料。",
+          "scope": "foreign"
+        }
+      ],
+      "question": "HZSCOPE02",
+      "expected_keys": []
+    },
+    {
+      "id": "ho-071",
+      "family": "holdout_v1_scope_unselected",
+      "category": "permission_scope",
+      "documents": [
+        {
+          "key": "selected",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE03 当前选中资料。"
+        },
+        {
+          "key": "unselected",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE03 当前未选资料。",
+          "selected": false
+        }
+      ],
+      "question": "HZSCOPE03",
+      "expected_keys": [
+        "selected"
+      ]
+    },
+    {
+      "id": "ho-072",
+      "family": "holdout_v1_scope_unpublished",
+      "category": "permission_scope",
+      "documents": [
+        {
+          "key": "published",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE04 已审核资料。"
+        },
+        {
+          "key": "draft",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE04 待审核资料。",
+          "published": false
+        }
+      ],
+      "question": "HZSCOPE04",
+      "expected_keys": [
+        "published"
+      ]
+    },
+    {
+      "id": "ho-073",
+      "family": "holdout_v1_scope_no_available_record",
+      "category": "permission_scope",
+      "documents": [
+        {
+          "key": "hidden",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE05 未授权资料。",
+          "selected": false
+        },
+        {
+          "key": "foreign",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE05 其他空间资料。",
+          "scope": "foreign"
+        },
+        {
+          "key": "draft",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE05 待审核资料。",
+          "published": false
+        }
+      ],
+      "question": "HZSCOPE05",
+      "expected_keys": []
+    },
+    {
+      "id": "ho-074",
+      "family": "holdout_v1_membership_denied_one",
+      "category": "permission_scope",
+      "documents": [
+        {
+          "key": "not_readable",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE06 当前空间资料。"
+        }
+      ],
+      "question": "HZSCOPE06",
+      "expected_keys": [],
+      "expect_access": "denied",
+      "note": "调用者不是目标空间成员，应拒绝整次读取；不是把共享工作资料错当个人记忆。"
+    },
+    {
+      "id": "ho-075",
+      "family": "holdout_v1_membership_denied_multiple",
+      "category": "permission_scope",
+      "documents": [
+        {
+          "key": "not_readable",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE07 当前空间资料。"
+        },
+        {
+          "key": "foreign",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE07 其他空间资料。",
+          "scope": "foreign"
+        }
+      ],
+      "question": "HZSCOPE07",
+      "expected_keys": [],
+      "expect_access": "denied"
+    },
+    {
+      "id": "ho-076",
+      "family": "holdout_v1_shared_viewer_allowed",
+      "category": "permission_scope",
+      "documents": [
+        {
+          "key": "workspace_shared",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成记录：HZSCOPE08 选中且已审核的空间共享资料。"
+        }
+      ],
+      "question": "HZSCOPE08",
+      "expected_keys": [
+        "workspace_shared"
+      ],
+      "note": "同空间有权 VIEWER 可读人格选中的已审核工作资料；不将该资料错误归类为作者私有记忆。"
+    },
+    {
+      "id": "ho-077",
+      "family": "holdout_v1_short_1",
+      "category": "short_token_boundary",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：ax。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：max。"
+        }
+      ],
+      "question": "ax",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "短词、单字或非Latin文字的能力边界；失败应记录，不以空查询或忽略题目掩盖。"
+    },
+    {
+      "id": "ho-078",
+      "family": "holdout_v1_short_2",
+      "category": "short_token_boundary",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：灯。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：墙。"
+        }
+      ],
+      "question": "灯",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "短词、单字或非Latin文字的能力边界；失败应记录，不以空查询或忽略题目掩盖。"
+    },
+    {
+      "id": "ho-079",
+      "family": "holdout_v1_short_3",
+      "category": "short_token_boundary",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：Ω。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：Φ。"
+        }
+      ],
+      "question": "Ω",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "短词、单字或非Latin文字的能力边界；失败应记录，不以空查询或忽略题目掩盖。"
+    },
+    {
+      "id": "ho-080",
+      "family": "holdout_v1_short_4",
+      "category": "short_token_boundary",
+      "documents": [
+        {
+          "key": "target",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：9。"
+        },
+        {
+          "key": "other",
+          "title": "独立保留条目",
+          "section": "合成档案",
+          "text": "合成词项：19。"
+        }
+      ],
+      "question": "9",
+      "expected_keys": [
+        "target"
+      ],
+      "note": "短词、单字或非Latin文字的能力边界；失败应记录，不以空查询或忽略题目掩盖。"
+    }
+  ]
+}
