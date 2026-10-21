@@ -20,6 +20,14 @@ public class SyntheticCostController {
     public Map<String, Object> summary(HttpServletRequest request, HttpServletResponse response, @PathVariable("project") String project) {
         return ledger.summary(owner(request, response), project);
     }
+    @GetMapping("/reservations")
+    public Map<String, Object> page(HttpServletRequest request, HttpServletResponse response,
+            @PathVariable("project") String project,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "status", defaultValue = "UNRESOLVED") String state) {
+        return ledger.page(owner(request, response), project, page, size, state);
+    }
     @PostMapping("/reservations")
     public Map<String, Object> reserve(HttpServletRequest request, HttpServletResponse response,
             @PathVariable("project") String project, @RequestBody Map<String, Object> body) {

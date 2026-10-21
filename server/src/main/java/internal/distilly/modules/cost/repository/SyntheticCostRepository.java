@@ -21,6 +21,30 @@ public class SyntheticCostRepository {
     public Map<String, Object> totals(String project) {
         return db.queryForMap("SELECT COALESCE(SUM(CASE WHEN status IN ('RESERVED','UNCERTAIN') THEN reserved_fen ELSE 0 END),0) AS held_fen, COALESCE(SUM(CASE WHEN status='SETTLED' THEN actual_fen ELSE 0 END),0) AS spent_fen, COUNT(*) AS reservation_count, COALESCE(SUM(CASE WHEN status IN ('RESERVED','UNCERTAIN') THEN 1 ELSE 0 END),0) AS unresolved_count FROM synthetic_cost_reservation WHERE project_id=?", project);
     }
+    private String filter(String state) {
+        return switch (state) {
+            case "ALL" -> "";
+            case "UNRESOLVED" -> " AND status IN ('RESERVED','UNCERTAIN')";
+            default -> " AND status=?";
+        };
+    }
+    private java.util.ArrayList<Object> parameters(String project, String state) {
+        var args = new java.util.ArrayList<Object>();
+        args.add(project);
+        if (!state.equals("ALL") && !state.equals("UNRESOLVED")) args.add(state);
+        return args;
+    }
+    public long count(String project, String state) {
+        return db.queryForObject("SELECT COUNT(*) FROM synthetic_cost_reservation WHERE project_id=?" + filter(state),
+                Long.class, parameters(project, state).toArray());
+    }
+    public List<Map<String, Object>> page(String project, String state, int page, int size) {
+        var args = parameters(project, state);
+        args.add(size);
+        args.add((page - 1) * size);
+        return db.queryForList("SELECT * FROM synthetic_cost_reservation WHERE project_id=?" + filter(state)
+                + " ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?", args.toArray());
+    }
     public List<Map<String, Object>> byRequest(String project, String key) {
         return db.queryForList("SELECT * FROM synthetic_cost_reservation WHERE project_id=? AND request_key=?", project, key);
     }

@@ -64,6 +64,17 @@ public class SyntheticCostService {
         return totals;
     }
     @Transactional
+    public Map<String, Object> page(String actor, String project, int page, int size, String state) {
+        authorize(actor, project);
+        if (page < 1 || page > 1000000 || size < 1 || size > 50
+                || !Set.of("UNRESOLVED", "ALL", "RESERVED", "UNCERTAIN", "SETTLED", "RELEASED").contains(state))
+            throw error(422, "invalid_ledger_page");
+        // The project lock remains held across summary, count and items, so the
+        // displayed totals and rows describe the same ledger state.
+        return view(Map.of("page", page, "size", size, "total", repository.count(project, state),
+                "items", repository.page(project, state, page, size), "summary", summary(actor, project)));
+    }
+    @Transactional
     public Map<String, Object> detail(String actor, String project, String reservation) {
         authorize(actor, project);
         var result = new LinkedHashMap<>(repository.reservation(project, reservation));
