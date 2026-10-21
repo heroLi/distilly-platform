@@ -3,17 +3,15 @@ package internal.distilly.modules.knowledge.service;
 import internal.distilly.common.json.JsonCodec;
 import internal.distilly.common.persistence.ResourceRepository;
 import internal.distilly.modules.knowledge.repository.PersonaKnowledgeRepository;
+import internal.distilly.modules.knowledge.domain.RecordLexicalQuery;
 import internal.distilly.modules.workspace.service.AuditService;
 import internal.distilly.modules.workspace.service.WorkspaceAccessService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import static internal.distilly.common.support.Identifiers.id;
@@ -90,23 +88,13 @@ public class PersonaKnowledgeService {
     public List<Map<String, Object>> retrieve(String actorId, String personaId, String question) {
         var personaRow = persona(actorId, personaId);
         var rows = repository.findPublishedClaims(personaId, personaRow.get("project_id"));
-        var terms = new LinkedHashSet<String>();
-        String q = question.toLowerCase(Locale.ROOT);
-        var words = Pattern.compile("[a-z0-9_]+|[\\p{IsHan}]+").matcher(q);
-        while (words.find()) {
-            String word = words.group();
-            if (word.matches("[a-z0-9_]+"))
-                terms.add(word);
-            else
-                for (int i = 0; i + 1 < word.length(); i++)
-                    terms.add(word.substring(i, i + 2));
-        }
+        var query = new RecordLexicalQuery(question);
         var ranked = new ArrayList<Map<String, Object>>();
         for (var row : rows)
             for (var claim : items(json.decode(row.get("content")).get("claims"))) {
                 String body = (String) claim.get("text"), section = (String) claim.get("section");
-                String hay = (row.get("title") + " " + section + " " + body).toLowerCase(Locale.ROOT);
-                long score = terms.stream().filter(hay::contains).count();
+                String hay = row.get("title") + " " + section + " " + body;
+                long score = query.score(hay);
                 if (score == 0)
                     continue;
                 var source = new LinkedHashMap<String, Object>();
