@@ -95,6 +95,14 @@ public class KnowledgeRepository {
         db.update("UPDATE profile SET published_id=NULL WHERE id=? AND published_id=?", topicId, versionId);
     }
 
+    public int cancelChatsForWithdrawnTopic(String topicId) {
+        // Match allowlist revocation: clear in-flight context for every persona
+        // using this topic, including chats still queued before context assembly.
+        return db.update(
+                "UPDATE persona_job SET status='CANCELLED',payload='{}',result=NULL,partial_reply='',lease_token=NULL,knowledge_snapshot='[]' WHERE kind='CHAT' AND status IN ('QUEUED','RUNNING') AND persona_id IN (SELECT persona_id FROM persona_knowledge WHERE profile_id=?)",
+                topicId);
+    }
+
     public List<Map<String, Object>> currentVersions(String project, String topic) {
         String sql = "SELECT v.*,f.title AS profile_title FROM profile f JOIN profile_version v ON v.id=f.published_id "
                 + "WHERE f.project_id=? AND v.status='APPROVED' AND f.id NOT IN (SELECT profile_id FROM profile_archive)"

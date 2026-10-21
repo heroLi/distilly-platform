@@ -12,6 +12,7 @@ args = parser.parse_args()
 commands = [
     [sys.executable, 'tests/architecture_check.py'],
     [sys.executable, 'tests/synthetic_demo_launcher_test.py'],
+    [sys.executable, 'tests/text_scenarios_test.py'],
     ['mvn', '-B', '-ntp', '-f', 'server/pom.xml', 'package'],
     [sys.executable, '-m', 'unittest', 'discover', '-s', 'worker', '-p', 'test_*.py'],
 ]
@@ -25,6 +26,7 @@ if args.e2e:
     commands.append([sys.executable, 'tests/chat_submission_e2e.py'])
     commands.append([sys.executable, 'tests/first_entry_e2e.py'])
     commands.append([sys.executable, 'tests/upload_receipt_e2e.py'])
+    commands.append([sys.executable, 'tests/text_scenarios_e2e.py'])
 commands.append(['git', 'diff', '--check'])
 for command in commands:
     print('RUN:', ' '.join(command), flush=True)

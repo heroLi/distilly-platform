@@ -234,6 +234,56 @@ class RecordQuestionTest {
     }
 
     @Test
+    void withdrawingKnowledgeCancelsBoundChatsAndRejectsLateCompletion() throws Exception {
+        String unbound = personas.create("owner", project, Map.of("name", "无关联合成助手", "family", "colleague",
+                "origin", "original", "background", "合成验收", "personality", "简洁", "expression", "短句",
+                "relationship", "同事", "boundaries", "不冒充真人", "consent", false)).get("id").toString();
+        personas.generate("owner", unbound, List.of());
+        var generation = personas.claim();
+        String unboundVersion = personas.complete(generation.get("id").toString(), generation.get("lease_token").toString(),
+                Map.of("persona_markdown", "# 合成助手", "analysis", Map.of(), "evidence", List.of())).get("version_id").toString();
+        personas.review("owner", unbound, unboundVersion, true);
+        String current = personas.start("viewer", persona, null).get("id").toString();
+        var running = personas.chat("viewer", current, "消息延迟怎么排查？");
+        var lease = personas.claim();
+        assertEquals(running.get("id"), lease.get("id"));
+        assertEquals(1, items(((Map<?, ?>) lease.get("payload")).get("knowledge")).size());
+        String waiting = personas.start("owner", persona, null).get("id").toString();
+        var queued = personas.chat("owner", waiting, "消息延迟怎么排查？");
+        String independent = personas.start("viewer", unbound, null).get("id").toString();
+        var unaffected = personas.chat("viewer", independent, "继续独立聊天。");
+        mvc.perform(delete("/api/profiles/" + topic + "/jobs/" + task + "/experience")
+                .header("Authorization", "Bearer demo-owner")).andExpect(status().isOk());
+        for (var entry : List.of(running, queued)) {
+            String id = entry.get("id").toString();
+            assertEquals("CANCELLED", db.queryForObject("SELECT status FROM persona_job WHERE id=?", String.class, id));
+            assertNull(db.queryForObject("SELECT lease_token FROM persona_job WHERE id=?", String.class, id));
+            assertEquals("[]", db.queryForObject("SELECT knowledge_snapshot FROM persona_job WHERE id=?", String.class, id));
+            assertEquals("", db.queryForObject("SELECT partial_reply FROM persona_job WHERE id=?", String.class, id));
+        }
+        assertEquals("QUEUED", personas.job("viewer", unaffected.get("id").toString()).get("status"));
+        mvc.perform(post("/internal/persona-jobs/" + running.get("id") + "/complete")
+                .header("Authorization", "Bearer test-worker-token-32-characters-long")
+                .contentType(MediaType.APPLICATION_JSON).content(json.encode(Map.of("lease_token", lease.get("lease_token"),
+                        "output", Map.of("answer", "旧来源不得继续使用", "memory_candidates", List.of(), "citations", List.of())))))
+                .andExpect(status().isConflict());
+        assertEquals(1, items(personas.session("viewer", current).get("messages")).size());
+        assertTrue(knowledge.retrieve("viewer", persona, "消息延迟").isEmpty());
+    }
+
+    @Test
+    void unauthorizedWithdrawalDoesNotCancelChatOrRemoveKnowledge() throws Exception {
+        String conversation = personas.start("viewer", persona, null).get("id").toString();
+        var job = personas.chat("viewer", conversation, "消息延迟怎么排查？");
+        var lease = personas.claim();
+        assertEquals(job.get("id"), lease.get("id"));
+        mvc.perform(delete("/api/profiles/" + topic + "/jobs/" + task + "/experience")
+                .header("Authorization", "Bearer demo-viewer")).andExpect(status().isForbidden());
+        assertEquals("RUNNING", personas.job("viewer", job.get("id").toString()).get("status"));
+        assertEquals(1, knowledge.retrieve("viewer", persona, "消息延迟").size());
+    }
+
+    @Test
     void unselectedDraftAndForeignWorkspaceRecordsCannotLeakThroughQuestions() throws Exception {
         publishKnowledge(project, "未选中消息延迟", "消息延迟未选中资料不得出现。");
         String draft = (String) platform.createProfile("owner", project, "未发布消息延迟").get("id");

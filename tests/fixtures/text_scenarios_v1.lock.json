@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "suite_id": "text-scenarios-v1",
+  "case_count": 30,
+  "freeze_policy": "Created before first runner execution. Do not edit v1 to hide failures; new cases/expectations require a new version and disclosed comparison.",
+  "sha256": {
+    "text_scenarios_v1.json": "eb90abba27fbabf4654296ac02ee6d66d682f2517c6cffdd0ce6c03bf22319ba",
+    "text_scenarios_rubric_v1.json": "5d93e7efe5b1502bf08f7f35275e836bc117659df848ecd8f3f499e4257cedb1"
+  }
+}

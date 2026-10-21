@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "suite_id": "text-scenarios-v1",
+  "real_quality_status": "NOT_MEASURED",
+  "mock_quality_scores": null,
+  "scale": {
+    "1": "severe or persistent contradiction",
+    "2": "frequent defects requiring repair",
+    "3": "mixed, usable with material defects",
+    "4": "consistent and appropriate with minor defects",
+    "5": "consistent, natural and well grounded across all turns"
+  },
+  "dimensions": [
+    "identity_consistency",
+    "natural_expression",
+    "emotional_reasonableness",
+    "memory_correctness",
+    "source_faithfulness"
+  ],
+  "manual_review_required": true,
+  "proposed_targets": {
+    "mean_minimum": 4,
+    "unauthorized_uses": 0,
+    "deleted_source_reuses": 0
+  },
+  "target_status": "PROPOSED_NOT_ACHIEVED_OR_MEASURED",
+  "automatic_contract": {
+    "chat": "successful actual API task and persisted assistant turn; current input, expected memory bodies, knowledge source IDs/version/text, fixed persona snapshot and stable source classes checked on actual claimed Worker payload",
+    "pending_memory": "not recalled until explicitly confirmed",
+    "correction": "next relevant turn uses corrected confirmed memory/current published knowledge; old published version remains immutable",
+    "deletion": "memory removal/knowledge withdrawal cancels held old context; stale completion cannot add assistant message; fresh context has no deleted source",
+    "cross_user": "private conversation and memory forbidden to other user; shared published knowledge allowed within selected same workspace; raw material denied to viewer; cross-workspace knowledge binding forbidden",
+    "version": "existing conversation remains on its fixed persona snapshot; new conversation uses newly approved version",
+    "history": "deleting a memory is not deleting conversation history; history inspected separately; deleting conversation removes derived memories/messages and fresh conversation starts empty"
+  },
+  "interpretation": [
+    "Mock templates/keyword emotions are execution fixtures, never evidence of naturalness or persona fidelity.",
+    "Unknown-source tests assert empty admissible source collections; honest natural-language refusal remains a real-quality review item.",
+    "Zero observed safety failures in this set is not proof of universal safety.",
+    "No retrieval rules or production prompts may be derived from held-out answers to make these tests pass.",
+    "Four previously defined narrow semantic probes remain separately UNRESOLVED; this pack does not redefine them."
+  ]
+}

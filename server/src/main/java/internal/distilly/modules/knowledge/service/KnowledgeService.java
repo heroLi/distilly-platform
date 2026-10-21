@@ -209,6 +209,7 @@ public class KnowledgeService {
         } while (changed);
         for (String id : removed)
             repository.withdrawVersion(topicId, id);
+        repository.cancelChatsForWithdrawnTopic(topicId);
         workTaskService.deleteJob(actorId, jobId);
         audits.record(projectId, actorId, "DISTILL_EXPERIENCE_DELETED", jobId);
     }
