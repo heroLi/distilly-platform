@@ -26,4 +26,15 @@ public class MaterialRepository {
                 projectId);
     }
 
+    public List<Map<String, Object>> findSubmission(String projectId, String actorId, String requestId) {
+        return db.queryForList("SELECT * FROM material_submission WHERE project_id=? AND actor_id=? AND request_id=?",
+                projectId, actorId, requestId);
+    }
+
+    public void insertSubmission(String projectId, String actorId, String requestId, String filename,
+            String rawDigest, String materialId, long createdAt) {
+        db.update("INSERT INTO material_submission(project_id,actor_id,request_id,filename,raw_digest,material_id,created_at) VALUES (?,?,?,?,?,?,?)",
+                projectId, actorId, requestId, filename, rawDigest, materialId, createdAt);
+    }
+
 }

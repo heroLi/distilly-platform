@@ -39,7 +39,8 @@ public class MaterialController {
 
     @PostMapping("/api/projects/{p}/materials")
     public Map<String, Object> upload(HttpServletRequest httpRequest, @PathVariable("p") String projectId,
-            @RequestParam MultipartFile file) throws Exception {
+            @RequestParam MultipartFile file,
+            @RequestParam(name="request_id", required=false) String requestId) throws Exception {
         byte[] bytes = file.getBytes();
         if (bytes.length > 1048576)
             throw error(413, "file_too_large");
@@ -55,7 +56,13 @@ public class MaterialController {
         }
         if (text.indexOf('\0') >= 0)
             throw error(422, "binary_content");
-        return materialService.upload(actor(httpRequest), projectId, file.getOriginalFilename(), text);
+        return materialService.upload(actor(httpRequest), projectId, file.getOriginalFilename(), text, requestId);
+    }
+
+    @GetMapping("/api/projects/{p}/material-submissions/{requestId}")
+    public Map<String, Object> submission(HttpServletRequest httpRequest, @PathVariable("p") String projectId,
+            @PathVariable("requestId") String requestId) {
+        return materialService.submission(actor(httpRequest), projectId, requestId);
     }
 
 }

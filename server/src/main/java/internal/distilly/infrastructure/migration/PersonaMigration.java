@@ -34,7 +34,8 @@ public class PersonaMigration {
         tx.executeWithoutResult(status -> {
             String[] migrations = { "V001__persona.sql", "V002__reply_deltas.sql", "V003__message_images.sql",
                     "V004__persona_knowledge.sql", "V005__personality_library.sql", "V006__work_chunk_checkpoints.sql", "V007__synthetic_cost_ledger.sql",
-                    "V008__text_execution_budget.sql", "V009__chat_submission_receipts.sql" };
+                    "V008__text_execution_budget.sql", "V009__chat_submission_receipts.sql",
+                    "V010__material_submission_receipts.sql" };
             for (int i = 0; i < migrations.length; i++) {
                 int version = i + 1;
                 if (db.queryForObject("SELECT COUNT(*) FROM persona_schema_version WHERE version=?", Integer.class,
