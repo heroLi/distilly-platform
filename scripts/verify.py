@@ -11,6 +11,7 @@ parser.add_argument('--e2e', action='store_true', help='Also run synthetic API/W
 args = parser.parse_args()
 commands = [
     [sys.executable, 'tests/architecture_check.py'],
+    [sys.executable, 'tests/synthetic_demo_launcher_test.py'],
     ['mvn', '-B', '-ntp', '-f', 'server/pom.xml', 'package'],
     [sys.executable, '-m', 'unittest', 'discover', '-s', 'worker', '-p', 'test_*.py'],
 ]
@@ -18,7 +19,7 @@ commands.extend(['node', '--check', str(path.relative_to(ROOT))]
                 for path in sorted((ROOT / 'server/src/main/resources/static').glob('*.js')))
 commands.extend(['node', str(path.relative_to(ROOT))] for path in sorted((ROOT / 'tests').glob('*_test.cjs')))
 if args.e2e:
-    commands.extend([[sys.executable, 'tests/persona_e2e.py'], [sys.executable, 'tests/e2e.py'], [sys.executable, 'tests/text_egress_e2e.py'], [sys.executable, 'tests/record_cards_e2e.py'], [sys.executable, 'tests/synthetic_cost_ledger_e2e.py']])
+    commands.extend([[sys.executable, 'tests/persona_e2e.py'], [sys.executable, 'tests/e2e.py'], [sys.executable, 'tests/text_egress_e2e.py'], [sys.executable, 'tests/record_cards_e2e.py'], [sys.executable, 'tests/synthetic_cost_ledger_e2e.py'], [sys.executable, 'tests/synthetic_cost_page_e2e.py']])
 commands.append(['git', 'diff', '--check'])
 for command in commands:
     print('RUN:', ' '.join(command), flush=True)
