@@ -100,6 +100,16 @@ class SyntheticCostLedgerTest {
     }
 
     @Test
+    void h2RuntimeDisablesDelayedWritesWithoutTestUrlOverride() throws Exception {
+        try (var connection = java.util.Objects.requireNonNull(db.getDataSource()).getConnection()) {
+            assertEquals("H2", connection.getMetaData().getDatabaseProductName());
+            assertFalse(connection.getMetaData().getURL().toUpperCase(java.util.Locale.ROOT).contains("WRITE_DELAY"));
+        }
+        assertEquals("0", db.queryForObject(
+                "SELECT setting_value FROM INFORMATION_SCHEMA.SETTINGS WHERE setting_name='WRITE_DELAY'", String.class));
+    }
+
+    @Test
     void reserveReplayIsIdempotentAndCannotChangeAmountOrReviveReleasedHold() throws Exception {
         var first = reserve("same-request", 300);
         assertEquals("RESERVED", first.get("status"));

@@ -23,6 +23,12 @@ public class PersonaMigration {
 
     @PostConstruct
     void migrate() {
+        // H2 defaults to delayed committed-log writes. Local accounting must survive
+        // an immediate API process kill, so configure synchronous commit writes
+        // before opening the migration transaction or accepting requests.
+        boolean h2 = Boolean.TRUE.equals(db.execute((org.springframework.jdbc.core.ConnectionCallback<Boolean>)
+                connection -> "H2".equals(connection.getMetaData().getDatabaseProductName())));
+        if (h2) db.execute("SET WRITE_DELAY 0");
         db.execute(
                 "CREATE TABLE IF NOT EXISTS persona_schema_version (version INT PRIMARY KEY, applied_at BIGINT NOT NULL)");
         tx.executeWithoutResult(status -> {
