@@ -9,3 +9,5 @@
 .knowledge-topic{margin:12px 0;flex-wrap:wrap}.knowledge-topic .badge{margin:0}.knowledge-sources{font-size:12px;white-space:normal}.knowledge-sources p{margin:8px 0}#knowledge-save{margin-top:15px}
 
 @media(max-width:420px){.topbar{height:auto;min-height:68px;flex-wrap:wrap;gap:10px;padding:12px 18px}.top-actions{margin-left:auto}}
+
+.record-question-panel>.section-head{align-items:center}.record-question-panel>.section-head>a{font-size:12px}.record-question-panel label{margin-bottom:0}.record-actions{margin:12px 0}.record-answer,.record-text{white-space:pre-wrap;overflow-wrap:anywhere}.record-answer:empty{display:none}.record-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}.record-card{border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0;background:var(--paper)}.record-card h3{margin-bottom:8px;overflow-wrap:anywhere}.record-card p:last-child{margin-bottom:0}.record-label{font-size:12px;font-weight:600;color:var(--accent)}.record-text{font-size:13px}.record-card .small{overflow-wrap:anywhere}
