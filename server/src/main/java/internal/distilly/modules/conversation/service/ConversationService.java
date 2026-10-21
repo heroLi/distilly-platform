@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import static internal.distilly.common.support.Identifiers.id;
 import static internal.distilly.common.support.Identifiers.now;
+import static internal.distilly.common.support.Digests.sha256;
 import static internal.distilly.common.validation.InputChecks.error;
 import static internal.distilly.common.validation.InputChecks.text;
 import static internal.distilly.modules.media.domain.MediaPayloadValidator.avatar;
@@ -86,18 +87,60 @@ public class ConversationService {
 
     @Transactional
     public Map<String, Object> chat(String actor, String id, String message, Object image) {
+        return chat(actor, id, message, image, null);
+    }
+
+    @Transactional
+    public Map<String, Object> chat(String actor, String id, String message, Object image, String requestId) {
         var c = personaAccess.conversation(actor, id);
         personaAccess.lock("persona_conversation", id);
         c = personaAccess.conversation(actor, id);
+        message = text(message, 4000);
+        String attachment = image == null ? null : avatar(image);
+        String digest = sha256(json.encode(java.util.Arrays.asList(message, attachment)));
+        if (requestId != null) {
+            requestId = submissionId(requestId);
+            var previous = repository.findSubmission(id, requestId);
+            if (!previous.isEmpty()) {
+                var row = previous.get(0);
+                if (!actor.equals(row.get("actor_id"))) throw error(403, "private_conversation");
+                if (!digest.equals(row.get("input_digest"))) throw error(409, "submission_conflict");
+                var job = new LinkedHashMap<>(personaTaskService.job(actor, row.get("job_id").toString()));
+                job.put("submission", receipt(row));
+                return job;
+            }
+        }
         if (repository.countActiveTasks(id) > 0)
             throw error(409, "conversation_busy");
         String m = id();
         long time = now();
-        message = text(message, 4000);
-        String attachment = image == null ? null : avatar(image);
         repository.insertUserMessage(m, id, message, time, attachment);
         repository.nameFirstMessage(message.substring(0, Math.min(40, message.length())), id);
-        return personaTaskService.enqueue(actor, (String) c.get("persona_id"), id, "CHAT", Map.of("message_id", m));
+        var job = new LinkedHashMap<>(personaTaskService.enqueue(actor, (String) c.get("persona_id"), id, "CHAT", Map.of("message_id", m)));
+        if (requestId != null) {
+            repository.insertSubmission(id, requestId, actor, digest, m, job.get("id").toString(), time);
+            job.put("submission", receipt(repository.findSubmission(id, requestId).get(0)));
+        }
+        return job;
+    }
+
+    public Map<String, Object> submission(String actor, String conversationId, String requestId) {
+        personaAccess.conversation(actor, conversationId);
+        var rows = repository.findSubmission(conversationId, submissionId(requestId));
+        if (rows.isEmpty()) throw error(404, "submission_not_found");
+        if (!actor.equals(rows.get(0).get("actor_id"))) throw error(403, "private_conversation");
+        return receipt(rows.get(0));
+    }
+
+    private String submissionId(String value) {
+        if (!value.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))
+            throw error(422, "invalid_submission_id");
+        return value.toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private Map<String, Object> receipt(Map<String, Object> row) {
+        return Map.of("request_id", row.get("request_id"), "message_id", row.get("message_id"),
+                "job_id", row.get("job_id"), "status", "ACCEPTED");
     }
 
     @Transactional
@@ -112,6 +155,7 @@ public class ConversationService {
     public void deleteConversation(String actor, String id) {
         personaAccess.conversation(actor, id);
         personaAccess.lock("persona_conversation", id);
+        repository.deleteSubmissions(id);
         repository.clearTaskPayloads(id);
         repository.deleteDerivedMemories(id);
         repository.deleteTasks(id);

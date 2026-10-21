@@ -22,6 +22,7 @@ if args.e2e:
     commands.extend([[sys.executable, 'tests/persona_e2e.py'], [sys.executable, 'tests/e2e.py'], [sys.executable, 'tests/text_egress_e2e.py'], [sys.executable, 'tests/record_cards_e2e.py'], [sys.executable, 'tests/synthetic_cost_ledger_e2e.py'], [sys.executable, 'tests/synthetic_cost_page_e2e.py'], [sys.executable, 'tests/record_filters_e2e.py'], [sys.executable, 'tests/text_execution_budget_e2e.py']])
     commands.append([sys.executable, 'tests/personality_journey_e2e.py'])
     commands.append([sys.executable, 'tests/chat_recovery_e2e.py'])
+    commands.append([sys.executable, 'tests/chat_submission_e2e.py'])
 commands.append(['git', 'diff', '--check'])
 for command in commands:
     print('RUN:', ' '.join(command), flush=True)

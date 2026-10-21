@@ -57,6 +57,21 @@ public class ConversationRepository {
                 id, conversationId, body, createdAt, image);
     }
 
+    public List<Map<String, Object>> findSubmission(String conversationId, String requestId) {
+        return db.queryForList("SELECT * FROM chat_submission WHERE conversation_id=? AND request_id=?",
+                conversationId, requestId);
+    }
+
+    public void insertSubmission(String conversationId, String requestId, String actorId, String digest,
+            String messageId, String jobId, long createdAt) {
+        db.update("INSERT INTO chat_submission(conversation_id,request_id,actor_id,input_digest,message_id,job_id,created_at) VALUES (?,?,?,?,?,?,?)",
+                conversationId, requestId, actorId, digest, messageId, jobId, createdAt);
+    }
+
+    public void deleteSubmissions(String conversationId) {
+        db.update("DELETE FROM chat_submission WHERE conversation_id=?", conversationId);
+    }
+
     public int nameFirstMessage(Object title, String id) {
         return db.update("UPDATE persona_conversation SET title=? WHERE id=? AND title='新的交流'", title, id);
     }

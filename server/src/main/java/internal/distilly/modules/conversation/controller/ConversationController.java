@@ -46,7 +46,13 @@ public class ConversationController {
     public Map<String, Object> chat(HttpServletRequest httpRequest, @PathVariable("id") String id,
             @RequestBody Map<String, Object> body) {
         var request = ChatMessageRequest.from(body);
-        return conversationService.chat(actor(httpRequest), id, request.message(), request.image());
+        return conversationService.chat(actor(httpRequest), id, request.message(), request.image(), request.requestId());
+    }
+
+    @GetMapping("/api/conversations/{id}/submissions/{requestId}")
+    public Map<String, Object> submission(HttpServletRequest httpRequest, @PathVariable("id") String id,
+            @PathVariable("requestId") String requestId) {
+        return conversationService.submission(actor(httpRequest), id, requestId);
     }
 
     @PutMapping("/api/conversations/{id}/memory")
