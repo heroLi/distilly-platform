@@ -15,6 +15,7 @@ import urllib.request
 from pathlib import Path
 from model_protocol import OutputPolicy, OutputLimitError, require_finish
 from text_egress import fixture_text_target
+from execution_budget import budgeted_call, execution_context
 
 LOG = logging.getLogger("distilly.worker")
 
@@ -44,7 +45,7 @@ class ExecutionChanged(ValueError):
 def failure_code(error):
     if isinstance(error, ExecutionChanged): return "EXECUTION_CHANGED"
     if isinstance(error, ModelConfigurationError): return "MODEL_CONFIGURATION_ERROR"
-    if getattr(error, "failure_code", None) in {"MODEL_CONFIGURATION_ERROR", "MODEL_OUTPUT_LIMIT", "MODEL_BUDGET_NOT_VERIFIED"}: return error.failure_code
+    if getattr(error, "failure_code", None) in {"MODEL_CONFIGURATION_ERROR", "MODEL_OUTPUT_LIMIT", "MODEL_BUDGET_NOT_VERIFIED", "MODEL_EXECUTION_BUDGET_UNVERIFIED"}: return error.failure_code
     if isinstance(error, ModelError): return "MODEL_UNAVAILABLE"
     if getattr(error, "failure_code", None) == "MEDIA_NOT_CONFIGURED": return "MEDIA_NOT_CONFIGURED"
     if isinstance(error, (ValueError, TypeError)): return "INVALID_MODEL_OUTPUT"
@@ -88,77 +89,88 @@ class Model:
             request_body["response_format"] = {"type": "json_object"}
         if on_chunk and self.output_policy.streaming:
             request_body["stream"] = True
-        body = json.dumps(request_body, ensure_ascii=False).encode()
-        request = urllib.request.Request(target, body,
-                                         {"Content-Type": "application/json", "Authorization": "Bearer " + self.key})
-        # Do not forward credentials through redirects.
-        class NoRedirect(urllib.request.HTTPRedirectHandler):
-            def redirect_request(self, *args, **kwargs):
-                return None
-        try:
-            with urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect()).open(request, timeout=self.timeout) as response:
-                if on_chunk and "text/event-stream" in response.headers.get("Content-Type", ""):
-                    content, received = "", 0
-                    finish, completed = None, False
-                    for line in response:
-                        check_cancel()
-                        received += len(line)
-                        if received > 2097152:
-                            raise ValueError("stream response too large")
-                        if not line.startswith(b"data:"):
-                            continue
-                        data = line[5:].strip()
-                        if data == b"[DONE]":
-                            completed = True
-                            break
-                        frame = json.loads(data)
-                        if not isinstance(frame, dict) or "error" in frame:
-                            raise ValueError("invalid model stream frame")
-                        choices = frame.get("choices", [])
-                        if not choices:
-                            continue
-                        if choices[0].get("finish_reason") is not None:
-                            finish = choices[0]["finish_reason"]
-                            require_finish(finish)
-                        delta = choices[0].get("delta", {}).get("content")
-                        if delta:
-                            content += delta
-                            if len(content) > 60000:
-                                raise ValueError("stream content too large")
-                            on_chunk(content)
-                    if not completed: raise ValueError("model stream ended without DONE")
-                    require_finish(finish)
-                else:
-                    pieces, received = [], 0
-                    while True:
-                        check_cancel()
-                        piece = response.read(8192)
-                        if not piece: break
-                        received += len(piece)
-                        if received > 1048576: raise ValueError("response too large")
-                        pieces.append(piece)
-                    raw = b"".join(pieces)
-                    choice = json.loads(raw)["choices"][0]
-                    require_finish(choice.get("finish_reason"))
-                    content = choice["message"]["content"]
-        except urllib.error.HTTPError as error:
-            error.close()
-            if error.code in (408, 409, 425, 429, 500, 502, 503, 504):
-                raise ModelError("model temporarily unavailable") from error
-            raise ModelConfigurationError("model configuration rejected") from error
-        except OSError as error:
-            raise ModelError("model request failed") from error
-        except OutputLimitError:
-            raise
-        except (ValueError, KeyError, TypeError, IndexError) as error:
-            raise ValueError("invalid model protocol") from error
-        try:
-            result = json.loads(content)
-            if not isinstance(result, dict):
-                raise ValueError("expected JSON object")
-            return result
-        except (ValueError, TypeError) as error:
-            raise ValueError("invalid model JSON") from error
+        with budgeted_call(enabled=os.getenv("MODEL_SYNTHETIC_GLOBAL_BUDGET") == "true",
+                           mode=self.mode, model=self.model, stage=output_stage, request_body=request_body,
+                           image=image is not None, before_dispatch=check_cancel) as budget:
+            body = json.dumps(request_body, ensure_ascii=False).encode()
+            request = urllib.request.Request(target, body,
+                                             {"Content-Type": "application/json", "Authorization": "Bearer " + self.key})
+            # Do not forward credentials through redirects.
+            class NoRedirect(urllib.request.HTTPRedirectHandler):
+                def redirect_request(self, *args, **kwargs):
+                    return None
+            try:
+                with urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect()).open(request, timeout=self.timeout) as response:
+                    if on_chunk and "text/event-stream" in response.headers.get("Content-Type", ""):
+                        content, received = "", 0
+                        finish, completed = None, False
+                        for line in response:
+                            check_cancel()
+                            received += len(line)
+                            if received > 2097152:
+                                raise ValueError("stream response too large")
+                            if not line.startswith(b"data:"):
+                                continue
+                            data = line[5:].strip()
+                            if data == b"[DONE]":
+                                completed = True
+                                break
+                            frame = json.loads(data)
+                            if not isinstance(frame, dict) or "error" in frame:
+                                raise ValueError("invalid model stream frame")
+                            if budget is not None:
+                                budget.feed_stream(frame)
+                            choices = frame.get("choices", [])
+                            if not choices:
+                                continue
+                            if choices[0].get("finish_reason") is not None:
+                                finish = choices[0]["finish_reason"]
+                                if budget is None:
+                                    require_finish(finish)
+                            delta = choices[0].get("delta", {}).get("content")
+                            if delta:
+                                content += delta
+                                if len(content) > 60000:
+                                    raise ValueError("stream content too large")
+                                on_chunk(content)
+                        if not completed: raise ValueError("model stream ended without DONE")
+                        if budget is not None:
+                            budget.finish_stream()
+                        require_finish(finish)
+                    else:
+                        pieces, received = [], 0
+                        while True:
+                            check_cancel()
+                            piece = response.read(8192)
+                            if not piece: break
+                            received += len(piece)
+                            if received > 1048576: raise ValueError("response too large")
+                            pieces.append(piece)
+                        raw = b"".join(pieces)
+                        decoded = json.loads(raw)
+                        if budget is not None:
+                            budget.observe_complete(decoded)
+                        choice = decoded["choices"][0]
+                        require_finish(choice.get("finish_reason"))
+                        content = choice["message"]["content"]
+            except urllib.error.HTTPError as error:
+                error.close()
+                if error.code in (408, 409, 425, 429, 500, 502, 503, 504):
+                    raise ModelError("model temporarily unavailable") from error
+                raise ModelConfigurationError("model configuration rejected") from error
+            except OSError as error:
+                raise ModelError("model request failed") from error
+            except OutputLimitError:
+                raise
+            except (ValueError, KeyError, TypeError, IndexError) as error:
+                raise ValueError("invalid model protocol") from error
+            try:
+                result = json.loads(content)
+                if not isinstance(result, dict):
+                    raise ValueError("expected JSON object")
+                return result
+            except (ValueError, TypeError) as error:
+                raise ValueError("invalid model JSON") from error
 
     def distill_chunk(self, chunk, title):
         if not isinstance(title, str) or not title.strip() or len(title) > 160:
@@ -291,70 +303,71 @@ class Worker:
 
         thread = threading.Thread(target=heartbeat, daemon=True)
         thread.start()
-        try:
-            if self.stop.is_set(): return
-            if job["kind"] == "DISTILL":
-                chunks = job["payload"]["chunks"]
-                checkpointed = job.get("checkpoint_protocol") == 1
-                cached = {}
-                if checkpointed:
-                    fingerprint = self.model.distillation_fingerprint()
-                    if job.get("execution_fingerprint") not in (None, fingerprint):
-                        raise ExecutionChanged("distillation configuration changed")
-                    self.request(f"/internal/jobs/{job['id']}/execution", {**token, "fingerprint": fingerprint})
-                    for checkpoint in job.get("checkpoints", []):
-                        if checkpoint["chunk_id"] in cached:
-                            raise ValueError("duplicate checkpoint")
-                        cached[checkpoint["chunk_id"]] = checkpoint
-                claims = []
-                for index, chunk in enumerate(chunks):
-                    if lost.is_set() or self.stop.is_set():
-                        return
-                    checkpoint = cached.get(chunk["chunk_id"])
-                    if checkpoint:
-                        if checkpoint["input_digest"] != chunk["input_digest"]:
-                            raise ValueError("checkpoint input changed")
-                        generated = checkpoint["claims"]
-                    else:
-                        generated = self.model.distill_chunk(chunk, job["payload"]["title"]).get("claims")
-                    validate_claims(generated, [chunk])
-                    claims.extend(generated)
-                    if len(claims) > 300:
-                        raise ValueError("claim budget exceeded")
+        with execution_context(self, "WORK", job):
+            try:
+                if self.stop.is_set(): return
+                if job["kind"] == "DISTILL":
+                    chunks = job["payload"]["chunks"]
+                    checkpointed = job.get("checkpoint_protocol") == 1
+                    cached = {}
                     if checkpointed:
-                        if not checkpoint:
-                            self.request(f"/internal/jobs/{job['id']}/chunks/complete", {
-                                **token, "chunk_id": chunk["chunk_id"], "input_digest": chunk["input_digest"],
-                                "claims": generated})
-                    else:
-                        self.request(f"/internal/jobs/{job['id']}/progress", {**token, "completed": index + 1})
-                validate_claims(claims, chunks)
-                output = {"checkpointed": True} if checkpointed else {"claims": claims}
-            else:
-                output = self.model.answer(job["payload"])
-            if not lost.is_set() and not self.stop.is_set():
-                self.complete_with_retry(f"/internal/jobs/{job['id']}/complete", {**token, "output": output})
-                finished = True
-                LOG.info("job completed id=%s kind=%s mode=%s", job["id"], job["kind"], self.model.mode)
-        except CompletionUncertain:
-            completion_uncertain = True
-            LOG.warning("completion unconfirmed id=%s", job['id'])
-        except Exception as error:
-            code = failure_code(error)
-            LOG.warning("job failed id=%s code=%s", job["id"], code)
-            if not lost.is_set() and not self.stop.is_set():
-                try:
-                    self.request(f"/internal/jobs/{job['id']}/fail", {**token, "code": code})
-                except Exception:
-                    LOG.warning("job failure reporting unavailable id=%s", job["id"])
-        finally:
-            done.set()
-            thread.join(timeout=35)
-            if self.stop.is_set() and not lost.is_set() and not finished and not completion_uncertain:
-                try:
-                    self.request(f"/internal/jobs/{job['id']}/release", token)
-                except Exception:
-                    LOG.warning("shutdown lease release unavailable id=%s", job['id'])
+                        fingerprint = self.model.distillation_fingerprint()
+                        if job.get("execution_fingerprint") not in (None, fingerprint):
+                            raise ExecutionChanged("distillation configuration changed")
+                        self.request(f"/internal/jobs/{job['id']}/execution", {**token, "fingerprint": fingerprint})
+                        for checkpoint in job.get("checkpoints", []):
+                            if checkpoint["chunk_id"] in cached:
+                                raise ValueError("duplicate checkpoint")
+                            cached[checkpoint["chunk_id"]] = checkpoint
+                    claims = []
+                    for index, chunk in enumerate(chunks):
+                        if lost.is_set() or self.stop.is_set():
+                            return
+                        checkpoint = cached.get(chunk["chunk_id"])
+                        if checkpoint:
+                            if checkpoint["input_digest"] != chunk["input_digest"]:
+                                raise ValueError("checkpoint input changed")
+                            generated = checkpoint["claims"]
+                        else:
+                            generated = self.model.distill_chunk(chunk, job["payload"]["title"]).get("claims")
+                        validate_claims(generated, [chunk])
+                        claims.extend(generated)
+                        if len(claims) > 300:
+                            raise ValueError("claim budget exceeded")
+                        if checkpointed:
+                            if not checkpoint:
+                                self.request(f"/internal/jobs/{job['id']}/chunks/complete", {
+                                    **token, "chunk_id": chunk["chunk_id"], "input_digest": chunk["input_digest"],
+                                    "claims": generated})
+                        else:
+                            self.request(f"/internal/jobs/{job['id']}/progress", {**token, "completed": index + 1})
+                    validate_claims(claims, chunks)
+                    output = {"checkpointed": True} if checkpointed else {"claims": claims}
+                else:
+                    output = self.model.answer(job["payload"])
+                if not lost.is_set() and not self.stop.is_set():
+                    self.complete_with_retry(f"/internal/jobs/{job['id']}/complete", {**token, "output": output})
+                    finished = True
+                    LOG.info("job completed id=%s kind=%s mode=%s", job["id"], job["kind"], self.model.mode)
+            except CompletionUncertain:
+                completion_uncertain = True
+                LOG.warning("completion unconfirmed id=%s", job['id'])
+            except Exception as error:
+                code = failure_code(error)
+                LOG.warning("job failed id=%s code=%s", job["id"], code)
+                if not lost.is_set() and not self.stop.is_set():
+                    try:
+                        self.request(f"/internal/jobs/{job['id']}/fail", {**token, "code": code})
+                    except Exception:
+                        LOG.warning("job failure reporting unavailable id=%s", job["id"])
+            finally:
+                done.set()
+                thread.join(timeout=35)
+                if self.stop.is_set() and not lost.is_set() and not finished and not completion_uncertain:
+                    try:
+                        self.request(f"/internal/jobs/{job['id']}/release", token)
+                    except Exception:
+                        LOG.warning("shutdown lease release unavailable id=%s", job['id'])
 
     def run(self):
         LOG.info("worker ready mode=%s", self.model.mode)

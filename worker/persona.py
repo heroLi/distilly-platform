@@ -6,6 +6,7 @@ import threading
 import urllib.request
 import urllib.error
 from pathlib import Path
+from execution_budget import execution_context
 
 
 class MediaNotConfigured(Exception):
@@ -202,63 +203,64 @@ def execute(worker, job):
                 return
     thread = threading.Thread(target=heartbeat, daemon=True)
     thread.start()
-    try:
-        handler = {'PERSONA': generate, 'CHAT': chat, 'IMAGE': image, 'TTS': speech, 'ASR': speech}.get(job['kind'])
-        if handler is None:
-            raise ValueError('unknown persona job')
-        if job['kind'] == 'CHAT':
-            import re, time
-            last_update = [0.0]
-            def partial(raw):
-                if lost.is_set() or worker.stop.is_set():
-                    return
-                if time.monotonic() - last_update[0] < 0.3:
-                    return
-                match = re.search(r'"answer"\s*:\s*"((?:[^"\\]|\\.)*)', raw)
-                if not match:
-                    return
-                fragment = match.group(1)
-                if fragment.endswith('\\'):
-                    fragment = fragment[:-1]
+    with execution_context(worker, "PERSONA", job):
+        try:
+            handler = {'PERSONA': generate, 'CHAT': chat, 'IMAGE': image, 'TTS': speech, 'ASR': speech}.get(job['kind'])
+            if handler is None:
+                raise ValueError('unknown persona job')
+            if job['kind'] == 'CHAT':
+                import re, time
+                last_update = [0.0]
+                def partial(raw):
+                    if lost.is_set() or worker.stop.is_set():
+                        return
+                    if time.monotonic() - last_update[0] < 0.3:
+                        return
+                    match = re.search(r'"answer"\s*:\s*"((?:[^"\\]|\\.)*)', raw)
+                    if not match:
+                        return
+                    fragment = match.group(1)
+                    if fragment.endswith('\\'):
+                        fragment = fragment[:-1]
+                    try:
+                        text = json.loads('"' + fragment + '"')[:12000]
+                    except ValueError:
+                        return
+                    try:
+                        worker.request(prefix + '/delta', {**token, 'partial': text})
+                        last_update[0] = time.monotonic()
+                    except Exception:
+                        lost.set()
+                output = chat(worker.model, job['payload'], partial, lambda: lost.is_set() or worker.stop.is_set())
+            else:
+                output = handler(worker.model, job['payload'])
+            if not lost.is_set() and not worker.stop.is_set():
+                worker.complete_with_retry(prefix + '/complete', {**token, 'output': output})
+                finished = True
+        except ModelCancelled:
+            return
+        except CompletionUncertain:
+            completion_uncertain = True
+            import logging
+            logging.getLogger('distilly.worker').warning('completion unconfirmed id=%s', job['id'])
+        except Exception as error:
+            code = failure_code(error)
+            if not lost.is_set() and not worker.stop.is_set():
                 try:
-                    text = json.loads('"' + fragment + '"')[:12000]
-                except ValueError:
-                    return
-                try:
-                    worker.request(prefix + '/delta', {**token, 'partial': text})
-                    last_update[0] = time.monotonic()
+                    worker.request(prefix + '/fail', {**token, 'code': code})
                 except Exception:
-                    lost.set()
-            output = chat(worker.model, job['payload'], partial, lambda: lost.is_set() or worker.stop.is_set())
-        else:
-            output = handler(worker.model, job['payload'])
-        if not lost.is_set() and not worker.stop.is_set():
-            worker.complete_with_retry(prefix + '/complete', {**token, 'output': output})
-            finished = True
-    except ModelCancelled:
-        return
-    except CompletionUncertain:
-        completion_uncertain = True
-        import logging
-        logging.getLogger('distilly.worker').warning('completion unconfirmed id=%s', job['id'])
-    except Exception as error:
-        code = failure_code(error)
-        if not lost.is_set() and not worker.stop.is_set():
-            try:
-                worker.request(prefix + '/fail', {**token, 'code': code})
-            except Exception:
-                pass
-        import logging
-        logging.getLogger('distilly.worker').warning('persona job failed id=%s code=%s', job['id'], code)
-    finally:
-        done.set()
-        thread.join(timeout=35)
-        if worker.stop.is_set() and not lost.is_set() and not finished and not completion_uncertain:
-            try:
-                worker.request(prefix + '/release', token)
-            except Exception:
-                import logging
-                logging.getLogger('distilly.worker').warning('shutdown lease release unavailable id=%s', job['id'])
+                    pass
+            import logging
+            logging.getLogger('distilly.worker').warning('persona job failed id=%s code=%s', job['id'], code)
+        finally:
+            done.set()
+            thread.join(timeout=35)
+            if worker.stop.is_set() and not lost.is_set() and not finished and not completion_uncertain:
+                try:
+                    worker.request(prefix + '/release', token)
+                except Exception:
+                    import logging
+                    logging.getLogger('distilly.worker').warning('shutdown lease release unavailable id=%s', job['id'])
 
 
 def speech(model, payload):

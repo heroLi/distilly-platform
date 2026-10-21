@@ -8,4 +8,7 @@ vm.runInContext(studio.split('\n').find(line=>line.startsWith('const errorLabels
 for(const message of [context.taskFailureReason('MODEL_BUDGET_NOT_VERIFIED'),context.labels.MODEL_BUDGET_NOT_VERIFIED]){
  assert.match(message,/费用/);assert.match(message,/模拟/);assert.doesNotMatch(message,/API_KEY|Bearer|https?:/);
 }
+for(const message of [context.taskFailureReason('MODEL_EXECUTION_BUDGET_UNVERIFIED'),context.labels.MODEL_EXECUTION_BUDGET_UNVERIFIED]){
+ assert.match(message,/合成/);assert.match(message,/占款/);assert.match(message,/不要连续重试/);assert.match(message,/真实调用仍关闭/);assert.doesNotMatch(message,/API_KEY|Bearer|https?:/);
+}
 console.log('PASS: both actual UI adapters explain unverified text cost and retain the mock alternative without credential details');

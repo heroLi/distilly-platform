@@ -2,7 +2,7 @@
 
 2026-10-21：本分支从现存旧Git基线续做，不代表找回旧247项。真实文字供应商出口因费用不可核验保持关闭，mock与显式本机合成fixture仍可验证；范围、命令及未恢复能力见[续做记录](docs/RESUME_TEXT_COST_GATE_2026-10-21.md)。
 
-真实文字接入已核对历史 DeepSeek / `deepseek-flash` 目标；[接入准备与准确门槛](docs/REAL_TEXT_READINESS_2026-10-21.md)区分公开用量估算、真实账单、全局预算和安全凭据配置，当前不发起真实调用。
+真实文字接入已核对历史 DeepSeek / `deepseek-flash` 目标；[接入准备与准确门槛](docs/REAL_TEXT_READINESS_2026-10-21.md)区分公开用量估算、真实账单、全局预算和安全凭据配置，当前不发起真实调用。 [全局合成执行预算](docs/TEXT_EXECUTION_BUDGET_2026-10-21.md)已关联实际 Worker 文字阶段和重试／未知占款，真实出口仍关闭。
 
 当前开发入口：[实施总纲](docs/PROJECT_BLUEPRINT.md) · [统一设计与交互](docs/DESIGN_SYSTEM.md) · [2026-10-08 审查](docs/PROJECT_REVIEW_2026-10-08.md)。
 

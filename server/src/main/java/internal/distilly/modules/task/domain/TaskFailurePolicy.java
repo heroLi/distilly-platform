@@ -4,7 +4,7 @@ import java.util.Set;
 
 /** Automatic repetition is reserved for transient model availability failures. */
 public final class TaskFailurePolicy {
-    private static final Set<String> COMMON = Set.of("MODEL_UNAVAILABLE", "MODEL_CONFIGURATION_ERROR", "MODEL_OUTPUT_LIMIT", "MODEL_BUDGET_NOT_VERIFIED", "INVALID_MODEL_OUTPUT", "INTERNAL_ERROR");
+    private static final Set<String> COMMON = Set.of("MODEL_UNAVAILABLE", "MODEL_CONFIGURATION_ERROR", "MODEL_OUTPUT_LIMIT", "MODEL_BUDGET_NOT_VERIFIED", "MODEL_EXECUTION_BUDGET_UNVERIFIED", "INVALID_MODEL_OUTPUT", "INTERNAL_ERROR");
     private TaskFailurePolicy() { }
 
     public static String normalize(String code, Set<String> additional) {
