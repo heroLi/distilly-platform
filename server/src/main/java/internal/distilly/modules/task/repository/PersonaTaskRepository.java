@@ -68,6 +68,11 @@ public class PersonaTaskRepository {
                 conversationId, currentMessageId);
     }
 
+    public long countOtherMessages(Object conversationId, Object currentMessageId) {
+        return db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND id<>?",
+                Long.class, conversationId, currentMessageId);
+    }
+
     public int saveContextMetadata(Object payload, Object id, String token) {
         return db.update("UPDATE persona_job SET payload=? WHERE id=? AND status='RUNNING' AND lease_token=?", payload, id, token);
     }

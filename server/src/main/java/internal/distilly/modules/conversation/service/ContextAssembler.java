@@ -25,6 +25,14 @@ public class ContextAssembler {
             Map<String, Object> emotion, boolean enabled, List<Map<String, Object>> history,
             List<Map<String, Object>> memories, List<Map<String, Object>> experiences,
             List<Map<String, Object>> knowledge, boolean image) {
+        return assemble(persona, versionId, message, emotion, enabled, history, memories, experiences, knowledge, image, 0);
+    }
+
+    public Map<String, Object> assemble(Map<String, Object> persona, String versionId, String message,
+            Map<String, Object> emotion, boolean enabled, List<Map<String, Object>> history,
+            List<Map<String, Object>> memories, List<Map<String, Object>> experiences,
+            List<Map<String, Object>> knowledge, boolean image, long historyOutsideWindow) {
+        if (historyOutsideWindow < 0) throw new IllegalArgumentException("invalid_history_scope");
         var out = new LinkedHashMap<String, Object>();
         var identity = new LinkedHashMap<String, Object>();
         for (String key : List.of("persona_markdown", "definition", "binding"))
@@ -49,6 +57,7 @@ public class ContextAssembler {
         budget.put("input_limit", limit);
         budget.put("estimated_input_units", 0);
         budget.put("omitted_history", history.size());
+        budget.put("history_outside_window", historyOutsideWindow);
         budget.put("omitted_memories", memories.size());
         budget.put("omitted_experiences", experiences.size());
         budget.put("omitted_knowledge", knowledge.size());

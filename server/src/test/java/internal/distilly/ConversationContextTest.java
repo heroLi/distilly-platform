@@ -127,6 +127,64 @@ class ConversationContextTest {
         var budget = (Map<?, ?>) payload.get("context_budget");
         assertTrue(assembler.estimate(payload) <= ((Number) budget.get("input_limit")).intValue());
         assertEquals(assembler.estimate(payload), budget.get("estimated_input_units"));
+        assertEquals(17, ((Number) budget.get("history_outside_window")).intValue());
+        assertEquals(24 - items(payload.get("history")).size(), budget.get("omitted_history"));
+    }
+
+    @Test
+    void completedReplyExposesOnlyItsHistoricalContextCountsToItsOwner() {
+        for (int i = 0; i < 26; i++)
+            db.update("INSERT INTO persona_message(id,conversation_id,role,body,created_at) VALUES (?,?,'assistant',?,?)",
+                    UUID.randomUUID().toString(), conversation, "合成短历史", i + 1);
+        var job = claim("合成新问题");
+        var payload = json.decode(json.encode(job.get("payload")));
+        var budget = (Map<?, ?>) payload.get("context_budget");
+        assertEquals(2, ((Number) budget.get("history_outside_window")).intValue());
+        assertEquals(0, budget.get("omitted_history"));
+        var forged = new LinkedHashMap<>(reply("", ""));
+        forged.put("context_budget", Map.of("omitted_history", 999));
+        var result = personas.complete(job.get("id").toString(), job.get("lease_token").toString(), forged);
+        var messages = items(personas.session("viewer", conversation).get("messages"));
+        var actual = messages.stream().filter(m -> m.get("id").equals(result.get("message_id"))).findFirst().orElseThrow();
+        var scope = (Map<?, ?>) actual.get("context_scope");
+        assertEquals(2L, scope.get("history_outside_window"));
+        assertEquals(0L, scope.get("omitted_history"));
+        assertEquals(Set.of("history_window_limit", "history_outside_window", "omitted_history", "omitted_memories", "omitted_experiences", "omitted_knowledge"), scope.keySet());
+        assertThrows(ResponseStatusException.class, () -> personas.session("owner", conversation));
+        assertEquals(scope, items(personas.session("viewer", conversation).get("messages")).stream()
+                .filter(m -> m.get("id").equals(result.get("message_id"))).findFirst().orElseThrow().get("context_scope"));
+    }
+
+    @Test
+    void legacyOrMalformedContextMetadataDoesNotBecomeZeroOmissions() {
+        assertNull(internal.distilly.modules.conversation.domain.ContextScope.fromBudget(Map.of()));
+        assertNull(internal.distilly.modules.conversation.domain.ContextScope.fromBudget(Map.of("omitted_history", -1)));
+        var legacy = Map.of("omitted_history", 1, "omitted_memories", 0, "omitted_experiences", 0, "omitted_knowledge", 0,
+                "source_body", "must not be exposed");
+        var scope = internal.distilly.modules.conversation.domain.ContextScope.fromBudget(legacy);
+        assertFalse(scope.containsKey("history_outside_window"));
+        assertFalse(scope.containsKey("source_body"));
+        assertEquals(1L, scope.get("omitted_history"));
+    }
+
+    @Test
+    void completionVisibleBetweenSessionReadsDoesNotMislabelNewReplyAsLegacy() {
+        var repository = org.mockito.Mockito.mock(internal.distilly.modules.conversation.repository.ConversationRepository.class);
+        var access = org.mockito.Mockito.mock(internal.distilly.modules.persona.service.PersonaAccessService.class);
+        org.mockito.Mockito.when(access.conversation("viewer", conversation)).thenReturn(Map.of("emotion", "{}"));
+        var committed = new java.util.concurrent.atomic.AtomicBoolean();
+        org.mockito.Mockito.when(repository.findMessages(conversation)).thenAnswer(invocation -> {
+            committed.set(true); // The atomic completion is visible when this SELECT sees the reply.
+            return List.of(new LinkedHashMap<>(Map.<String, Object>of("id", "synthetic-reply", "role", "assistant", "citations", "[]")));
+        });
+        var result = json.encode(Map.of("message_id", "synthetic-reply", "context_budget", Map.of(
+                "omitted_history", 1, "omitted_memories", 0, "omitted_experiences", 0, "omitted_knowledge", 0)));
+        org.mockito.Mockito.when(repository.findCompletedChatResults(conversation, "viewer")).thenAnswer(invocation ->
+                committed.get() ? List.of(Map.of("result", result)) : List.of());
+        var service = new internal.distilly.modules.conversation.service.ConversationService(repository, json,
+                org.mockito.Mockito.mock(internal.distilly.common.persistence.ResourceRepository.class), access,
+                org.mockito.Mockito.mock(internal.distilly.modules.task.service.PersonaTaskService.class));
+        assertTrue(items(service.session("viewer", conversation).get("messages")).get(0).containsKey("context_scope"));
     }
 
     @Test
@@ -166,6 +224,8 @@ class ConversationContextTest {
                 List.of(Map.of("id", "experience", "text", "原创摄影设定", "origin", "fictional_setting")), sources, false);
         assertEquals(List.of("small"), items(payload.get("memories")).stream().map(x -> x.get("id")).toList());
         assertTrue(items(payload.get("knowledge")).size() < sources.size());
+        assertEquals(1, ((Map<?, ?>) payload.get("context_budget")).get("omitted_memories"));
+        assertEquals(sources.size() - items(payload.get("knowledge")).size(), ((Map<?, ?>) payload.get("context_budget")).get("omitted_knowledge"));
         assertTrue(assembler.estimate(payload) <= ((Number) ((Map<?, ?>) payload.get("context_budget")).get("input_limit")).intValue());
     }
     @Test

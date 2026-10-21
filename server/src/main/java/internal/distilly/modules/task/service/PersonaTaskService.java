@@ -153,6 +153,7 @@ public class PersonaTaskService {
                 var conversationRow = resources.one("persona_conversation", (String) taskRow.get("conversation_id"));
                 var persona = json.decode(resources.one("persona_version", (String) conversationRow.get("version_id")).get("content"));
                 var history = repository.findRecentMessages(conversationRow.get("id"), payload.get("message_id"));
+                long outsideWindow = Math.max(0, repository.countOtherMessages(conversationRow.get("id"), payload.get("message_id")) - history.size());
                 Collections.reverse(history);
                 var message = resources.one("persona_message", (String) payload.get("message_id"));
                 String query = (String) message.get("body");
@@ -169,7 +170,7 @@ public class PersonaTaskService {
                 try {
                     var assembled = contexts.assemble(persona, (String) conversationRow.get("version_id"), query,
                             json.decode(conversationRow.get("emotion")), enabled, history, recalled, experiences, sources,
-                            message.get("image") != null);
+                            message.get("image") != null, outsideWindow);
                     var metadata = new LinkedHashMap<String, Object>();
                     metadata.put("message_id", payload.get("message_id"));
                     metadata.put("context_budget", assembled.get("context_budget"));

@@ -3,6 +3,7 @@ package internal.distilly.modules.conversation.service;
 import internal.distilly.common.json.JsonCodec;
 import internal.distilly.common.persistence.ResourceRepository;
 import internal.distilly.modules.conversation.repository.ConversationRepository;
+import internal.distilly.modules.conversation.domain.ContextScope;
 import internal.distilly.modules.persona.service.PersonaAccessService;
 import internal.distilly.modules.task.service.PersonaTaskService;
 import java.util.LinkedHashMap;
@@ -68,10 +69,21 @@ public class ConversationService {
         var c = personaAccess.conversation(actor, id);
         var out = new LinkedHashMap<>(c);
         out.put("emotion", json.decode(c.get("emotion")));
-        out.put("messages", repository.findMessages(id).stream().map(m -> {
+        // A visible completed reply and its task result commit atomically. Read
+        // messages first so a newly visible reply cannot precede its scope read.
+        var messages = repository.findMessages(id);
+        var scopes = new LinkedHashMap<String, Map<String, Object>>();
+        for (var row : repository.findCompletedChatResults(id, actor)) {
+            var result = json.decode(row.get("result"));
+            var scope = ContextScope.fromBudget(result.get("context_budget"));
+            if (scope != null && result.get("message_id") instanceof String messageId) scopes.put(messageId, scope);
+        }
+        out.put("messages", messages.stream().map(m -> {
             if (m.get("emotion") != null)
                 m.put("emotion", json.decode(m.get("emotion")));
             m.put("citations", json.decode("{\"items\":" + m.get("citations") + "}").get("items"));
+            if ("assistant".equals(m.get("role")) && scopes.containsKey(m.get("id")))
+                m.put("context_scope", scopes.get(m.get("id")));
             return m;
         }).toList());
         out.put("active_job", repository.findActiveTasks(id));

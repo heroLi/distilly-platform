@@ -33,6 +33,11 @@ public class ConversationRepository {
                 conversationId);
     }
 
+    public List<Map<String, Object>> findCompletedChatResults(String conversationId, String actor) {
+        return db.queryForList("SELECT result FROM persona_job WHERE conversation_id=? AND creator=? AND kind='CHAT' AND status='SUCCEEDED' AND result IS NOT NULL",
+                conversationId, actor);
+    }
+
     public List<Map<String, Object>> findActiveTasks(String conversationId) {
         return db.queryForList(
                 "SELECT id,status,error_code,partial_reply FROM persona_job WHERE conversation_id=? AND status IN ('QUEUED','RUNNING') ORDER BY created_at DESC",
