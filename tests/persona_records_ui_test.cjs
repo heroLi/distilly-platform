@@ -48,7 +48,7 @@ function setup(){
  const studio=fs.readFileSync(base+'persona.js','utf8');
  function integrate(h){
   const events={};h.c.window.PersonaRecords=h.ui;h.c.window.addEventListener=(name,fn)=>events[name]=fn;
-  Object.assign(h.c,{state:h.state,studioReads:h.reads,$:id=>h.elements[id]||(h.elements[id]={innerHTML:'',hidden:false}),stopSpeech(){},recognition:null,document:{querySelectorAll:()=>[]},renderPersona:()=>h.ui.update(),clearInterval(){}});
+  Object.assign(h.c,{chatRecovery:null,poll(){},setInterval:()=>1,loadSession:async()=>{},state:h.state,studioReads:h.reads,$:id=>h.elements[id]||(h.elements[id]={innerHTML:'',hidden:false}),stopSpeech(){},recognition:null,document:{querySelectorAll:()=>[]},renderPersona:()=>h.ui.update(),clearInterval(){}});
   for(const name of ['loadMaterials','loadConversations','loadMemories','loadJobs','loadKnowledge','loadPersonalityBindings'])h.c[name]=async()=>{};
   vm.runInContext(studio.split('\n').find(line=>line.startsWith('async function selectPersona(')),h.c);
   for(const name of ['pagehide','pageshow'])vm.runInContext(studio.split('\n').find(line=>line.startsWith("window.addEventListener('"+name+"'")),h.c);

@@ -39,6 +39,12 @@ public class ConversationRepository {
                 conversationId);
     }
 
+    public List<Map<String, Object>> findLatestChatTask(String conversationId) {
+        return db.queryForList(
+                "SELECT id,status,error_code,attempt FROM persona_job WHERE conversation_id=? AND kind='CHAT' ORDER BY created_at DESC,id LIMIT 1",
+                conversationId);
+    }
+
     public int countActiveTasks(String conversationId) {
         return db.queryForObject(
                 "SELECT COUNT(*) FROM persona_job WHERE conversation_id=? AND status IN ('QUEUED','RUNNING')",

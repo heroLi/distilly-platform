@@ -74,6 +74,8 @@ public class ConversationService {
             return m;
         }).toList());
         out.put("active_job", repository.findActiveTasks(id));
+        var latest = repository.findLatestChatTask(id);
+        out.put("latest_chat_job", latest.isEmpty() ? null : latest.get(0));
         return out;
     }
 
