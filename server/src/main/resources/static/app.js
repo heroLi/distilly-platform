@@ -26,7 +26,7 @@ function pager(key,data,load){const state=lists[key],host=$(key==='material'?'ma
 async function listData(key,type){const state=lists[key],params=new URLSearchParams(state),p=project,revision=(listRevision[key]||0)+1;listRevision[key]=revision;const result=await workspaceReads.read('page:'+key,()=>api(`/api/projects/${p}/${type}/page?${params}`));if(!result||listRevision[key]!==revision)return null;const data=result.value;if(!data.items.length&&data.total>0&&state.page>1){state.page=Math.max(1,Math.ceil(data.total/state.size));return listData(key,type);}return data;}
 
 async function loadMaterials(){const data=await listData('material','materials');if(!data)return;const scope=workspaceReads.capture();const {t,body}=table(['选择','材料名称','操作人','上传时间','状态','操作']);for(const m of data.items){const row=node('tr');cell(row,materialCheck(m));const name=cell(row,m.filename);name.append(node('small',m.id.slice(0,8)));cell(row,m.creator);cell(row,new Date(m.created_at).toLocaleString());cell(row,node('span','可用','badge'));const b=node('button','查看材料');b.addEventListener('click',async()=>{try{const view=page,read=await workspaceReads.read('material-detail',()=>api(`/api/materials/${m.id}`),()=>workspaceReads.current(scope)&&page===view);if(!read)return;const item=read.value,modal=ExperienceUI.modal(item.filename);modal.body.append(node('pre',item.body),ExperienceUI.action('关闭',modal.close));}catch(e){if(workspaceReads.current(scope))message(e.message,true);}});cell(row,b,'row-actions');body.append(row);}if(!data.items.length){const r=node('tr'),c=cell(r,'暂无符合条件的材料','empty-cell');c.colSpan=6;body.append(r);}$('materials').replaceChildren(t);pager('material',data,loadMaterials);selectionCount();}
-function closeModal(id){const modal=$(id);if(!modal)return;if(modal.open)modal.close();modal.hidden=true;document.body.classList.remove('modal-open');if(modal._returnFocus)modal._returnFocus.focus();}
+function closeModal(id){if(id==='upload-modal')window.MaterialUploader?.cancel();const modal=$(id);if(!modal)return;if(modal.open)modal.close();modal.hidden=true;document.body.classList.remove('modal-open');if(modal._returnFocus)modal._returnFocus.focus();}
 function openModal(id){const modal=$(id);modal._returnFocus=document.activeElement;modal.hidden=false;modal.oncancel=e=>{e.preventDefault();closeModal(id);};modal.showModal();document.body.classList.add('modal-open');modal.querySelector('input,select,button').focus();}
 function renderTaskTopics(topics,selected=$('task-profile').value){
  const options=topics.map(p=>{const o=node('option',p.title);o.value=p.id;return o;});
@@ -170,18 +170,8 @@ window.addEventListener('pageshow',event=>{if(event.persisted)window.SyntheticCo
 bind('projects','change',chooseProject);
 bind('project-form','submit',async()=>{const p=await api('/api/projects',{method:'POST',body:{title:$('project-title').value}});project=p.id;$('project-title').value='';ExperienceUI.closeAll();await loadProjects();});
 bind('member-form','submit',async()=>{await api(`/api/projects/${project}/members`,{method:'PUT',body:{user_id:$('member-user').value,role:$('member-role').value}});ExperienceUI.closeAll();await loadMembers();message('成员权限已更新');});
-bind('upload-form','submit',async e=>{
- const p=project,buttons=$('upload-form').querySelectorAll('button[type=submit]'),continueToTask=e.submitter?.id==='upload-continue';
- buttons.forEach(b=>b.disabled=true);$('upload-error').textContent='';
- try{
-  const file=$('file').files[0];if(!file)throw Error('请选择材料文件');if(file.size>1048576)throw Error('文件超过 1 MiB');
-  const body=new FormData();body.append('file',file);const uploaded=await api(`/api/projects/${p}/materials`,{method:'POST',body});
-  if(project!==p)return;selectedMaterials.add(uploaded.id);$('file').value='';closeModal('upload-modal');
-  lists.material.page=1;lists.material.q='';$('material-query').value='';await loadMaterials();
-  message('材料已上传并选中，可继续生成知识');if(continueToTask)await openTaskModal();
- }catch(e){if($('upload-modal').open)$('upload-error').textContent=e.message;else message(e.message,true);}
- finally{buttons.forEach(b=>b.disabled=false);}
-});
+window.MaterialUploader=window.MaterialUploadFlow?.create({context:()=>({project,role}),capture:()=>workspaceReads.capture(),current:scope=>workspaceReads.current(scope),api,openModal:()=>openModal('upload-modal'),closeModal:()=>closeModal('upload-modal'),refresh:async uploaded=>{selectedMaterials.add(uploaded.id);lists.material.page=1;lists.material.q='';$('material-query').value='';await loadMaterials();},continueKnowledge:openTaskModal,notify:message,elements:{modal:$('upload-modal'),file:$('file'),error:$('upload-error'),only:$('upload-only'),more:$('upload-continue')},formData:()=>new FormData()});
+bind('upload-form','submit',e=>window.MaterialUploader?.submit(e));
 bind('profile-form','submit',async()=>{const p=await api(`/api/projects/${project}/profiles`,{method:'POST',body:{title:$('profile-title').value}});$('profile-title').value='';ExperienceUI.closeAll();const topics=await api(`/api/projects/${project}/profiles`);await chooseProfile(topics.find(t=>t.id===p.id)||{...p,title:'新知识专题'});});
 bind('distill','click',async()=>{$('task-profile').value=profile;ExperienceUI.closeAll();await openTaskModal();});
 bind('question-form','submit',async()=>{
@@ -219,7 +209,7 @@ bind('task-form','submit',async()=>{
   showPage('tasks');await loadTasks();await loadProfiles();message('候选生成任务已提交，完成后请审核发布');
  }catch(e){if(project===p)$('task-error').textContent=e.message;}finally{button.disabled=false;}
 });
-bind('new-material','click',()=>{$('upload-error').textContent='';openModal('upload-modal');});bind('task-create','click',openTaskModal);
+bind('new-material','click',()=>window.MaterialUploader?.open());bind('task-create','click',openTaskModal);
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
 
 for(const [key,prefix,load]of [['material','material',loadMaterials],['task','task',loadTasks]]){bind(prefix+'-search','submit',()=>{lists[key].q=$(prefix+'-query').value.trim();lists[key].page=1;return load();});bind(prefix+'-reset','click',()=>{$(prefix+'-query').value='';lists[key].q='';lists[key].page=1;if(key==='task'){lists.task.status='';$('task-filter').value='';}return load();});}

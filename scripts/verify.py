@@ -23,6 +23,7 @@ if args.e2e:
     commands.append([sys.executable, 'tests/personality_journey_e2e.py'])
     commands.append([sys.executable, 'tests/chat_recovery_e2e.py'])
     commands.append([sys.executable, 'tests/chat_submission_e2e.py'])
+    commands.append([sys.executable, 'tests/first_entry_e2e.py'])
 commands.append(['git', 'diff', '--check'])
 for command in commands:
     print('RUN:', ' '.join(command), flush=True)
