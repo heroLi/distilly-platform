@@ -14,6 +14,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from model_protocol import OutputPolicy, OutputLimitError, require_finish
+from text_egress import fixture_text_target
 
 LOG = logging.getLogger("distilly.worker")
 
@@ -43,7 +44,7 @@ class ExecutionChanged(ValueError):
 def failure_code(error):
     if isinstance(error, ExecutionChanged): return "EXECUTION_CHANGED"
     if isinstance(error, ModelConfigurationError): return "MODEL_CONFIGURATION_ERROR"
-    if getattr(error, "failure_code", None) in {"MODEL_CONFIGURATION_ERROR", "MODEL_OUTPUT_LIMIT"}: return error.failure_code
+    if getattr(error, "failure_code", None) in {"MODEL_CONFIGURATION_ERROR", "MODEL_OUTPUT_LIMIT", "MODEL_BUDGET_NOT_VERIFIED"}: return error.failure_code
     if isinstance(error, ModelError): return "MODEL_UNAVAILABLE"
     if getattr(error, "failure_code", None) == "MEDIA_NOT_CONFIGURED": return "MEDIA_NOT_CONFIGURED"
     if isinstance(error, (ValueError, TypeError)): return "INVALID_MODEL_OUTPUT"
@@ -74,6 +75,7 @@ class Model:
             if should_cancel and should_cancel():
                 raise ModelCancelled("model request cancelled")
         check_cancel()
+        target = fixture_text_target(self.mode, self.url, synthetic_fixture=os.getenv("MODEL_SYNTHETIC_TEXT_FIXTURE") == "true")
         request_body = {"model": self.model,
                            "messages": [{"role": "system", "content": system},
                                         {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}]}
@@ -87,14 +89,14 @@ class Model:
         if on_chunk and self.output_policy.streaming:
             request_body["stream"] = True
         body = json.dumps(request_body, ensure_ascii=False).encode()
-        request = urllib.request.Request(self.url.rstrip("/") + "/chat/completions", body,
+        request = urllib.request.Request(target, body,
                                          {"Content-Type": "application/json", "Authorization": "Bearer " + self.key})
         # Do not forward credentials through redirects.
         class NoRedirect(urllib.request.HTTPRedirectHandler):
             def redirect_request(self, *args, **kwargs):
                 return None
         try:
-            with urllib.request.build_opener(NoRedirect()).open(request, timeout=self.timeout) as response:
+            with urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect()).open(request, timeout=self.timeout) as response:
                 if on_chunk and "text/event-stream" in response.headers.get("Content-Type", ""):
                     content, received = "", 0
                     finish, completed = None, False

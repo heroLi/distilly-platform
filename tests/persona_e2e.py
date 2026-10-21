@@ -123,7 +123,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='persona-e2e-') as tmp:
         runtime_jar=Path(tmp)/'distilly-platform.jar'
         shutil.copy2(ROOT/'server/target/distilly-platform-0.1.0.jar',runtime_jar)
-        env={**os.environ,'PLATFORM_DEMO':'true','PLATFORM_WORKER_TOKEN':TOKEN,'PLATFORM_PORT':str(port),'PLATFORM_BIND':'127.0.0.1','PLATFORM_DB_URL':f'jdbc:h2:file:{tmp}/db;DATABASE_TO_LOWER=TRUE','PLATFORM_DB_USER':'sa','PLATFORM_DB_PASSWORD':'','PLATFORM_API_URL':base,'MODEL_MODE':'gateway','MODEL_BASE_URL':f'http://127.0.0.1:{gateway.server_port}/v1','MODEL_ALLOW_HTTP':'true','MODEL_NAME':'fixture','MODEL_API_KEY':'fixture-key','IMAGE_BASE_URL':f'http://127.0.0.1:{gateway.server_port}/v1','IMAGE_API_KEY':'fixture-key','IMAGE_MODEL':'fixture-image'}
+        env={**os.environ,'MODEL_SYNTHETIC_TEXT_FIXTURE':'true','PLATFORM_DEMO':'true','PLATFORM_WORKER_TOKEN':TOKEN,'PLATFORM_PORT':str(port),'PLATFORM_BIND':'127.0.0.1','PLATFORM_DB_URL':f'jdbc:h2:file:{tmp}/db;DATABASE_TO_LOWER=TRUE','PLATFORM_DB_USER':'sa','PLATFORM_DB_PASSWORD':'','PLATFORM_API_URL':base,'MODEL_MODE':'gateway','MODEL_BASE_URL':f'http://127.0.0.1:{gateway.server_port}/v1','MODEL_ALLOW_HTTP':'true','MODEL_NAME':'fixture','MODEL_API_KEY':'fixture-key','IMAGE_BASE_URL':f'http://127.0.0.1:{gateway.server_port}/v1','IMAGE_API_KEY':'fixture-key','IMAGE_MODEL':'fixture-image'}
         env.update(SPEECH_BASE_URL=f'http://127.0.0.1:{gateway.server_port}/v1',SPEECH_API_KEY='fixture-key',TTS_MODEL='fixture-tts',ASR_MODEL='fixture-asr',VISION_BASE_URL=f'http://127.0.0.1:{gateway.server_port}/v1',VISION_API_KEY='fixture-key',VISION_MODEL='fixture-vision')
         if not real:env['PLATFORM_LEASE_SECONDS']='4'
         if real:

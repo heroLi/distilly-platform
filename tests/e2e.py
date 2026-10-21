@@ -83,7 +83,7 @@ def main():
         runtime_jar = Path(tmp) / JAR.name
         shutil.copy2(JAR, runtime_jar)
         log = Path(tmp) / "runtime.log"
-        env = {**os.environ, "PLATFORM_DEMO": "true", "PLATFORM_WORKER_TOKEN": WORKER_TOKEN,
+        env = {**os.environ, "MODEL_SYNTHETIC_TEXT_FIXTURE": "true", "PLATFORM_DEMO": "true", "PLATFORM_WORKER_TOKEN": WORKER_TOKEN,
                "PLATFORM_PORT": str(port), "PLATFORM_BIND": "127.0.0.1",
                "PLATFORM_DB_URL": "jdbc:h2:file:" + str(Path(tmp) / "db") + ";DATABASE_TO_LOWER=TRUE",
                "PLATFORM_DB_USER": "sa", "PLATFORM_DB_PASSWORD": "",

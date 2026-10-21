@@ -11,7 +11,7 @@ import persona
 
 class ProtocolTests(unittest.TestCase):
     def setUp(self):
-        self.env = patch.dict(os.environ, {"MODEL_ALLOW_HTTP": "true", "MODEL_JSON_MODE": "false", "MODEL_STREAMING": "true"}, clear=True)
+        self.env = patch.dict(os.environ, {"MODEL_SYNTHETIC_TEXT_FIXTURE": "true", "MODEL_ALLOW_HTTP": "true", "MODEL_JSON_MODE": "false", "MODEL_STREAMING": "true"}, clear=True)
         self.env.start(); self.addCleanup(self.env.stop)
         self.observed = []; self.result = {"answer": "synthetic", "claims": []}; self.reason = "stop"; self.status = 200
         test = self
