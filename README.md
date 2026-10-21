@@ -2,6 +2,8 @@
 
 2026-10-21：本分支从现存旧Git基线续做，不代表找回旧247项。真实文字供应商出口因费用不可核验保持关闭，mock与显式本机合成fixture仍可验证；范围、命令及未恢复能力见[续做记录](docs/RESUME_TEXT_COST_GATE_2026-10-21.md)。
 
+真实文字接入已核对历史 DeepSeek / `deepseek-flash` 目标；[接入准备与准确门槛](docs/REAL_TEXT_READINESS_2026-10-21.md)区分公开用量估算、真实账单、全局预算和安全凭据配置，当前不发起真实调用。
+
 当前开发入口：[实施总纲](docs/PROJECT_BLUEPRINT.md) · [统一设计与交互](docs/DESIGN_SYSTEM.md) · [2026-10-08 审查](docs/PROJECT_REVIEW_2026-10-08.md)。
 
 [Hindsight 与 VoiceStudio 接入方案](docs/HINDSIGHT_VOICESTUDIO_PLAN.md)（2026-10-10）设计长期关系记忆检索、人物专属声音及统一语音回复；当前为待实现方案，含固定上游版本、接口差异、许可记录与验收门槛。
