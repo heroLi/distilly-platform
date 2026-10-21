@@ -1,0 +1,396 @@
+{
+  "audit_id": "record_literal_filters_split_audit_v1_20261021",
+  "audit_scope": "Only the two newly frozen synthetic filter fixtures; no product code, historical datasets, Git operations, or network.",
+  "inputs": {
+    "development": {
+      "path": "tests/fixtures/record_filter_development_v1.json",
+      "sha256": "eccc2d2374a8f4fb4bc7edf05b76e36a2c1f75a943fad21b4b152d1ffc953974",
+      "bytes": 40724,
+      "cases": 81
+    },
+    "holdout": {
+      "path": "tests/fixtures/record_filter_holdout_v1.json",
+      "sha256": "e2c578a668c8f465665c9c1adc8580b3f346be50184a02ddad6e007537475478",
+      "bytes": 41078,
+      "cases": 79
+    }
+  },
+  "exact_overlap": {
+    "complete_prompt_including_question_filters_and_documents": {
+      "shared_distinct_values": 0,
+      "development_items_affected": 0,
+      "holdout_items_affected": 0,
+      "matching_pairs": 0
+    },
+    "question": {
+      "shared_distinct_values": 0,
+      "development_items_affected": 0,
+      "holdout_items_affected": 0,
+      "matching_pairs": 0
+    },
+    "question_and_filter_payload": {
+      "shared_distinct_values": 0,
+      "development_items_affected": 0,
+      "holdout_items_affected": 0,
+      "matching_pairs": 0
+    },
+    "source_body": {
+      "shared_distinct_values": 0,
+      "development_items_affected": 0,
+      "holdout_items_affected": 0,
+      "matching_pairs": 0
+    },
+    "exact_filter_payload_including_absent": {
+      "shared_distinct_values": 8,
+      "development_items_affected": 10,
+      "holdout_items_affected": 8,
+      "matching_pairs": 10
+    }
+  },
+  "entity_overlap": {
+    "ascii_date_shaped_literals_in_source_metadata_or_filters": {
+      "development_distinct": 33,
+      "holdout_distinct": 66,
+      "shared_distinct": 3,
+      "development_cases_affected": 3,
+      "holdout_cases_affected": 3
+    },
+    "shared_date_literal_classes": [
+      "minimum permitted Gregorian year boundary",
+      "maximum permitted Gregorian year boundary",
+      "invalid zero-year sentinel"
+    ],
+    "identifier_entities_in_filter_values_or_ascii_source_tokens": {
+      "development_distinct": 25,
+      "holdout_distinct": 53,
+      "shared_distinct": 0,
+      "development_cases_affected": 0,
+      "holdout_cases_affected": 0
+    },
+    "extraction_limits": "Date extraction counts ASCII date-shaped literals including invalid calendar sentinels. Identifier extraction includes syntactically valid requested identifiers and source ASCII tokens containing hyphen or underscore; unrelated free-form prose is not treated as an entity."
+  },
+  "generic_contract_transformation_overlap": {
+    "shared_coded_families": 61,
+    "development_cases_in_shared_families": 70,
+    "holdout_cases_in_shared_families": 76,
+    "families": [
+      {
+        "contract_transformation": "date_exact",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_lower_inclusive",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_upper_inclusive",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_cross_year",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_valid_leap",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_century_nonleap_source",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_minimum_year",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_maximum_year",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_any_mention",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_absent_no_fallback",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_impossible_source",
+        "development_cases": 1,
+        "holdout_cases": 2
+      },
+      {
+        "contract_transformation": "date_noncanonical_source",
+        "development_cases": 1,
+        "holdout_cases": 4
+      },
+      {
+        "contract_transformation": "date_fullwidth_source",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_timestamp_source",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_body_only",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "identifier_exact",
+        "development_cases": 2,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "identifier_case_sensitive",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "identifier_fullwidth_source",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "identifier_no_substring",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "identifier_connected_boundary",
+        "development_cases": 3,
+        "holdout_cases": 6
+      },
+      {
+        "contract_transformation": "identifier_delimiters",
+        "development_cases": 1,
+        "holdout_cases": 2
+      },
+      {
+        "contract_transformation": "identifier_single_character",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "identifier_max_length",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "identifier_conjunction",
+        "development_cases": 1,
+        "holdout_cases": 2
+      },
+      {
+        "contract_transformation": "identifier_five_conjunction",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "identifier_body_only",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "date_identifier_conjunction",
+        "development_cases": 1,
+        "holdout_cases": 2
+      },
+      {
+        "contract_transformation": "literal_negation_mention",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "selection_isolation",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "publication_isolation",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "workspace_isolation",
+        "development_cases": 2,
+        "holdout_cases": 2
+      },
+      {
+        "contract_transformation": "filter_before_candidate_limit",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "legacy_no_filters",
+        "development_cases": 2,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "viewer_denied",
+        "development_cases": 2,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_empty_filter",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_null_filter",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_unknown_key",
+        "development_cases": 2,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_partial_date",
+        "development_cases": 2,
+        "holdout_cases": 2
+      },
+      {
+        "contract_transformation": "invalid_reversed_range",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_calendar_date",
+        "development_cases": 2,
+        "holdout_cases": 2
+      },
+      {
+        "contract_transformation": "invalid_year_zero",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_year_overflow",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_nonpadded_date",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_date_slashes",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_date_fullwidth",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_date_whitespace",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_date_number",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_date_null",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifiers_empty",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifier_count",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifier_duplicate",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifier_length",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifier_prefix",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifier_whitespace",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifier_nonascii",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifier_slash",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifier_number",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifiers_null",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifiers_scalar",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_date_timestamp",
+        "development_cases": 1,
+        "holdout_cases": 1
+      },
+      {
+        "contract_transformation": "invalid_identifier_empty",
+        "development_cases": 1,
+        "holdout_cases": 1
+      }
+    ],
+    "development_case_families_not_coded_as_shared": 11,
+    "holdout_case_families_not_coded_as_shared": 3,
+    "interpretation": "These are common specification boundary/format/authorization transformations, not duplicated question/source content and not independently unseen transformation families. Coding is manual and intentionally broad: for example, noncanonical source dates share one family despite differing surface formats."
+  },
+  "independence_limits": [
+    "The holdout was authored and SHA-frozen before its author read this development fixture; this audit is the first permitted cross-read by that author.",
+    "Both authors received the same explicit contract, so generic boundary, case, connector, and validation families deliberately overlap.",
+    "Exact question, complete prompt, and body comparisons do not prove absence of conceptual similarity or paraphrase overlap.",
+    "Three shared date-shaped entities are fixed contract boundary/error sentinels; identifier entity overlap is reported separately.",
+    "The corpus consists of new synthetic examples, not recovered historical examples, private materials, or evidence of general semantic understanding.",
+    "No frozen case, difficult example, expected result, denominator, or product rule was changed during this audit."
+  ],
+  "artifact_privacy": "This audit contains counts, generic contract labels, paths, and hashes only; it excludes questions, source bodies, expected answers, and concrete entity values."
+}

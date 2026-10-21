@@ -1,0 +1,1689 @@
+{
+  "dataset_id": "record_literal_filters_holdout_v1_20261021",
+  "split": "holdout",
+  "historical_corpus_restored": false,
+  "description": "独立新建且冻结的合成保留集；不复用遗失历史样本，不证明普遍语义理解。仅测试授权已选已发布记录正文的结构化字面日期/标识符过滤；题面与答案不用于检索规则。每题独立词法锚点仅控制正文可检索性。",
+  "cases": [
+    {
+      "id": "rfh-001",
+      "family": "inclusive_lower",
+      "category": "date_positive",
+      "documents": [
+        {
+          "text": "zorivale001 合成检验日期：2036-07-12。",
+          "key": "h001_1"
+        },
+        {
+          "text": "zorivale001 合成检验日期：2036-07-11。",
+          "key": "h001_2"
+        }
+      ],
+      "question": "zorivale001",
+      "expected_keys": [
+        "h001_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-07-12",
+        "date_to": "2036-07-18"
+      }
+    },
+    {
+      "id": "rfh-002",
+      "family": "inclusive_upper",
+      "category": "date_positive",
+      "documents": [
+        {
+          "text": "zorivale002 合成复核日期：2037-11-23。",
+          "key": "h002_1"
+        },
+        {
+          "text": "zorivale002 合成复核日期：2037-11-24。",
+          "key": "h002_2"
+        }
+      ],
+      "question": "zorivale002",
+      "expected_keys": [
+        "h002_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2037-11-20",
+        "date_to": "2037-11-23"
+      }
+    },
+    {
+      "id": "rfh-003",
+      "family": "single_day",
+      "category": "date_positive",
+      "documents": [
+        {
+          "text": "zorivale003 试验日期（2038-02-16）。",
+          "key": "h003_1"
+        },
+        {
+          "text": "zorivale003 试验日期（2038-02-15）。",
+          "key": "h003_2"
+        }
+      ],
+      "question": "zorivale003",
+      "expected_keys": [
+        "h003_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2038-02-16",
+        "date_to": "2038-02-16"
+      }
+    },
+    {
+      "id": "rfh-004",
+      "family": "cross_year",
+      "category": "date_positive",
+      "documents": [
+        {
+          "text": "zorivale004 合成维护日期 2040-01-01。",
+          "key": "h004_1"
+        },
+        {
+          "text": "zorivale004 合成维护日期 2039-12-29。",
+          "key": "h004_2"
+        }
+      ],
+      "question": "zorivale004",
+      "expected_keys": [
+        "h004_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2039-12-31",
+        "date_to": "2040-01-02"
+      }
+    },
+    {
+      "id": "rfh-005",
+      "family": "leap_source",
+      "category": "date_positive",
+      "documents": [
+        {
+          "text": "zorivale005 合成核对日期 2044-02-29。",
+          "key": "h005_1"
+        },
+        {
+          "text": "zorivale005 合成核对日期 2044-03-01。",
+          "key": "h005_2"
+        }
+      ],
+      "question": "zorivale005",
+      "expected_keys": [
+        "h005_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2044-02-28",
+        "date_to": "2044-02-29"
+      }
+    },
+    {
+      "id": "rfh-006",
+      "family": "gregorian_century_leap",
+      "category": "date_positive",
+      "documents": [
+        {
+          "text": "zorivale006 合成旧式历法测试 2000-02-29。",
+          "key": "h006_1"
+        },
+        {
+          "text": "zorivale006 合成旧式历法测试 2000-03-01。",
+          "key": "h006_2"
+        }
+      ],
+      "question": "zorivale006",
+      "expected_keys": [
+        "h006_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2000-02-29",
+        "date_to": "2000-02-29"
+      }
+    },
+    {
+      "id": "rfh-007",
+      "family": "minimum_year",
+      "category": "date_positive",
+      "documents": [
+        {
+          "text": "zorivale007 合成边界日期 0001-01-01。",
+          "key": "h007_1"
+        },
+        {
+          "text": "zorivale007 合成边界日期 0001-01-02。",
+          "key": "h007_2"
+        }
+      ],
+      "question": "zorivale007",
+      "expected_keys": [
+        "h007_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "0001-01-01",
+        "date_to": "0001-01-01"
+      }
+    },
+    {
+      "id": "rfh-008",
+      "family": "maximum_year",
+      "category": "date_positive",
+      "documents": [
+        {
+          "text": "zorivale008 合成边界日期 9999-12-31。",
+          "key": "h008_1"
+        },
+        {
+          "text": "zorivale008 合成边界日期 9999-12-30。",
+          "key": "h008_2"
+        }
+      ],
+      "question": "zorivale008",
+      "expected_keys": [
+        "h008_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "9999-12-31",
+        "date_to": "9999-12-31"
+      }
+    },
+    {
+      "id": "rfh-009",
+      "family": "any_date_not_event_relation",
+      "category": "date_positive",
+      "documents": [
+        {
+          "text": "zorivale009 起始标记 2047-03-18，回顾标记 2047-09-27。",
+          "key": "h009_1"
+        },
+        {
+          "text": "zorivale009 单一标记 2047-03-18。",
+          "key": "h009_2"
+        }
+      ],
+      "question": "zorivale009",
+      "expected_keys": [
+        "h009_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2047-09-27",
+        "date_to": "2047-09-27"
+      },
+      "note": "任一正文日期符合即可；不推断日期所属事件。"
+    },
+    {
+      "id": "rfh-010",
+      "family": "date_absent",
+      "category": "date_no_match",
+      "documents": [
+        {
+          "text": "zorivale010 合成记录尚未写明日期。",
+          "key": "h010_1"
+        }
+      ],
+      "question": "zorivale010",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2048-06-01",
+        "date_to": "2048-06-30"
+      }
+    },
+    {
+      "id": "rfh-011",
+      "family": "slash_date",
+      "category": "date_no_match",
+      "documents": [
+        {
+          "text": "zorivale011 合成记录日期 2049/08/19。",
+          "key": "h011_1"
+        }
+      ],
+      "question": "zorivale011",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2049-08-19",
+        "date_to": "2049-08-19"
+      }
+    },
+    {
+      "id": "rfh-012",
+      "family": "non_padded_date",
+      "category": "date_no_match",
+      "documents": [
+        {
+          "text": "zorivale012 合成记录日期 2050-4-6。",
+          "key": "h012_1"
+        }
+      ],
+      "question": "zorivale012",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2050-04-06",
+        "date_to": "2050-04-06"
+      }
+    },
+    {
+      "id": "rfh-013",
+      "family": "chinese_date",
+      "category": "date_no_match",
+      "documents": [
+        {
+          "text": "zorivale013 合成记录日期 2051年5月7日。",
+          "key": "h013_1"
+        }
+      ],
+      "question": "zorivale013",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2051-05-07",
+        "date_to": "2051-05-07"
+      }
+    },
+    {
+      "id": "rfh-014",
+      "family": "month_day_ambiguity",
+      "category": "date_no_match",
+      "documents": [
+        {
+          "text": "zorivale014 合成记录日期 06/09。",
+          "key": "h014_1"
+        }
+      ],
+      "question": "zorivale014",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2052-06-09",
+        "date_to": "2052-06-09"
+      }
+    },
+    {
+      "id": "rfh-015",
+      "family": "iso_timestamp",
+      "category": "date_no_match",
+      "documents": [
+        {
+          "text": "zorivale015 合成记录时刻 2053-10-21T08:14:00Z。",
+          "key": "h015_1"
+        }
+      ],
+      "question": "zorivale015",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2053-10-21",
+        "date_to": "2053-10-21"
+      }
+    },
+    {
+      "id": "rfh-016",
+      "family": "fullwidth_date",
+      "category": "date_no_match",
+      "documents": [
+        {
+          "text": "zorivale016 合成记录日期 ２０５４-１２-１７。",
+          "key": "h016_1"
+        }
+      ],
+      "question": "zorivale016",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2054-12-17",
+        "date_to": "2054-12-17"
+      }
+    },
+    {
+      "id": "rfh-017",
+      "family": "invalid_source_day",
+      "category": "date_no_match",
+      "documents": [
+        {
+          "text": "zorivale017 合成记录日期 2055-02-30。",
+          "key": "h017_1"
+        }
+      ],
+      "question": "zorivale017",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2055-02-01",
+        "date_to": "2055-03-01"
+      }
+    },
+    {
+      "id": "rfh-018",
+      "family": "nonleap_century_source",
+      "category": "date_no_match",
+      "documents": [
+        {
+          "text": "zorivale018 合成历法反例日期 1900-02-29。",
+          "key": "h018_1"
+        }
+      ],
+      "question": "zorivale018",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "1900-02-28",
+        "date_to": "1900-03-01"
+      }
+    },
+    {
+      "id": "rfh-019",
+      "family": "date_only_title",
+      "category": "body_scope",
+      "documents": [
+        {
+          "text": "zorivale019 合成正文未记录日期。",
+          "title": "2056-04-12 合成标题",
+          "section": "2056-04-12",
+          "key": "h019_1"
+        }
+      ],
+      "question": "zorivale019",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2056-04-12",
+        "date_to": "2056-04-12"
+      }
+    },
+    {
+      "id": "rfh-020",
+      "family": "invalid_and_valid_source_dates",
+      "category": "date_positive",
+      "documents": [
+        {
+          "text": "zorivale020 无效日期 2057-02-29；有效日期 2057-03-02。",
+          "key": "h020_1"
+        }
+      ],
+      "question": "zorivale020",
+      "expected_keys": [
+        "h020_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2057-03-02",
+        "date_to": "2057-03-02"
+      }
+    },
+    {
+      "id": "rfh-021",
+      "family": "out_of_range_no_fallback",
+      "category": "date_no_match",
+      "documents": [
+        {
+          "text": "zorivale021 合成签核日期 2058-08-03。",
+          "key": "h021_1"
+        }
+      ],
+      "question": "zorivale021",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2058-08-04",
+        "date_to": "2058-08-08"
+      }
+    },
+    {
+      "id": "rfh-022",
+      "family": "identifier_exact",
+      "category": "identifier_positive",
+      "documents": [
+        {
+          "text": "zorivale022 合成编号 QVR-481。",
+          "key": "h022_1"
+        },
+        {
+          "text": "zorivale022 合成编号 QVR-482。",
+          "key": "h022_2"
+        }
+      ],
+      "question": "zorivale022",
+      "expected_keys": [
+        "h022_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "QVR-481"
+        ]
+      }
+    },
+    {
+      "id": "rfh-023",
+      "family": "identifier_case_sensitive",
+      "category": "identifier_no_match",
+      "documents": [
+        {
+          "text": "zorivale023 合成编号 Qvx-593。",
+          "key": "h023_1"
+        }
+      ],
+      "question": "zorivale023",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "QVX-593"
+        ]
+      }
+    },
+    {
+      "id": "rfh-024",
+      "family": "identifier_fullwidth_source",
+      "category": "identifier_no_match",
+      "documents": [
+        {
+          "text": "zorivale024 合成编号 ＱＷＺ-６０４。",
+          "key": "h024_1"
+        }
+      ],
+      "question": "zorivale024",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "QWZ-604"
+        ]
+      }
+    },
+    {
+      "id": "rfh-025",
+      "family": "identifier_prefix_suffix",
+      "category": "identifier_no_match",
+      "documents": [
+        {
+          "text": "zorivale025 合成编号 JRN-7150。",
+          "key": "h025_1"
+        },
+        {
+          "text": "zorivale025 合成编号 XJRN-715。",
+          "key": "h025_2"
+        }
+      ],
+      "question": "zorivale025",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "JRN-715"
+        ]
+      }
+    },
+    {
+      "id": "rfh-026",
+      "family": "identifier_underscore_continuation",
+      "category": "identifier_no_match",
+      "documents": [
+        {
+          "text": "zorivale026 合成编号 LMX_826_extra。",
+          "key": "h026_1"
+        }
+      ],
+      "question": "zorivale026",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "LMX_826"
+        ]
+      }
+    },
+    {
+      "id": "rfh-027",
+      "family": "identifier_hyphen_continuation",
+      "category": "identifier_no_match",
+      "documents": [
+        {
+          "text": "zorivale027 合成编号 MNY-937-tail。",
+          "key": "h027_1"
+        }
+      ],
+      "question": "zorivale027",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "MNY-937"
+        ]
+      }
+    },
+    {
+      "id": "rfh-028",
+      "family": "identifier_dot_continuation",
+      "category": "identifier_no_match",
+      "documents": [
+        {
+          "text": "zorivale028 合成编号 NPZ-148.json。",
+          "key": "h028_1"
+        }
+      ],
+      "question": "zorivale028",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "NPZ-148"
+        ]
+      },
+      "note": "ASCII 点连接采用保守边界，不拆分扩展名。"
+    },
+    {
+      "id": "rfh-029",
+      "family": "identifier_colon_continuation",
+      "category": "identifier_no_match",
+      "documents": [
+        {
+          "text": "zorivale029 合成编号 OQA-259:pending。",
+          "key": "h029_1"
+        }
+      ],
+      "question": "zorivale029",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "OQA-259"
+        ]
+      },
+      "note": "ASCII 冒号连接采用保守边界。"
+    },
+    {
+      "id": "rfh-030",
+      "family": "identifier_slash_continuation",
+      "category": "identifier_no_match",
+      "documents": [
+        {
+          "text": "zorivale030 合成编号 PRB-360/part。",
+          "key": "h030_1"
+        }
+      ],
+      "question": "zorivale030",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "PRB-360"
+        ]
+      },
+      "note": "ASCII 斜杠连接采用保守边界。"
+    },
+    {
+      "id": "rfh-031",
+      "family": "identifier_leading_connected",
+      "category": "identifier_no_match",
+      "documents": [
+        {
+          "text": "zorivale031 合成编号 parent/SUC-471。",
+          "key": "h031_1"
+        },
+        {
+          "text": "zorivale031 合成编号 key:TVD-582。",
+          "key": "h031_2"
+        }
+      ],
+      "question": "zorivale031",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "SUC-471"
+        ]
+      }
+    },
+    {
+      "id": "rfh-032",
+      "family": "identifier_chinese_punctuation",
+      "category": "identifier_positive",
+      "documents": [
+        {
+          "text": "zorivale032 合成编号：UWE-693，状态为草案。",
+          "key": "h032_1"
+        }
+      ],
+      "question": "zorivale032",
+      "expected_keys": [
+        "h032_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "UWE-693"
+        ]
+      }
+    },
+    {
+      "id": "rfh-033",
+      "family": "identifier_parentheses_whitespace",
+      "category": "identifier_positive",
+      "documents": [
+        {
+          "text": "zorivale033 合成记录（VXF_704） 待复核。",
+          "key": "h033_1"
+        }
+      ],
+      "question": "zorivale033",
+      "expected_keys": [
+        "h033_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "VXF_704"
+        ]
+      }
+    },
+    {
+      "id": "rfh-034",
+      "family": "identifier_all_required",
+      "category": "identifier_positive",
+      "documents": [
+        {
+          "text": "zorivale034 合成记录 WYG-815 与 XZH_926 均被提及。",
+          "key": "h034_1"
+        },
+        {
+          "text": "zorivale034 合成记录只有 WYG-815。",
+          "key": "h034_2"
+        }
+      ],
+      "question": "zorivale034",
+      "expected_keys": [
+        "h034_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "WYG-815",
+          "XZH_926"
+        ]
+      }
+    },
+    {
+      "id": "rfh-035",
+      "family": "identifier_cross_record_not_joined",
+      "category": "identifier_no_match",
+      "documents": [
+        {
+          "text": "zorivale035 合成记录只有 YAI-137。",
+          "key": "h035_1"
+        },
+        {
+          "text": "zorivale035 合成记录只有 ZBJ-248。",
+          "key": "h035_2"
+        }
+      ],
+      "question": "zorivale035",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "YAI-137",
+          "ZBJ-248"
+        ]
+      }
+    },
+    {
+      "id": "rfh-036",
+      "family": "identifier_negation_is_mention",
+      "category": "literal_not_truth",
+      "documents": [
+        {
+          "text": "zorivale036 合成声明：此次不采用 CCK-359，也未完成对应任务。",
+          "key": "h036_1"
+        }
+      ],
+      "question": "zorivale036",
+      "expected_keys": [
+        "h036_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "CCK-359"
+        ]
+      },
+      "note": "字面存在不代表肯定事实；保留否定正文。"
+    },
+    {
+      "id": "rfh-037",
+      "family": "identifier_maximum_length",
+      "category": "identifier_positive",
+      "documents": [
+        {
+          "text": "zorivale037 合成编号 Dqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq。",
+          "key": "h037_1"
+        }
+      ],
+      "question": "zorivale037",
+      "expected_keys": [
+        "h037_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "Dqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+        ]
+      }
+    },
+    {
+      "id": "rfh-038",
+      "family": "identifier_single_character",
+      "category": "identifier_positive",
+      "documents": [
+        {
+          "text": "zorivale038 合成标签（7）归于虚构检验。",
+          "key": "h038_1"
+        },
+        {
+          "text": "zorivale038 合成标签 77 归于虚构检验。",
+          "key": "h038_2"
+        }
+      ],
+      "question": "zorivale038",
+      "expected_keys": [
+        "h038_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "7"
+        ]
+      }
+    },
+    {
+      "id": "rfh-039",
+      "family": "identifier_five_required",
+      "category": "identifier_positive",
+      "documents": [
+        {
+          "text": "zorivale039 合成标签 EDP-460 FET_571 GFU-682 HGV_793 IHW-804。",
+          "key": "h039_1"
+        },
+        {
+          "text": "zorivale039 合成标签 EDP-460 FET_571 GFU-682 HGV_793。",
+          "key": "h039_2"
+        }
+      ],
+      "question": "zorivale039",
+      "expected_keys": [
+        "h039_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "EDP-460",
+          "FET_571",
+          "GFU-682",
+          "HGV_793",
+          "IHW-804"
+        ]
+      }
+    },
+    {
+      "id": "rfh-040",
+      "family": "combined_conditions",
+      "category": "combined",
+      "documents": [
+        {
+          "text": "zorivale040 合成编号 JIX-915，日期 2061-06-24。",
+          "key": "h040_1"
+        },
+        {
+          "text": "zorivale040 合成编号 JIX-915，日期 2061-06-25。",
+          "key": "h040_2"
+        },
+        {
+          "text": "zorivale040 合成编号 KJY-026，日期 2061-06-24。",
+          "key": "h040_3"
+        }
+      ],
+      "question": "zorivale040",
+      "expected_keys": [
+        "h040_1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2061-06-24",
+        "date_to": "2061-06-24",
+        "identifiers": [
+          "JIX-915"
+        ]
+      }
+    },
+    {
+      "id": "rfh-041",
+      "family": "combined_no_fallback",
+      "category": "combined",
+      "documents": [
+        {
+          "text": "zorivale041 合成编号 LKZ-137，日期 2062-07-25。",
+          "key": "h041_1"
+        },
+        {
+          "text": "zorivale041 合成编号 MLA-248，日期 2062-07-26。",
+          "key": "h041_2"
+        }
+      ],
+      "question": "zorivale041",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2062-07-26",
+        "date_to": "2062-07-26",
+        "identifiers": [
+          "LKZ-137"
+        ]
+      }
+    },
+    {
+      "id": "rfh-042",
+      "family": "identifier_only_title",
+      "category": "body_scope",
+      "documents": [
+        {
+          "text": "zorivale042 合成正文尚未填写编号。",
+          "title": "NMB-359 合成标题",
+          "section": "NMB-359",
+          "key": "h042_1"
+        }
+      ],
+      "question": "zorivale042",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "NMB-359"
+        ]
+      }
+    },
+    {
+      "id": "rfh-043",
+      "family": "unselected_excluded",
+      "category": "authorization",
+      "documents": [
+        {
+          "text": "zorivale043 合成编号 ONC-460。",
+          "selected": false,
+          "key": "h043_1"
+        },
+        {
+          "text": "zorivale043 合成编号 PND-571。",
+          "key": "h043_2"
+        }
+      ],
+      "question": "zorivale043",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "ONC-460"
+        ]
+      }
+    },
+    {
+      "id": "rfh-044",
+      "family": "unpublished_excluded",
+      "category": "authorization",
+      "documents": [
+        {
+          "text": "zorivale044 合成编号 QOE-682。",
+          "published": false,
+          "key": "h044_1"
+        },
+        {
+          "text": "zorivale044 合成编号 RPF-793。",
+          "key": "h044_2"
+        }
+      ],
+      "question": "zorivale044",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "QOE-682"
+        ]
+      }
+    },
+    {
+      "id": "rfh-045",
+      "family": "foreign_excluded",
+      "category": "authorization",
+      "documents": [
+        {
+          "text": "zorivale045 合成编号 SQG-804。",
+          "scope": "foreign",
+          "key": "h045_1"
+        },
+        {
+          "text": "zorivale045 合成编号 TRH-915。",
+          "key": "h045_2"
+        }
+      ],
+      "question": "zorivale045",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "SQG-804"
+        ]
+      }
+    },
+    {
+      "id": "rfh-046",
+      "family": "mixed_scope_same_literal",
+      "category": "authorization",
+      "documents": [
+        {
+          "text": "zorivale046 合成编号 USI-026。",
+          "scope": "foreign",
+          "key": "h046_1"
+        },
+        {
+          "text": "zorivale046 合成编号 USI-026。",
+          "selected": false,
+          "key": "h046_2"
+        },
+        {
+          "text": "zorivale046 合成编号 USI-026。",
+          "published": false,
+          "key": "h046_3"
+        },
+        {
+          "text": "zorivale046 合成编号 USI-026。",
+          "key": "h046_4"
+        }
+      ],
+      "question": "zorivale046",
+      "expected_keys": [
+        "h046_4"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "USI-026"
+        ]
+      }
+    },
+    {
+      "id": "rfh-047",
+      "family": "viewer_not_member",
+      "category": "authorization",
+      "documents": [
+        {
+          "text": "zorivale047 合成编号 VTJ-137，日期 2063-08-26。",
+          "key": "h047_1"
+        }
+      ],
+      "question": "zorivale047",
+      "expected_keys": [],
+      "expected_status": 403,
+      "filters": {
+        "identifiers": [
+          "VTJ-137"
+        ]
+      }
+    },
+    {
+      "id": "rfh-048",
+      "family": "filter_before_top_twelve",
+      "category": "candidate_limit",
+      "documents": [
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_1"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_2"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_3"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_4"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_5"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_6"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_7"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_8"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_9"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_10"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_11"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_12"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_13"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_14"
+        },
+        {
+          "text": "zorivale048 合成编号 WUK-248。",
+          "key": "h048_15"
+        },
+        {
+          "text": "zorivale048 合成编号 XVL-359。",
+          "key": "h048_16"
+        }
+      ],
+      "question": "zorivale048",
+      "expected_keys": [
+        "h048_16"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "XVL-359"
+        ]
+      },
+      "note": "过滤应在候选 top12 截断之前执行。"
+    },
+    {
+      "id": "rfh-049",
+      "family": "legacy_absent_filters",
+      "category": "legacy",
+      "documents": [
+        {
+          "text": "zorivale049 合成原行为记录保留可检索文本。",
+          "key": "h049_1"
+        }
+      ],
+      "question": "zorivale049",
+      "expected_keys": [
+        "h049_1"
+      ],
+      "expected_status": 200
+    },
+    {
+      "id": "rfh-050",
+      "family": "invalid_empty_object",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale050 合成占位正文，不依赖过滤结果。",
+          "key": "h050_1"
+        }
+      ],
+      "question": "zorivale050",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {}
+    },
+    {
+      "id": "rfh-051",
+      "family": "invalid_null_filters",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale051 合成占位正文，不依赖过滤结果。",
+          "key": "h051_1"
+        }
+      ],
+      "question": "zorivale051",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": null
+    },
+    {
+      "id": "rfh-052",
+      "family": "invalid_unknown_key",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale052 合成占位正文，不依赖过滤结果。",
+          "key": "h052_1"
+        }
+      ],
+      "question": "zorivale052",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "YWM-460"
+        ],
+        "mode": "loose"
+      }
+    },
+    {
+      "id": "rfh-053",
+      "family": "invalid_missing_date_to",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale053 合成占位正文，不依赖过滤结果。",
+          "key": "h053_1"
+        }
+      ],
+      "question": "zorivale053",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2064-09-27"
+      }
+    },
+    {
+      "id": "rfh-054",
+      "family": "invalid_missing_date_from",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale054 合成占位正文，不依赖过滤结果。",
+          "key": "h054_1"
+        }
+      ],
+      "question": "zorivale054",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_to": "2064-09-27"
+      }
+    },
+    {
+      "id": "rfh-055",
+      "family": "invalid_reversed_dates",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale055 合成占位正文，不依赖过滤结果。",
+          "key": "h055_1"
+        }
+      ],
+      "question": "zorivale055",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2065-10-29",
+        "date_to": "2065-10-28"
+      }
+    },
+    {
+      "id": "rfh-056",
+      "family": "invalid_invalid_leap_input",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale056 合成占位正文，不依赖过滤结果。",
+          "key": "h056_1"
+        }
+      ],
+      "question": "zorivale056",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2066-02-29",
+        "date_to": "2066-03-01"
+      }
+    },
+    {
+      "id": "rfh-057",
+      "family": "invalid_invalid_month_input",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale057 合成占位正文，不依赖过滤结果。",
+          "key": "h057_1"
+        }
+      ],
+      "question": "zorivale057",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2067-13-01",
+        "date_to": "2067-13-02"
+      }
+    },
+    {
+      "id": "rfh-058",
+      "family": "invalid_nonpadded_input",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale058 合成占位正文，不依赖过滤结果。",
+          "key": "h058_1"
+        }
+      ],
+      "question": "zorivale058",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2068-2-01",
+        "date_to": "2068-02-02"
+      }
+    },
+    {
+      "id": "rfh-059",
+      "family": "invalid_fullwidth_input",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale059 合成占位正文，不依赖过滤结果。",
+          "key": "h059_1"
+        }
+      ],
+      "question": "zorivale059",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "２０６９-03-02",
+        "date_to": "2069-03-03"
+      }
+    },
+    {
+      "id": "rfh-060",
+      "family": "invalid_slash_input",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale060 合成占位正文，不依赖过滤结果。",
+          "key": "h060_1"
+        }
+      ],
+      "question": "zorivale060",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2070/04/03",
+        "date_to": "2070-04-04"
+      }
+    },
+    {
+      "id": "rfh-061",
+      "family": "invalid_year_zero_input",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale061 合成占位正文，不依赖过滤结果。",
+          "key": "h061_1"
+        }
+      ],
+      "question": "zorivale061",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "0000-01-01",
+        "date_to": "0001-01-01"
+      }
+    },
+    {
+      "id": "rfh-062",
+      "family": "invalid_year_ten_thousand_input",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale062 合成占位正文，不依赖过滤结果。",
+          "key": "h062_1"
+        }
+      ],
+      "question": "zorivale062",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "10000-01-01",
+        "date_to": "10000-01-02"
+      }
+    },
+    {
+      "id": "rfh-063",
+      "family": "invalid_date_type_number",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale063 合成占位正文，不依赖过滤结果。",
+          "key": "h063_1"
+        }
+      ],
+      "question": "zorivale063",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": 20720506,
+        "date_to": "2072-05-07"
+      }
+    },
+    {
+      "id": "rfh-064",
+      "family": "invalid_date_type_null",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale064 合成占位正文，不依赖过滤结果。",
+          "key": "h064_1"
+        }
+      ],
+      "question": "zorivale064",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": null,
+        "date_to": "2073-06-08"
+      }
+    },
+    {
+      "id": "rfh-065",
+      "family": "invalid_date_trailing_space",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale065 合成占位正文，不依赖过滤结果。",
+          "key": "h065_1"
+        }
+      ],
+      "question": "zorivale065",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2074-07-09 ",
+        "date_to": "2074-07-10"
+      }
+    },
+    {
+      "id": "rfh-066",
+      "family": "invalid_ids_empty",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale066 合成占位正文，不依赖过滤结果。",
+          "key": "h066_1"
+        }
+      ],
+      "question": "zorivale066",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": []
+      }
+    },
+    {
+      "id": "rfh-067",
+      "family": "invalid_ids_scalar",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale067 合成占位正文，不依赖过滤结果。",
+          "key": "h067_1"
+        }
+      ],
+      "question": "zorivale067",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": "ZXN-571"
+      }
+    },
+    {
+      "id": "rfh-068",
+      "family": "invalid_ids_null",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale068 合成占位正文，不依赖过滤结果。",
+          "key": "h068_1"
+        }
+      ],
+      "question": "zorivale068",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": null
+      }
+    },
+    {
+      "id": "rfh-069",
+      "family": "invalid_ids_duplicate",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale069 合成占位正文，不依赖过滤结果。",
+          "key": "h069_1"
+        }
+      ],
+      "question": "zorivale069",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "AYO-682",
+          "AYO-682"
+        ]
+      }
+    },
+    {
+      "id": "rfh-070",
+      "family": "invalid_ids_too_many",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale070 合成占位正文，不依赖过滤结果。",
+          "key": "h070_1"
+        }
+      ],
+      "question": "zorivale070",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "BZP-793",
+          "CAQ-804",
+          "DBR-915",
+          "ECS-026",
+          "FDT-137",
+          "GEU-248"
+        ]
+      }
+    },
+    {
+      "id": "rfh-071",
+      "family": "invalid_id_fullwidth_input",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale071 合成占位正文，不依赖过滤结果。",
+          "key": "h071_1"
+        }
+      ],
+      "question": "zorivale071",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "ＨＦＶ-３５９"
+        ]
+      }
+    },
+    {
+      "id": "rfh-072",
+      "family": "invalid_id_leading_hyphen",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale072 合成占位正文，不依赖过滤结果。",
+          "key": "h072_1"
+        }
+      ],
+      "question": "zorivale072",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "-IGW-460"
+        ]
+      }
+    },
+    {
+      "id": "rfh-073",
+      "family": "invalid_id_space",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale073 合成占位正文，不依赖过滤结果。",
+          "key": "h073_1"
+        }
+      ],
+      "question": "zorivale073",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "JHX 571"
+        ]
+      }
+    },
+    {
+      "id": "rfh-074",
+      "family": "invalid_id_slash",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale074 合成占位正文，不依赖过滤结果。",
+          "key": "h074_1"
+        }
+      ],
+      "question": "zorivale074",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "KIY/682"
+        ]
+      }
+    },
+    {
+      "id": "rfh-075",
+      "family": "invalid_id_empty",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale075 合成占位正文，不依赖过滤结果。",
+          "key": "h075_1"
+        }
+      ],
+      "question": "zorivale075",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          ""
+        ]
+      }
+    },
+    {
+      "id": "rfh-076",
+      "family": "invalid_id_too_long",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale076 合成占位正文，不依赖过滤结果。",
+          "key": "h076_1"
+        }
+      ],
+      "question": "zorivale076",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "Lzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+        ]
+      }
+    },
+    {
+      "id": "rfh-077",
+      "family": "invalid_id_nonstring",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale077 合成占位正文，不依赖过滤结果。",
+          "key": "h077_1"
+        }
+      ],
+      "question": "zorivale077",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          123
+        ]
+      }
+    },
+    {
+      "id": "rfh-078",
+      "family": "invalid_date_timestamp_input",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale078 合成占位正文，不依赖过滤结果。",
+          "key": "h078_1"
+        }
+      ],
+      "question": "zorivale078",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2075-08-10T00:00:00Z",
+        "date_to": "2075-08-11"
+      }
+    },
+    {
+      "id": "rfh-079",
+      "family": "invalid_date_boolean_input",
+      "category": "invalid_input",
+      "documents": [
+        {
+          "text": "zorivale079 合成占位正文，不依赖过滤结果。",
+          "key": "h079_1"
+        }
+      ],
+      "question": "zorivale079",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": true,
+        "date_to": "2076-09-12"
+      }
+    }
+  ]
+}

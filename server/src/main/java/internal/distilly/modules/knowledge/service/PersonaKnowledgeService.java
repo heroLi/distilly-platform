@@ -4,6 +4,7 @@ import internal.distilly.common.json.JsonCodec;
 import internal.distilly.common.persistence.ResourceRepository;
 import internal.distilly.modules.knowledge.repository.PersonaKnowledgeRepository;
 import internal.distilly.modules.knowledge.domain.RecordLexicalQuery;
+import internal.distilly.modules.knowledge.domain.RecordSourceFilter;
 import internal.distilly.modules.workspace.service.AuditService;
 import internal.distilly.modules.workspace.service.WorkspaceAccessService;
 import java.util.ArrayList;
@@ -86,6 +87,11 @@ public class PersonaKnowledgeService {
     }
 
     public List<Map<String, Object>> retrieve(String actorId, String personaId, String question) {
+        return retrieve(actorId, personaId, question, RecordSourceFilter.none());
+    }
+
+    public List<Map<String, Object>> retrieve(String actorId, String personaId, String question,
+            RecordSourceFilter filter) {
         var personaRow = persona(actorId, personaId);
         var rows = repository.findPublishedClaims(personaId, personaRow.get("project_id"));
         var query = new RecordLexicalQuery(question);
@@ -93,6 +99,9 @@ public class PersonaKnowledgeService {
         for (var row : rows)
             for (var claim : items(json.decode(row.get("content")).get("claims"))) {
                 String body = (String) claim.get("text"), section = (String) claim.get("section");
+                // Only this raw claim may satisfy explicit conditions. Filter before ranking/caps.
+                if (!filter.matches(body))
+                    continue;
                 String hay = row.get("title") + " " + section + " " + body;
                 long score = query.score(hay);
                 if (score == 0)

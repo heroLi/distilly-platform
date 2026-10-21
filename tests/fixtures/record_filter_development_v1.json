@@ -1,0 +1,1864 @@
+{
+  "dataset_id": "record-literal-filters-development-v1-20261021",
+  "split": "development",
+  "historical_corpus_restored": false,
+  "description": "新建纯合成开发案例；显式日期和标识符正文过滤契约，不是历史遗失语义集恢复，不声称普遍语义理解。",
+  "cases": [
+    {
+      "id": "RFDEV-001",
+      "family": "literal-day",
+      "category": "date_exact",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检记于 2031-05-17。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检记于 2031-05-18。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2031-05-17",
+        "date_to": "2031-05-17"
+      }
+    },
+    {
+      "id": "RFDEV-002",
+      "family": "inclusive-lower",
+      "category": "date_boundary",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2032-04-01 完成。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2032-03-31 完成。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2032-04-01",
+        "date_to": "2032-04-09"
+      }
+    },
+    {
+      "id": "RFDEV-003",
+      "family": "inclusive-upper",
+      "category": "date_boundary",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2032-04-09 完成。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2032-04-10 完成。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2032-04-01",
+        "date_to": "2032-04-09"
+      }
+    },
+    {
+      "id": "RFDEV-004",
+      "family": "year-transition",
+      "category": "date_range",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2034-12-31 完成。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2035-01-01 完成。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 2035-01-02 完成。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1",
+        "d2"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2034-12-31",
+        "date_to": "2035-01-01"
+      }
+    },
+    {
+      "id": "RFDEV-005",
+      "family": "gregorian-leap",
+      "category": "date_calendar",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2040-02-29 完成。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2039-02-29 完成。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2039-01-01",
+        "date_to": "2040-12-31"
+      }
+    },
+    {
+      "id": "RFDEV-006",
+      "family": "century-nonleap",
+      "category": "date_calendar",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2100-02-29 完成。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2100-02-28 完成。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d2"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2100-02-01",
+        "date_to": "2100-03-01"
+      }
+    },
+    {
+      "id": "RFDEV-007",
+      "family": "year-minimum",
+      "category": "date_calendar",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 0001-01-01 完成。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 0000-01-01 完成。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "0001-01-01",
+        "date_to": "0001-01-01"
+      }
+    },
+    {
+      "id": "RFDEV-008",
+      "family": "year-maximum",
+      "category": "date_calendar",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 9999-12-31 完成。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 10000-12-31 完成。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "9999-12-31",
+        "date_to": "9999-12-31"
+      }
+    },
+    {
+      "id": "RFDEV-009",
+      "family": "many-date-mentions",
+      "category": "date_any_mention",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2037-08-01，另记 2037-08-14。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2037-08-02，另记 2037-08-03。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2037-08-14",
+        "date_to": "2037-08-14"
+      },
+      "note": "任意有效日期提及匹配；不推断日期与哪个事件绑定。"
+    },
+    {
+      "id": "RFDEV-010",
+      "family": "date-absent-no-fallback",
+      "category": "date_no_fallback",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检没有填写日期。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-09-10",
+        "date_to": "2036-09-10"
+      }
+    },
+    {
+      "id": "RFDEV-011",
+      "family": "date-impossible-source",
+      "category": "date_source_invalid",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-04-31。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2036-13-10。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 2036-00-10。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-01-01",
+        "date_to": "2036-12-31"
+      }
+    },
+    {
+      "id": "RFDEV-012",
+      "family": "date-ambiguous-source",
+      "category": "date_source_ambiguous",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 03/04/2036。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2036/03/04。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 2036-3-4。"
+        },
+        {
+          "key": "d4",
+          "text": "巡检 2036年3月4日。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-03-04",
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-013",
+      "family": "date-fullwidth-source",
+      "category": "date_source_width",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 ２０３６-０３-０４。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2036-03-04。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d2"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-03-04",
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-014",
+      "family": "date-timestamp-source",
+      "category": "date_source_connected",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04T10:00:00Z。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2036-03-04 10时。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d2"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-03-04",
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-015",
+      "family": "date-connected-prefix",
+      "category": "date_source_connected",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 X2036-03-04。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 /2036-03-04。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 (2036-03-04)。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d3"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-03-04",
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-016",
+      "family": "date-connected-suffix",
+      "category": "date_source_connected",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04_extra。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2036-03-04/05。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 2036-03-04。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d3"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-03-04",
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-017",
+      "family": "date-label-colon",
+      "category": "date_conservative_boundary",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 日期:2036-03-04。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 日期：2036-03-04。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 2036-03-04."
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d2"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-03-04",
+        "date_to": "2036-03-04"
+      },
+      "note": "ASCII冒号与句点作为连接字符，保守不匹配。"
+    },
+    {
+      "id": "RFDEV-018",
+      "family": "date-body-only",
+      "category": "body_only",
+      "documents": [
+        {
+          "key": "metadata",
+          "text": "巡检资料没有填写日期。",
+          "title": "2036-03-04 巡检",
+          "section": "2036-03-04"
+        },
+        {
+          "key": "body",
+          "text": "巡检日期 2036-03-04。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "body"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-03-04",
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-019",
+      "family": "date-original-negation",
+      "category": "source_negation",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检并未在 2036-03-04 举行。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-03-04",
+        "date_to": "2036-03-04"
+      },
+      "note": "仅日期提及；返回原否定文本，不作事实推断。"
+    },
+    {
+      "id": "RFDEV-020",
+      "family": "date-question-and",
+      "category": "question_and",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检日期 2036-03-04。"
+        },
+        {
+          "key": "d2",
+          "text": "仓储日期 2036-03-04。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-03-04",
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-021",
+      "family": "id-exact",
+      "category": "identifier_exact",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检编码 TX-482。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检编码 TX-483。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-022",
+      "family": "id-case",
+      "category": "identifier_case",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 tx-482。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 TX-482。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 Tx-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d2"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-023",
+      "family": "id-width",
+      "category": "identifier_width",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 ＴＸ-４８２。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d2"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-024",
+      "family": "id-prefix",
+      "category": "identifier_boundary",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 TX-4820。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 QTX-482。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d3"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-025",
+      "family": "id-connectors",
+      "category": "identifier_boundary",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 TX-482_A。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 TX-482-X。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 TX-482/X。"
+        },
+        {
+          "key": "d4",
+          "text": "巡检 TX-482:X。"
+        },
+        {
+          "key": "d5",
+          "text": "巡检 TX-482.X。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-026",
+      "family": "id-prefix-connectors",
+      "category": "identifier_boundary",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 A_TX-482。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 A-TX-482。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 A/TX-482。"
+        },
+        {
+          "key": "d4",
+          "text": "巡检 A:TX-482。"
+        },
+        {
+          "key": "d5",
+          "text": "巡检 A.TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-027",
+      "family": "id-chinese-punctuation",
+      "category": "identifier_delimiter",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检（TX-482）完成。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检，TX-482；完成。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 TX-482 完成。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1",
+        "d2",
+        "d3"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-028",
+      "family": "id-no-ascii-taildot",
+      "category": "identifier_conservative_boundary",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 TX-482."
+        },
+        {
+          "key": "d2",
+          "text": "巡检 编码:TX-482。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 编码：TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d3"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-029",
+      "family": "id-underscore-exact",
+      "category": "identifier_exact",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 ZONE_39。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 ZONE-39。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 ZONE_390。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "ZONE_39"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-030",
+      "family": "id-single-character",
+      "category": "identifier_exact",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 K。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 KK。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 k。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "K"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-031",
+      "family": "id-max-length",
+      "category": "identifier_length",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-032",
+      "family": "id-all-and",
+      "category": "identifier_conjunction",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 TX-482 与 CASE_65。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 TX-482。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 CASE_65。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482",
+          "CASE_65"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-033",
+      "family": "id-five-and",
+      "category": "identifier_conjunction",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 A1 B2 C3 D4 E5。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 A1 B2 C3 D4。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "A1",
+          "B2",
+          "C3",
+          "D4",
+          "E5"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-034",
+      "family": "id-no-fallback",
+      "category": "identifier_no_fallback",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 TX-483 完成。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-035",
+      "family": "id-body-only",
+      "category": "body_only",
+      "documents": [
+        {
+          "key": "metadata",
+          "text": "巡检编码未填写。",
+          "title": "TX-482 巡检",
+          "section": "TX-482"
+        },
+        {
+          "key": "body",
+          "text": "巡检编码 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "body"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-036",
+      "family": "date-plus-id-and",
+      "category": "filter_conjunction",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        },
+        {
+          "key": "d2",
+          "text": "巡检 2036-03-05 TX-482。"
+        },
+        {
+          "key": "d3",
+          "text": "巡检 2036-03-04 TX-483。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-03-04",
+        "date_to": "2036-03-04",
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-037",
+      "family": "id-question-and",
+      "category": "question_and",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 TX-482。"
+        },
+        {
+          "key": "d2",
+          "text": "仓储 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-038",
+      "family": "id-original-negation",
+      "category": "source_negation",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 TX-482 尚未批准，不得视为完成。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-039",
+      "family": "id-order-does-not-bind",
+      "category": "identifier_conjunction",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 CASE_65 后标 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482",
+          "CASE_65"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-040",
+      "family": "unselected-filter-isolation",
+      "category": "access_selection",
+      "documents": [
+        {
+          "key": "selected",
+          "text": "巡检 TX-482。"
+        },
+        {
+          "key": "unselected",
+          "text": "巡检 TX-482。",
+          "selected": false
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "selected"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-041",
+      "family": "unpublished-filter-isolation",
+      "category": "access_publish",
+      "documents": [
+        {
+          "key": "approved",
+          "text": "巡检 2036-03-04。"
+        },
+        {
+          "key": "draft",
+          "text": "巡检 2036-03-04。",
+          "published": false
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "approved"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "date_from": "2036-03-04",
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-042",
+      "family": "foreign-filter-isolation",
+      "category": "access_workspace",
+      "documents": [
+        {
+          "key": "current",
+          "text": "巡检 TX-482。"
+        },
+        {
+          "key": "foreign",
+          "text": "巡检 TX-482。",
+          "scope": "foreign"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "current"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-043",
+      "family": "foreign-only-no-fallback",
+      "category": "access_workspace",
+      "documents": [
+        {
+          "key": "foreign",
+          "text": "巡检 TX-482。",
+          "scope": "foreign"
+        },
+        {
+          "key": "current",
+          "text": "巡检 TX-483。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-044",
+      "family": "filter-before-top12",
+      "category": "limit_order",
+      "documents": [
+        {
+          "key": "distractor00",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor01",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor02",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor03",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor04",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor05",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor06",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor07",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor08",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor09",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor10",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor11",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor12",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "distractor13",
+          "text": "巡检 巡检 巡检 TX-999。"
+        },
+        {
+          "key": "qualifying",
+          "text": "巡检 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "qualifying"
+      ],
+      "expected_status": 200,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-045",
+      "family": "legacy-unfiltered-record",
+      "category": "no_filter",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检没有结构化字段。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [
+        "d1"
+      ],
+      "expected_status": 200
+    },
+    {
+      "id": "RFDEV-046",
+      "family": "legacy-empty-record",
+      "category": "no_filter",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "仓储没有巡更资料。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 200
+    },
+    {
+      "id": "RFDEV-047",
+      "family": "legacy-viewer-denied",
+      "category": "denied",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 403
+    },
+    {
+      "id": "RFDEV-048",
+      "family": "filtered-viewer-denied",
+      "category": "denied",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 403,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-049",
+      "family": "empty-filter",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {}
+    },
+    {
+      "id": "RFDEV-050",
+      "family": "null-filter",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": null
+    },
+    {
+      "id": "RFDEV-051",
+      "family": "unknown-field",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-052",
+      "family": "filter-array",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": []
+    },
+    {
+      "id": "RFDEV-053",
+      "family": "filter-string",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": "TX-482"
+    },
+    {
+      "id": "RFDEV-054",
+      "family": "filter-boolean",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": true
+    },
+    {
+      "id": "RFDEV-055",
+      "family": "date-from-only",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-056",
+      "family": "date-to-only",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-057",
+      "family": "date-reversed",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2036-03-05",
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-058",
+      "family": "date-impossible",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2036-04-31",
+        "date_to": "2036-04-31"
+      }
+    },
+    {
+      "id": "RFDEV-059",
+      "family": "date-nonleap",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2037-02-29",
+        "date_to": "2037-02-29"
+      }
+    },
+    {
+      "id": "RFDEV-060",
+      "family": "date-zero-year",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "0000-01-01",
+        "date_to": "0000-01-01"
+      }
+    },
+    {
+      "id": "RFDEV-061",
+      "family": "date-too-large-year",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "10000-01-01",
+        "date_to": "10000-01-01"
+      }
+    },
+    {
+      "id": "RFDEV-062",
+      "family": "date-short-month",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2036-3-04",
+        "date_to": "2036-3-04"
+      }
+    },
+    {
+      "id": "RFDEV-063",
+      "family": "date-slashes",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2036/03/04",
+        "date_to": "2036/03/04"
+      }
+    },
+    {
+      "id": "RFDEV-064",
+      "family": "date-fullwidth",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "２０３６-０３-０４",
+        "date_to": "２０３６-０３-０４"
+      }
+    },
+    {
+      "id": "RFDEV-065",
+      "family": "date-whitespace",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": " 2036-03-04",
+        "date_to": " 2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-066",
+      "family": "date-number",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": 20360304,
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-067",
+      "family": "date-null",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": null,
+        "date_to": "2036-03-04"
+      }
+    },
+    {
+      "id": "RFDEV-068",
+      "family": "id-empty-array",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": []
+      }
+    },
+    {
+      "id": "RFDEV-069",
+      "family": "id-six",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "A1",
+          "B2",
+          "C3",
+          "D4",
+          "E5",
+          "F6"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-070",
+      "family": "id-duplicate",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "TX-482",
+          "TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-071",
+      "family": "id-overlong",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-072",
+      "family": "id-prefix-underscore",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "_TX-482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-073",
+      "family": "id-space",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "TX 482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-074",
+      "family": "id-nonascii",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "编号482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-075",
+      "family": "id-slash",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "TX/482"
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-076",
+      "family": "id-number",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          482
+        ]
+      }
+    },
+    {
+      "id": "RFDEV-077",
+      "family": "id-null",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": null
+      }
+    },
+    {
+      "id": "RFDEV-078",
+      "family": "id-string",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": "TX-482"
+      }
+    },
+    {
+      "id": "RFDEV-079",
+      "family": "valid-plus-unknown",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          "TX-482"
+        ],
+        "fallback": true
+      }
+    },
+    {
+      "id": "RFDEV-080",
+      "family": "date-with-time",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "date_from": "2036-03-04T00:00:00Z",
+        "date_to": "2036-03-04T00:00:00Z"
+      }
+    },
+    {
+      "id": "RFDEV-081",
+      "family": "id-empty-value",
+      "category": "invalid_request",
+      "documents": [
+        {
+          "key": "d1",
+          "text": "巡检 2036-03-04 TX-482。"
+        }
+      ],
+      "question": "巡检",
+      "expected_keys": [],
+      "expected_status": 422,
+      "filters": {
+        "identifiers": [
+          ""
+        ]
+      }
+    }
+  ]
+}

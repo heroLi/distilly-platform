@@ -2,6 +2,7 @@ package internal.distilly.modules.knowledge.service;
 
 import internal.distilly.common.persistence.ResourceRepository;
 import internal.distilly.modules.knowledge.repository.RecordQuestionRepository;
+import internal.distilly.modules.knowledge.domain.RecordSourceFilter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,9 +27,12 @@ public class RecordQuestionService {
 
     @Transactional
     public Map<String, Object> ask(String actor, String personaId, Map<String, Object> body) {
-        if (body == null || !body.keySet().equals(java.util.Set.of("question")))
+        if (body == null || !(body.keySet().equals(java.util.Set.of("question"))
+                || body.keySet().equals(java.util.Set.of("question", "filters"))))
             throw error(422, "invalid_record_question");
         String question = text(body.get("question"), 4000);
+        RecordSourceFilter filter = body.containsKey("filters")
+                ? RecordSourceFilter.parse(body.get("filters")) : RecordSourceFilter.none();
         var initial = knowledge.persona(actor, personaId);
         // Serializes role changes, selection changes and published-record revisions.
         // All selected profiles are locked in ID order; never acquire a persona after a profile.
@@ -45,7 +49,7 @@ public class RecordQuestionService {
         var cards = new ArrayList<Map<String, Object>>();
         // retrieve joins the current published pointer, APPROVED status, selection,
         // same workspace and archive exclusion in one query. Old approved snapshots are excluded.
-        for (var source : knowledge.retrieve(actor, personaId, question)) {
+        for (var source : knowledge.retrieve(actor, personaId, question, filter)) {
             var card = new LinkedHashMap<String, Object>(source);
             String composite = source.get("id").toString();
             card.put("claim_id", composite.substring(composite.lastIndexOf('/') + 1));
@@ -57,6 +61,7 @@ public class RecordQuestionService {
                 "persona_version_id", persona.get("published_id"), "question", question,
                 "answer", cards.isEmpty() ? "目前没有匹配的已审核资料记录。可以先核对资料或补充信息。"
                     : "找到以下当前可读记录，请核对来源；这些资料不证明人物亲历。",
-                "record_cards", cards, "model_calls", 0);
+                "record_cards", cards, "model_calls", 0,
+                "filter_contract", RecordSourceFilter.CONTRACT, "applied_filters", filter.applied());
     }
 }

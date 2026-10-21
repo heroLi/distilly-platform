@@ -1,5 +1,7 @@
 # 当前资料记录卡问答（2026-10-21）
 
+本文件记录首个记录卡阶段的契约与测试。后续已兼容新增可选 `filters`、`filter_contract` 和 `applied_filters`，当前日期/精确编号规则及新回归见 [显式筛选契约](RECORD_LITERAL_FILTERS_2026-10-21.md)。下列历史结果保留，不代替后续回归。
+
 这是 Git 续做基线上的新增能力，不代表找回旧 247 项候选或旧 A 实现。
 
 `POST /api/personas/{id}/record-questions` 只接受 `{"question":"..."}`，非空且不超过 4000 字符。所有角色都需要同空间权限及当前已审核发布的人格。响应契约 `RECORD_CARDS_V1` 包含当前人格版本、固定提示、最多 12 张当前记录卡（正文总计不超过 16000 字符）及 `model_calls: 0`。响应使用 `Cache-Control: no-store`。
