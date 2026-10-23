@@ -95,7 +95,7 @@ public class KnowledgeRepository {
         db.update("UPDATE profile SET published_id=NULL WHERE id=? AND published_id=?", topicId, versionId);
     }
 
-    public int cancelChatsForWithdrawnTopic(String topicId) {
+    public int cancelChatsForChangedKnowledge(String topicId) {
         // Match allowlist revocation: clear in-flight context for every persona
         // using this topic, including chats still queued before context assembly.
         return db.update(

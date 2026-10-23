@@ -46,8 +46,9 @@ public class PersonaKnowledgeRepository {
     }
 
     public int countAccessibleSnapshot(Object id, String personaId, String profileId, Object projectId) {
+        // Approved history is retained, but a pending reply cannot treat it as current knowledge.
         return db.queryForObject(
-                "SELECT COUNT(*) FROM persona_knowledge k JOIN profile f ON f.id=k.profile_id JOIN profile_version v ON v.id=? AND v.profile_id=f.id AND v.status='APPROVED' WHERE k.persona_id=? AND k.profile_id=? AND f.project_id=? AND f.id NOT IN (SELECT profile_id FROM profile_archive)",
+                "SELECT COUNT(*) FROM persona_knowledge k JOIN profile f ON f.id=k.profile_id JOIN profile_version v ON v.id=? AND v.id=f.published_id AND v.profile_id=f.id AND v.status='APPROVED' WHERE k.persona_id=? AND k.profile_id=? AND f.project_id=? AND f.id NOT IN (SELECT profile_id FROM profile_archive)",
                 Integer.class, id, personaId, profileId, projectId);
     }
 

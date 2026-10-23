@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {
         "spring.datasource.url=jdbc:h2:mem:record-question-test;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE",
         "platform.demo=true", "platform.worker-token=test-worker-token-32-characters-long" })
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(print = org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrint.NONE)
 class RecordQuestionTest {
     @Autowired PlatformFixture platform;
     @Autowired PersonaFixture personas;
@@ -35,6 +35,7 @@ class RecordQuestionTest {
     @Autowired JsonCodec json;
     @Autowired JdbcTemplate db;
     @Autowired MockMvc mvc;
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
 
     String project, persona, personaVersion, topic, version, claim, task;
     final String original = "消息延迟先检查队列积压，禁止重复扣款。";
@@ -100,6 +101,25 @@ class RecordQuestionTest {
         return counts;
     }
 
+    ResultActions correct(String actor, String selectedTopic, String selectedClaim, String selectedVersion,
+            String text) throws Exception {
+        return mvc.perform(put("/api/profiles/" + selectedTopic + "/claims/" + selectedClaim)
+                .header("Authorization", "Bearer demo-" + actor).contentType(MediaType.APPLICATION_JSON)
+                .content(json.encode(Map.of("version_id", selectedVersion, "section", "排障记录", "text", text))));
+    }
+
+    Map<String, Object> chatOutput(Map<String, Object> lease) {
+        var sources = items(((Map<?, ?>) lease.get("payload")).get("knowledge"));
+        return Map.of("answer", "合成验收回复", "emotion", Map.of("label", "calm", "intensity", 0.2,
+                "reason", "合成验收"), "memory_candidates", List.of(), "citations",
+                sources.stream().map(source -> source.get("id")).toList());
+    }
+
+    int assistantCount(String conversation) {
+        return db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND role='assistant'",
+                Integer.class, conversation);
+    }
+
     @Test
     void allWorkspaceRolesReadOnlyCurrentApprovedCardsWithoutModelOrHistoryWrites() throws Exception {
         var before = storageCounts();
@@ -160,6 +180,141 @@ class RecordQuestionTest {
         mvc.perform(put(edit).header("Authorization", "Bearer demo-owner")
                 .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isConflict());
         assertEquals(next, items(ask("viewer", "消息延迟").get("record_cards")).get(0).get("version_id"));
+    }
+
+    @Test
+    void manualCorrectionRejectsAnAlreadyClaimedOldKnowledgeReply() throws Exception {
+        String conversation = personas.start("viewer", persona, null).get("id").toString();
+        var job = personas.chat("viewer", conversation, "消息延迟怎么排查？");
+        var lease = personas.claim();
+        assertEquals(job.get("id"), lease.get("id"));
+        assertEquals(1, items(((Map<?, ?>) lease.get("payload")).get("knowledge")).size());
+        mvc.perform(put("/api/profiles/" + topic + "/claims/" + claim)
+                .header("Authorization", "Bearer demo-owner").contentType(MediaType.APPLICATION_JSON)
+                .content(json.encode(Map.of("version_id", version, "section", "排障记录",
+                        "text", "消息延迟改为检查重试次数，禁止重复扣款。"))))
+                .andExpect(status().isOk());
+        var response = mvc.perform(post("/internal/persona-jobs/" + job.get("id") + "/complete")
+                .header("Authorization", "Bearer test-worker-token-32-characters-long")
+                .contentType(MediaType.APPLICATION_JSON).content(json.encode(Map.of("lease_token", lease.get("lease_token"),
+                        "output", chatOutput(lease)))))
+                .andReturn().getResponse();
+        // Report status/counts only: never dump request bodies or Worker credentials on failure.
+        int assistants = db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND role='assistant'",
+                Integer.class, conversation);
+        assertEquals("409/0", response.getStatus() + "/" + assistants, "late completion status/assistant count");
+        assertEquals("CANCELLED", personas.job("viewer", job.get("id").toString()).get("status"));
+        assertNull(db.queryForObject("SELECT lease_token FROM persona_job WHERE id=?", String.class, job.get("id")));
+        assertEquals("[]", db.queryForObject("SELECT knowledge_snapshot FROM persona_job WHERE id=?", String.class, job.get("id")));
+        assertEquals("", db.queryForObject("SELECT partial_reply FROM persona_job WHERE id=?", String.class, job.get("id")));
+        var next = personas.chat("viewer", conversation, "消息延迟现在怎么排查？");
+        var fresh = personas.claim();
+        assertEquals(next.get("id"), fresh.get("id"));
+        var source = items(((Map<?, ?>) fresh.get("payload")).get("knowledge")).get(0);
+        assertEquals(platform.published("owner", topic).get("id"), source.get("version_id"));
+        assertNotEquals(version, source.get("version_id"));
+        personas.complete(next.get("id").toString(), fresh.get("lease_token").toString(), chatOutput(fresh));
+        assertEquals(1, assistantCount(conversation));
+    }
+
+    @Test
+    void correctionCancelsOtherUsersQueuedChatsButUnselectedTopicsDoNot() throws Exception {
+        String conversation = personas.start("viewer", persona, null).get("id").toString();
+        var running = personas.chat("viewer", conversation, "消息延迟怎么排查？");
+        var lease = personas.claim();
+        assertEquals(running.get("id"), lease.get("id"));
+        String waiting = personas.start("owner", persona, null).get("id").toString();
+        var queued = personas.chat("owner", waiting, "消息延迟怎么排查？");
+        var other = publishKnowledge(project, "未选择的专题", "消息延迟未选择的合成资料。");
+        correct("owner", other.get("topic"), other.get("claim"), other.get("version"),
+                "消息延迟未选择资料已纠错。").andExpect(status().isOk());
+        assertEquals("RUNNING", personas.job("viewer", running.get("id").toString()).get("status"));
+        assertEquals("QUEUED", personas.job("owner", queued.get("id").toString()).get("status"));
+        correct("owner", topic, claim, version, "消息延迟改为检查重试次数。").andExpect(status().isOk());
+        for (var entry : List.of(running, queued))
+            assertEquals("CANCELLED", db.queryForObject("SELECT status FROM persona_job WHERE id=?", String.class, entry.get("id")));
+        assertEquals(0, assistantCount(conversation));
+        assertEquals(0, assistantCount(waiting));
+        assertEquals("APPROVED", db.queryForObject("SELECT status FROM profile_version WHERE id=?", String.class, version));
+    }
+
+    @Test
+    void noOpForbiddenAndStaleCorrectionCannotCancelAnActiveReply() throws Exception {
+        String conversation = personas.start("viewer", persona, null).get("id").toString();
+        var job = personas.chat("viewer", conversation, "消息延迟怎么排查？");
+        var lease = personas.claim();
+        for (String actor : List.of("viewer", "editor"))
+            correct(actor, topic, claim, version, "消息延迟不得越权纠错。").andExpect(status().isForbidden());
+        var noOp = correct("owner", topic, claim, version, original).andExpect(status().isOk()).andReturn();
+        assertEquals(false, json.decode(noOp.getResponse().getContentAsString()).get("changed"));
+        assertEquals("RUNNING", personas.job("viewer", job.get("id").toString()).get("status"));
+        var completed = personas.complete(job.get("id").toString(), lease.get("lease_token").toString(), chatOutput(lease));
+        correct("owner", topic, claim, version, "消息延迟改为检查重试次数。").andExpect(status().isOk());
+        // A committed historical answer and its idempotent acknowledgement remain intact.
+        assertEquals(completed, personas.complete(job.get("id").toString(), lease.get("lease_token").toString(), chatOutput(lease)));
+        assertEquals(1, assistantCount(conversation));
+        var current = personas.chat("viewer", conversation, "消息延迟现在怎么排查？");
+        var fresh = personas.claim();
+        assertEquals(current.get("id"), fresh.get("id"));
+        correct("owner", topic, claim, version, "消息延迟过期纠错。").andExpect(status().isConflict());
+        assertEquals("RUNNING", personas.job("viewer", current.get("id").toString()).get("status"));
+        personas.complete(current.get("id").toString(), fresh.get("lease_token").toString(), chatOutput(fresh));
+        assertEquals(2, assistantCount(conversation));
+    }
+
+    @Test
+    void finalAccessCheckRejectsOldApprovedVersionIndependentlyOfCancellation() throws Exception {
+        var sources = knowledge.retrieve("viewer", persona, "消息延迟");
+        correct("owner", topic, claim, version, "消息延迟改为检查重试次数。").andExpect(status().isOk());
+        var failure = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> knowledge.validateAccess("viewer", persona, sources));
+        assertEquals(409, failure.getStatusCode().value());
+        knowledge.validateAccess("viewer", persona, knowledge.retrieve("viewer", persona, "消息延迟"));
+    }
+
+    @Test
+    void overlappingCorrectionWaitsForAnAlreadyCommittingReplyAndKeepsItHistorical() throws Exception {
+        String conversation = personas.start("viewer", persona, null).get("id").toString();
+        var job = personas.chat("viewer", conversation, "消息延迟怎么排查？");
+        var lease = personas.claim();
+        var ready = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        var correcting = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var completing = executor.submit(() -> new org.springframework.transaction.support.TransactionTemplate(transactions)
+                    .execute(transaction -> {
+                        var result = personas.complete(job.get("id").toString(), lease.get("lease_token").toString(), chatOutput(lease));
+                        ready.countDown();
+                        try {
+                            if (!release.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("test_release_timeout");
+                        } catch (InterruptedException error) {
+                            Thread.currentThread().interrupt();
+                            throw new IllegalStateException("test_interrupted");
+                        }
+                        return result;
+                    }));
+            assertTrue(ready.await(10, TimeUnit.SECONDS));
+            var revision = executor.submit(() -> {
+                correcting.countDown();
+                correct("owner", topic, claim, version, "消息延迟改为检查重试次数。").andExpect(status().isOk());
+                return true;
+            });
+            assertTrue(correcting.await(10, TimeUnit.SECONDS));
+            assertThrows(java.util.concurrent.TimeoutException.class, () -> revision.get(250, TimeUnit.MILLISECONDS));
+            release.countDown();
+            var result = completing.get(10, TimeUnit.SECONDS);
+            assertTrue(revision.get(10, TimeUnit.SECONDS));
+            assertEquals("SUCCEEDED", personas.job("viewer", job.get("id").toString()).get("status"));
+            assertEquals(1, assistantCount(conversation));
+            assertEquals(version, items(result.get("citations")).get(0).get("version_id"));
+            assertNotEquals(version, platform.published("owner", topic).get("id"));
+            assertEquals(result, personas.complete(job.get("id").toString(), lease.get("lease_token").toString(), chatOutput(lease)));
+            assertEquals(1, assistantCount(conversation));
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+        }
     }
 
     @Test

@@ -71,7 +71,8 @@ def run(output, browser=False):
             request = urllib.request.Request(
                 base + path,
                 None if body is None else json.dumps(body, ensure_ascii=False).encode(),
-                {'Authorization': 'Bearer demo-' + actor, 'Content-Type': 'application/json'},
+                {'Authorization': 'Bearer ' + (TOKEN if actor == 'internal' else 'demo-' + actor),
+                 'Content-Type': 'application/json'},
                 method=method or ('POST' if body is not None else 'GET'))
             try:
                 with urllib.request.urlopen(request, timeout=8) as response:
@@ -202,6 +203,7 @@ def run(output, browser=False):
                         page.locator('#login-form button').click()
                         page.locator('#workspace').wait_for(state='visible')
                         page.locator('#projects').select_option(project)
+                        page.wait_for_load_state('networkidle')
                         return page
                     def screenshot(page, name):
                         shot = output / (name + '.png')
@@ -209,6 +211,7 @@ def run(output, browser=False):
                         result['screenshots'][name] = {'file': str(shot), 'sha256': hashlib.sha256(shot.read_bytes()).hexdigest()}
                     reader = new_page('viewer', '/')
                     reader.locator(f'[data-person="{persona}"]').click()
+                    reader.wait_for_load_state('networkidle')
                     reader.locator('[data-view="chat"]').click()
                     reader.locator('#record-question').fill(QUESTION)
                     reader.locator('#record-submit').click()
@@ -282,17 +285,93 @@ def run(output, browser=False):
             check_cards(ask(), next_version, CORRECTED)
             assert snapshot() == before
             result['checks'].append('default-JVM restart of same isolated file H2 retains corrected version and source selection without query history/tasks/memory')
+
+            # A separate in-flight correction probe, after the read-only card checks.
+            # The old claim is real; only its final synthetic output is supplied manually.
+            conversation = api(f'/api/personas/{persona}/conversations', {}, actor='viewer')['id']
+            held = api(f'/api/conversations/{conversation}/messages', {'message': QUESTION}, actor='viewer')
+            lease = api('/internal/persona-jobs/claim', {}, actor='internal')
+            assert lease['id'] == held['id']
+            assert lease['payload']['knowledge'][0]['version_id'] == next_version
+            api(f"/internal/persona-jobs/{held['id']}/delta",
+                {'lease_token': lease['lease_token'], 'partial': '合成纠错前的临时回应'}, actor='internal')
+            refined = CORRECTED + ' 来源已复核。'
+            second_correction = dict(correction, version_id=next_version, text=refined)
+            if browser:
+                with sync_playwright() as pw:
+                    chromium = pw.chromium.launch(executable_path='/usr/bin/chromium', headless=True,
+                                                 args=['--no-sandbox', '--disable-dev-shm-usage'])
+                    try:
+                        reader = new_page('viewer', '/')
+                        reader.locator(f'[data-person="{persona}"]').click()
+                        reader.wait_for_load_state('networkidle')
+                        reader.locator('[data-view="chat"]').click()
+                        reader.locator('#conversations').select_option(conversation)
+                        reader.locator('#messages').filter(has_text='合成纠错前的临时回应').wait_for()
+                        owner = new_page('owner', '/knowledge.html')
+                        owner.locator('[data-page="published-knowledge"]').click()
+                        owner.locator('#published-knowledge-list tr').filter(has_text=CORRECTED).get_by_role('button', name='编辑知识', exact=True).click()
+                        dialog = owner.get_by_role('dialog', name='编辑已审核知识', exact=True)
+                        dialog.get_by_label('知识内容', exact=True).fill(refined)
+                        dialog.get_by_role('button', name='保存并发布修订', exact=True).click()
+                        owner.locator('#published-knowledge-list tr').filter(has_text=refined).wait_for()
+                        reader.bring_to_front()
+                        reader.locator('#chat-status').filter(has_text='本次回应已停止').wait_for(timeout=12000)
+                        assert '合成纠错前的临时回应' not in reader.locator('#messages').inner_text()
+                        assert reader.locator('#chat-retry').is_hidden()
+                        screenshot(reader, 'correction-stops-old-chat')
+                        reader.reload(wait_until='networkidle')
+                        reader.locator('[data-view="chat"]').click()
+                        reader.locator('#chat-status').filter(has_text='本次回应已停止').wait_for()
+                        assert reader.locator('#messages .bubble.assistant').count() == 0
+                        result['checks'].append('native OWNER correction stops the reader in-flight chat; polling removes old partial, no retry button, refresh keeps cancellation and no stale assistant')
+                    finally:
+                        chromium.close()
+            else:
+                api(endpoint, second_correction, method='PUT')
+            page = api(f'/api/projects/{project}/published-knowledge/page')
+            next_version = next(item['version_id'] for item in page['items'] if item['claim_id'] == first['claim_id'])
+            late = {'lease_token': lease['lease_token'], 'output': {
+                'answer': '合成旧回复', 'emotion': {'label': 'calm', 'intensity': .2, 'reason': '合成验收'},
+                'memory_candidates': [], 'citations': [lease['payload']['knowledge'][0]['id']]}}
+            api(f"/internal/persona-jobs/{held['id']}/complete", late, actor='internal', expected=409)
+            assert api('/api/persona-jobs/' + held['id'], actor='viewer')['status'] == 'CANCELLED'
+            assert len(api('/api/conversations/' + conversation, actor='viewer')['messages']) == 1
+            # A fresh explicit turn uses the actual mock Worker and corrected source version.
+            fresh = api(f'/api/conversations/{conversation}/messages', {'message': QUESTION}, actor='viewer')
+            worker = launch('mock-worker-after-correction', [sys.executable, str(ROOT / 'worker/worker.py')])
+            def fresh_result():
+                row = api('/api/persona-jobs/' + fresh['id'], actor='viewer')
+                assert row['status'] not in ('FAILED', 'CANCELLED'), 'fresh mock reply failed'
+                return row.get('result') if row['status'] == 'SUCCEEDED' else None
+            answer = wait(fresh_result)
+            stop(worker)
+            assert answer['citations'][0]['version_id'] == next_version
+            assert answer['citations'][0]['text'] == refined
+            assert len(api('/api/conversations/' + conversation, actor='viewer')['messages']) == 3
+            stop(server)
+            server = launch('api-restart-after-correction', [safe.get('JAVA_BIN', 'java'), '-jar', str(jar)])
+            wait(healthy)
+            assert api('/api/persona-jobs/' + held['id'], actor='viewer')['status'] == 'CANCELLED'
+            assert api('/api/persona-jobs/' + fresh['id'], actor='viewer')['status'] == 'SUCCEEDED'
+            assert len(api('/api/conversations/' + conversation, actor='viewer')['messages']) == 3
+            check_cards(ask(), next_version, refined)
+            result['checks'].append('late old completion is409 with zero old assistant; explicit next turn uses actual mock Worker/current citations; cancellation, unique fresh reply and corrected records survive same-file default-JVM restart')
             api(f'/api/personas/{persona}/knowledge', {'profile_ids': []}, method='PUT')
             assert ask()['record_cards'] == []
             api(f'/api/personas/{persona}/knowledge', {'profile_ids': [profile]}, method='PUT')
             api(f'/api/profiles/{profile}', method='DELETE')
             assert ask()['record_cards'] == []
             api(f'/api/profiles/{profile}/restore', method='POST')
-            check_cards(ask(), next_version, CORRECTED)
+            check_cards(ask(), next_version, refined)
             api(f"/api/profiles/{profile}/jobs/{distill_job['id']}/experience", method='DELETE')
             assert ask()['record_cards'] == []
             result['checks'].append('deselection, archive and withdrawal remove cards on next read; archive restoration returns current corrected record')
             result['status'] = 'PASS'
+        except Exception as error:
+            result['status'] = 'FAIL'
+            result['failure_type'] = type(error).__name__
+            raise
         finally:
             for process in reversed(processes):
                 stop(process)

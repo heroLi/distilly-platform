@@ -92,6 +92,7 @@ public class PublishedKnowledgeService {
                 PublishedClaimRevision.render((String) topic.get("title"), claims), actor, request.note(), now());
         if (repository.replacePublishedVersion(next, topicId, request.versionId()) != 1)
             throw error(409, "published_version_changed");
+        repository.cancelChatsForChangedKnowledge(topicId);
         audits.record(project, actor, "KNOWLEDGE_MANUALLY_REVISED", next);
         return Map.of("version_id", next, "claim_id", claimId, "changed", true);
     }
