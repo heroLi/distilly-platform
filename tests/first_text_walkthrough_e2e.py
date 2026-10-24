@@ -28,12 +28,13 @@ CORRECTED = SOURCE.replace('2 秒', '5 秒')
 QUESTION = '重试间隔是多少？'
 
 
-def run(output):
+def run(output, completion_between_reads=False):
     output.mkdir(parents=True, exist_ok=True)
     safe = {key: os.environ[key] for key in ('HOME', 'LANG', 'LC_ALL', 'TMPDIR', 'PATH', 'JAVA_HOME', 'JAVA_BIN') if key in os.environ}
     report = {'status': 'RUNNING', 'stage': 'startup', 'real_provider_calls': 0,
               'business_objects_seeded': 0, 'account_scope': 'three explicit synthetic fixtures in temporary database only',
-              'checks': [], 'screenshots': {}, 'page_errors': [], 'external_requests': []}
+              'checks': [], 'screenshots': {}, 'page_errors': [], 'external_requests': [],
+              'controlled_detail_completion': completion_between_reads}
     processes, logs = [], []
     with tempfile.TemporaryDirectory(prefix='distilly-first-text-walk-') as tmp:
         folder = Path(tmp); jar = folder / 'runtime.jar'
@@ -86,7 +87,7 @@ def run(output):
                 except OSError: return False
             wait(healthy); report['default_jvm_startup_seconds'] = round(time.monotonic() - started, 3)
             for actor in ACCOUNTS: assert api('/api/projects', actor=actor) == []
-            launch('mock-worker', [sys.executable, str(ROOT / 'worker/worker.py')])
+            background_worker = launch('mock-worker', [sys.executable, str(ROOT / 'worker/worker.py')])
             from playwright.sync_api import sync_playwright
             with sync_playwright() as pw:
                 browser = pw.chromium.launch(executable_path='/usr/bin/chromium', headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
@@ -120,6 +121,7 @@ def run(output):
                     checked('fresh configured synthetic account and browser start with no workspaces; workspace and original person created only through existing UI')
 
                     report['stage'] = 'personality and one TXT with correctable error'
+                    report['step'] = 'create-personality'
                     page.locator('#personality-create-link').click()
                     page.get_by_role('button', name='沿用人物设定新增人格', exact=True).click()
                     create = page.get_by_role('dialog', name='新增人格', exact=True)
@@ -127,6 +129,7 @@ def run(output):
                     with page.expect_response(lambda r: r.url == base + f'/api/projects/{project}/personalities' and r.request.method == 'POST') as saved:
                         create.get_by_role('button', name='保存人格设定', exact=True).click()
                     personality = saved.value.json()['id']
+                    report['step'] = 'open-generation-and-upload'
                     detail = page.get_by_role('dialog', name='人格详情', exact=True)
                     detail.get_by_role('button', name='生成新候选', exact=True).click()
                     generate = page.get_by_role('dialog', name='生成人格 · 选择材料', exact=True)
@@ -135,21 +138,60 @@ def run(output):
                     page.locator('#upload-only').click(); page.locator('#upload-error').filter(has_text='UTF-8').wait_for()
                     assert api(f'/api/projects/{project}/materials') == []
                     shot(page, '02-invalid-txt-correctable')
+                    report['step'] = 'correct-valid-txt-upload-and-return'
                     page.locator('#file').set_input_files({'name': 'walkthrough.txt', 'mimeType': 'text/plain', 'buffer': SOURCE.encode()})
                     page.locator('#upload-only').click()
                     generate = page.get_by_role('dialog', name='生成人格 · 选择材料', exact=True)
                     generate.get_by_role('checkbox', name='选择材料 walkthrough.txt').wait_for()
                     assert generate.get_by_role('checkbox', name='选择材料 walkthrough.txt').is_checked()
                     material = api(f'/api/projects/{project}/materials')[0]['id']
+                    report['step'] = 'reload-and-reopen-generation'
                     generate.get_by_role('button', name='关闭', exact=True).click(); page.reload(wait_until='networkidle')
                     row = page.locator('#personality-library tr').filter(has_text='合成初行伙伴人格')
                     row.get_by_role('button', name='生成', exact=True).click()
                     generate = page.get_by_role('dialog', name='生成人格 · 选择材料', exact=True)
                     generate.get_by_role('checkbox', name='选择材料 walkthrough.txt').check()
                     assert len(api(f'/api/projects/{project}/materials')) == len(api(f'/api/projects/{project}/personalities')) == 1
+                    if completion_between_reads:
+                        # Finish the real task at the jobs read; never invent API snapshots.
+                        background_worker.terminate(); background_worker.wait(timeout=12)
+                        trace = report['detail_interleaving'] = {'persona_version_counts': [], 'job_statuses_before': [], 'job_statuses_after': []}
+                        gate = {'fired': False, 'persona_read': False}
+                        detail_url = base + '/api/personas/' + personality
+                        def persona_snapshot(route):
+                            if gate['persona_read']: route.continue_(); return
+                            gate['persona_read'] = True
+                            snapshot = api('/api/personas/' + personality)
+                            trace['persona_version_counts'].append(len(snapshot['versions']))
+                            route.fulfill(status=200, content_type='application/json', body=json.dumps(snapshot))
+                        def complete_at_jobs_read(route):
+                            if gate['fired']: route.continue_(); return
+                            gate['fired'] = True
+                            rows = api('/api/personas/' + personality + '/jobs')
+                            trace['job_statuses_before'] = [r['status'] for r in rows]
+                            assert len(rows) == 1 and rows[0]['status'] == 'QUEUED'
+                            code = 'from worker import Worker,Model; import persona; w=Worker(Model(mode="mock")); j=w.request("/internal/persona-jobs/claim",{}); assert j and j["kind"]=="PERSONA"; persona.execute(w,j)'
+                            with (output / 'controlled-worker.log').open('w') as log:
+                                completed = subprocess.run([sys.executable, '-c', code], cwd=ROOT / 'worker', env=env,
+                                                           stdout=log, stderr=subprocess.STDOUT, timeout=30)
+                            trace['worker_exit_code'] = completed.returncode
+                            assert completed.returncode == 0
+                            rows = api('/api/personas/' + personality + '/jobs')
+                            trace['job_statuses_after'] = [r['status'] for r in rows]
+                            assert len(rows) == 1 and rows[0]['status'] == 'SUCCEEDED'
+                            route.fulfill(status=200, content_type='application/json', body=json.dumps(rows))
+                        page.route(detail_url, persona_snapshot)
+                        page.route(detail_url + '/jobs', complete_at_jobs_read)
+                    report['step'] = 'submit-generation'
                     generate.get_by_role('button', name='提交生成', exact=True).click()
+                    report['step'] = 'await-first-candidate'
                     detail = page.get_by_role('dialog', name='人格详情', exact=True)
                     detail.get_by_role('button', name='批准并发布', exact=True).wait_for(timeout=20000)
+                    if completion_between_reads:
+                        assert gate['fired'] and trace['persona_version_counts'] == [1]
+                        page.unroute(detail_url, persona_snapshot); page.unroute(detail_url + '/jobs', complete_at_jobs_read)
+                        background_worker = launch('mock-worker-resumed', [sys.executable, str(ROOT / 'worker/worker.py')])
+                    report['step'] = 'approve-bind-and-first-chat'
                     detail.get_by_role('button', name='批准并发布', exact=True).click()
                     detail.get_by_role('button', name='绑定到虚拟人', exact=True).click()
                     binding = page.get_by_role('dialog', name='绑定人格版本', exact=True)
@@ -237,7 +279,16 @@ def run(output):
                         except Exception: pass
                     browser.close()
         except BaseException as error:
-            report.update(status='FAIL', failure_type=type(error).__name__); raise
+            report.update(status='FAIL', failure_type=type(error).__name__)
+            if 'personality' in locals():
+                try:
+                    p = api('/api/personas/' + personality)
+                    jobs = api('/api/personas/' + personality + '/jobs')
+                    report['failure_backend_snapshot'] = {'version_count': len(p['versions']),
+                            'job_states': [{k:j.get(k) for k in ('kind','status','error_code','attempt')} for j in jobs]}
+                except Exception as diagnostic: report['diagnostic_error_type'] = type(diagnostic).__name__
+            report['worker_exit_codes'] = [p.poll() for p in processes[1:]]
+            raise
         finally:
             for p in reversed(processes):
                 if p.poll() is None:
@@ -252,9 +303,10 @@ def run(output):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(); parser.add_argument('--output', type=Path, default=ROOT / 'server/target/first-text-walkthrough-e2e')
+    parser.add_argument('--completion-between-detail-reads', action='store_true', help='Complete actual mock generation at the detail jobs-read boundary')
     args = parser.parse_args()
     try:
-        run(args.output.resolve())
+        run(args.output.resolve(), args.completion_between_detail_reads)
     except Exception as error:
         # Playwright exceptions can include locator text/material content.
         # Keep detailed state in the synthetic screenshot/metadata, never logs.

@@ -28,7 +28,7 @@ if args.e2e:
     commands.append([sys.executable, 'tests/upload_receipt_e2e.py'])
     commands.append([sys.executable, 'tests/text_scenarios_e2e.py'])
     commands.append([sys.executable, 'tests/context_scope_e2e.py'])
-    commands.append([sys.executable, 'tests/first_text_walkthrough_e2e.py'])
+    commands.append([sys.executable, 'tests/first_text_walkthrough_e2e.py', '--completion-between-detail-reads'])
 commands.append(['git', 'diff', '--check'])
 for command in commands:
     print('RUN:', ' '.join(command), flush=True)

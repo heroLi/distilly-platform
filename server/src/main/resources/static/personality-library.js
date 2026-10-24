@@ -13,7 +13,8 @@ const name=field(form,'人格名称','name',def.name||'','input');name.required=
  async function detail(id){const current=project,m=ExperienceUI.modal('人格详情');m.body.append(node('p','正在加载人格…','muted'));await renderDetail(id,m,current);}
  async function renderDetail(id,m,current){
   if(!m.active()||current!==project)return;
-  const read=await workspaceReads.read('personality-detail',()=>Promise.all([api(`/api/personas/${id}`),api(`/api/personas/${id}/jobs`)]),()=>m.active()&&current===project);if(!read)return;const scope=read.scope,[p,jobs]=read.value;
+  // Read completion first: a completed job's version must be visible in the later persona snapshot.
+  const read=await workspaceReads.read('personality-detail',async()=>{const jobs=await api(`/api/personas/${id}/jobs`);const p=await api(`/api/personas/${id}`);return [p,jobs];},()=>m.active()&&current===project);if(!read)return;const scope=read.scope,[p,jobs]=read.value;
   m.body.replaceChildren();const info=node('div',undefined,'detail-summary');info.append(node('h3',p.name),node('p',`${kinds[p.family]} · ${p.published_id?'已发布':'待发布'} · 创建于 ${new Date(p.created_at).toLocaleString()}`,'muted'),node('p','人格编号：'+p.id,'muted small'));const tools=node('div',undefined,'actions');if(role!=='VIEWER')tools.append(action('编辑设定',()=>{m.close();return edit(p);}),action('生成新候选',()=>{m.close();return generate(id);},'primary'));info.append(tools);if(!p.versions.length)info.append(node('p','下一步：生成候选 → 审核发布 → 绑定人物 → 返回首聊。使用材料需先在编辑设定中确认授权。','muted'));m.body.append(info);
   const tabs=node('div',undefined,'detail-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','人格详情内容');tabs.setAttribute('aria-orientation','horizontal');
   const panels=[],tabButtons=[],tabset='personality-detail-'+(++detailSequence);
