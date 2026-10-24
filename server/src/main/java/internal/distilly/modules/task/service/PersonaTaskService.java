@@ -227,6 +227,10 @@ public class PersonaTaskService {
     @Transactional
     public Map<String, Object> complete(String id, String token, Map<String, Object> output) {
         var taskRow = resources.one("persona_job", id);
+        // Source deletion and memory mutations take the same lock before rows/jobs.
+        // A completion either commits first or validates after their transaction.
+        if ("CHAT".equals(taskRow.get("kind")))
+            personaAccess.lock("persona", (String) taskRow.get("persona_id"));
         if (taskRow.get("conversation_id") != null)
             personaAccess.lock("persona_conversation", (String) taskRow.get("conversation_id"));
         else
@@ -268,6 +272,8 @@ public class PersonaTaskService {
         else if ("CHAT".equals(taskRow.get("kind"))) {
             var sources = items(json.decode("{\"items\":" + taskRow.get("knowledge_snapshot") + "}").get("items"));
             knowledge.validateAccess((String) taskRow.get("creator"), (String) taskRow.get("persona_id"), sources);
+            memories.validateAccess((String) taskRow.get("creator"), (String) taskRow.get("persona_id"),
+                    payload.getOrDefault("memory_ids", List.of()));
             Object rawCitations = output.getOrDefault("citations", List.of());
             if (!(rawCitations instanceof List<?> cited) || cited.size() > 12
                     || cited.stream().anyMatch(x -> !(x instanceof String)))

@@ -41,8 +41,14 @@ public class MemoryRepository {
 
     public int cancelPendingChatsForUser(String personaId, String creator) {
         return db.update(
-                "UPDATE persona_job SET status='CANCELLED',payload='{}',result=NULL,partial_reply='',lease_token=NULL WHERE persona_id=? AND creator=? AND kind='CHAT' AND status IN ('QUEUED','RUNNING')",
+                "UPDATE persona_job SET status='CANCELLED',payload='{}',result=NULL,partial_reply='',lease_token=NULL,knowledge_snapshot='[]' WHERE persona_id=? AND creator=? AND kind='CHAT' AND status IN ('QUEUED','RUNNING')",
                 personaId, creator);
+    }
+
+    public int countConfirmedSource(String id, String personaId, String userId) {
+        return db.queryForObject(
+                "SELECT COUNT(*) FROM persona_memory m JOIN persona_message s ON s.id=m.source_id JOIN persona_conversation c ON c.id=s.conversation_id WHERE m.id=? AND m.persona_id=? AND m.user_id=? AND m.status='CONFIRMED' AND c.persona_id=? AND c.user_id=?",
+                Integer.class, id, personaId, userId, personaId, userId);
     }
 
     public int updateStatusAndBody(String status, Object body, String id) {

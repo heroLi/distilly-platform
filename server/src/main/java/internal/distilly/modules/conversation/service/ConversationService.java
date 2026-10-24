@@ -5,6 +5,7 @@ import internal.distilly.common.persistence.ResourceRepository;
 import internal.distilly.modules.conversation.repository.ConversationRepository;
 import internal.distilly.modules.conversation.domain.ContextScope;
 import internal.distilly.modules.persona.service.PersonaAccessService;
+import internal.distilly.modules.memory.service.MemoryService;
 import internal.distilly.modules.task.service.PersonaTaskService;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,13 +33,16 @@ public class ConversationService {
 
     private final PersonaTaskService personaTaskService;
 
+    private final MemoryService memories;
+
     public ConversationService(ConversationRepository repository, JsonCodec json, ResourceRepository resources,
-            PersonaAccessService personaAccess, PersonaTaskService personaTaskService) {
+            PersonaAccessService personaAccess, PersonaTaskService personaTaskService, MemoryService memories) {
         this.repository = repository;
         this.json = json;
         this.resources = resources;
         this.personaAccess = personaAccess;
         this.personaTaskService = personaTaskService;
+        this.memories = memories;
     }
 
     @Transactional
@@ -165,11 +169,14 @@ public class ConversationService {
 
     @Transactional
     public void deleteConversation(String actor, String id) {
-        personaAccess.conversation(actor, id);
+        var conversation = personaAccess.conversation(actor, id);
+        // Match memory edit/delete ordering before locking conversations or memory rows.
+        personaAccess.lock("persona", (String) conversation.get("persona_id"));
         personaAccess.lock("persona_conversation", id);
         repository.deleteSubmissions(id);
         repository.clearTaskPayloads(id);
-        repository.deleteDerivedMemories(id);
+        if (repository.deleteDerivedMemories(id) > 0)
+            memories.invalidatePendingChats(actor, (String) conversation.get("persona_id"));
         repository.deleteTasks(id);
         repository.deleteMessages(id);
         repository.deleteConversation(id);

@@ -25,6 +25,7 @@ class ConversationContextTest {
     @Autowired PlatformProperties properties;
     @Autowired JdbcTemplate db;
     @Autowired JsonCodec json;
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
     String project, persona, version, conversation;
 
     Map<String, Object> definition(String name) {
@@ -111,6 +112,187 @@ class ConversationContextTest {
     }
 
     @Test
+    void deletingMemorySourceConversationRejectsHeldReplyInAnotherConversation() {
+        String memoryId = memory(conversation, persona, "viewer", "我们在青岛海边拍照", "CONFIRMED", 1);
+        String other = personas.start("viewer", persona, null).get("id").toString();
+        var job = personas.chat("viewer", other, "青岛海边拍照");
+        var lease = personas.claim();
+        assertEquals(job.get("id"), lease.get("id"));
+        assertEquals(1, items(((Map<?, ?>) lease.get("payload")).get("memories")).size());
+        personas.deleteConversation("viewer", conversation);
+        assertEquals(0, db.queryForObject("SELECT COUNT(*) FROM persona_memory WHERE id=?", Integer.class, memoryId));
+        int status = 200;
+        try {
+            personas.complete(job.get("id").toString(), lease.get("lease_token").toString(), reply(memoryId, ""));
+        } catch (ResponseStatusException error) {
+            status = error.getStatusCode().value();
+        }
+        int assistants = db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND role='assistant'",
+                Integer.class, other);
+        assertEquals("409/0", status + "/" + assistants, "late completion status/assistant count only");
+        assertEquals("CANCELLED", personas.job("viewer", job.get("id").toString()).get("status"));
+        var row = db.queryForMap("SELECT payload,partial_reply,lease_token,knowledge_snapshot FROM persona_job WHERE id=?", job.get("id"));
+        assertEquals("{}", row.get("payload"));
+        assertEquals("", row.get("partial_reply"));
+        assertNull(row.get("lease_token"));
+        assertEquals("[]", row.get("knowledge_snapshot"));
+        var next = personas.chat("viewer", other, "青岛海边拍照");
+        var fresh = personas.claim();
+        assertEquals(next.get("id"), fresh.get("id"));
+        assertTrue(items(((Map<?, ?>) fresh.get("payload")).get("memories")).isEmpty());
+        personas.complete(next.get("id").toString(), fresh.get("lease_token").toString(), reply("", ""));
+    }
+
+    @Test
+    void sourceDeletionCancelsOnlySameUserAndPersonaAcrossConversations() {
+        memory(conversation, persona, "viewer", "青岛海边拍照", "CONFIRMED", 1);
+        String secondPersona = personas.create("owner", project, definition("另一个合成人物")).get("id").toString();
+        publish(secondPersona, "# 另一个合成人物");
+        String ownerSource = personas.start("owner", persona, null).get("id").toString();
+        memory(ownerSource, persona, "owner", "青岛海边拍照", "CONFIRMED", 2);
+        String independent = personas.start("viewer", secondPersona, null).get("id").toString();
+        memory(independent, secondPersona, "viewer", "青岛海边拍照", "CONFIRMED", 3);
+        String runningConversation = personas.start("viewer", persona, null).get("id").toString();
+        var running = personas.chat("viewer", runningConversation, "青岛海边拍照");
+        var held = personas.claim();
+        assertEquals(running.get("id"), held.get("id"));
+        String queuedConversation = personas.start("viewer", persona, null).get("id").toString();
+        var queued = personas.chat("viewer", queuedConversation, "青岛海边拍照");
+        var ownerJob = personas.chat("owner", ownerSource, "青岛海边拍照");
+        var otherPersonaJob = personas.chat("viewer", independent, "青岛海边拍照");
+        personas.deleteConversation("viewer", conversation);
+        for (var job : List.of(running, queued))
+            assertEquals("CANCELLED", personas.job("viewer", job.get("id").toString()).get("status"));
+        assertEquals("QUEUED", personas.job("owner", ownerJob.get("id").toString()).get("status"));
+        assertEquals("QUEUED", personas.job("viewer", otherPersonaJob.get("id").toString()).get("status"));
+        assertEquals(1, recall.retrieve("owner", persona, "青岛海边拍照").size());
+        assertEquals(1, recall.retrieve("viewer", secondPersona, "青岛海边拍照").size());
+    }
+
+    @Test
+    void unauthorizedSourceDeletionHasNoMemoryOrTaskSideEffect() {
+        String id = memory(conversation, persona, "viewer", "青岛海边拍照", "CONFIRMED", 1);
+        String other = personas.start("viewer", persona, null).get("id").toString();
+        var job = personas.chat("viewer", other, "青岛海边拍照");
+        var held = personas.claim();
+        var error = assertThrows(ResponseStatusException.class, () -> personas.deleteConversation("owner", conversation));
+        assertEquals(403, error.getStatusCode().value());
+        assertEquals(1, recall.retrieve("viewer", persona, "青岛海边拍照").size());
+        assertEquals("RUNNING", personas.job("viewer", job.get("id").toString()).get("status"));
+        personas.complete(job.get("id").toString(), held.get("lease_token").toString(), reply(id, ""));
+    }
+
+    @Test
+    void deletingConversationWithoutDerivedMemoriesKeepsOtherChatRunning() {
+        String source = personas.start("viewer", persona, null).get("id").toString();
+        String id = memory(source, persona, "viewer", "青岛海边拍照", "CONFIRMED", 1);
+        String other = personas.start("viewer", persona, null).get("id").toString();
+        var job = personas.chat("viewer", other, "青岛海边拍照");
+        var held = personas.claim();
+        personas.deleteConversation("viewer", conversation);
+        assertEquals("RUNNING", personas.job("viewer", job.get("id").toString()).get("status"));
+        personas.complete(job.get("id").toString(), held.get("lease_token").toString(), reply(id, ""));
+    }
+
+    @Test
+    void finalMemoryGuardRejectsMissingUnconfirmedOrForeignSourcesEvenWithoutCitations() {
+        String id = memory(conversation, persona, "viewer", "青岛海边拍照", "CONFIRMED", 1);
+        recall.validateAccess("viewer", persona, List.of(id));
+        assertEquals(409, assertThrows(ResponseStatusException.class,
+                () -> recall.validateAccess("owner", persona, List.of(id))).getStatusCode().value());
+        db.update("UPDATE persona_memory SET status='REJECTED' WHERE id=?", id);
+        assertEquals(409, assertThrows(ResponseStatusException.class,
+                () -> recall.validateAccess("viewer", persona, List.of(id))).getStatusCode().value());
+        db.update("UPDATE persona_memory SET status='CONFIRMED' WHERE id=?", id);
+        var held = claim("青岛海边拍照");
+        // Simulate a context missed by proactive cancellation; final validation is independent.
+        db.update("DELETE FROM persona_memory WHERE id=?", id);
+        var error = assertThrows(ResponseStatusException.class, () -> personas.complete(held.get("id").toString(),
+                held.get("lease_token").toString(), reply("", "")));
+        assertEquals(409, error.getStatusCode().value());
+        assertEquals(0, db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND role='assistant'",
+                Integer.class, conversation));
+    }
+
+    @Test
+    void concurrentSourceDeletesFinishWithoutRevivingOtherConversations() throws Exception {
+        memory(conversation, persona, "viewer", "青岛海边拍照", "CONFIRMED", 1);
+        String second = personas.start("viewer", persona, null).get("id").toString();
+        memory(second, persona, "viewer", "青岛海边拍照", "CONFIRMED", 2);
+        personas.chat("viewer", conversation, "青岛海边拍照");
+        personas.claim();
+        personas.chat("viewer", second, "青岛海边拍照");
+        personas.claim();
+        String other = personas.start("viewer", persona, null).get("id").toString();
+        var queued = personas.chat("viewer", other, "青岛海边拍照");
+        var ready = new java.util.concurrent.CountDownLatch(2);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            var futures = List.of(conversation, second).stream().map(source -> executor.submit(() -> {
+                ready.countDown();
+                assertTrue(start.await(10, java.util.concurrent.TimeUnit.SECONDS));
+                personas.deleteConversation("viewer", source);
+                return true;
+            })).toList();
+            assertTrue(ready.await(10, java.util.concurrent.TimeUnit.SECONDS));
+            start.countDown();
+            for (var future : futures) assertTrue(future.get(10, java.util.concurrent.TimeUnit.SECONDS));
+            assertTrue(personas.memories("viewer", persona).isEmpty());
+            assertEquals("CANCELLED", personas.job("viewer", queued.get("id").toString()).get("status"));
+            assertEquals(1, personas.conversations("viewer", persona).size());
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void sourceDeletionWaitsForAnEarlierCommittingReplyAndKeepsItHistorical() throws Exception {
+        String id = memory(conversation, persona, "viewer", "青岛海边拍照", "CONFIRMED", 1);
+        String other = personas.start("viewer", persona, null).get("id").toString();
+        var job = personas.chat("viewer", other, "青岛海边拍照");
+        var lease = personas.claim();
+        var ready = new java.util.concurrent.CountDownLatch(1);
+        var release = new java.util.concurrent.CountDownLatch(1);
+        var deleting = new java.util.concurrent.CountDownLatch(1);
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            var completing = executor.submit(() -> new org.springframework.transaction.support.TransactionTemplate(transactions)
+                    .execute(transaction -> {
+                        var result = personas.complete(job.get("id").toString(), lease.get("lease_token").toString(), reply(id, ""));
+                        ready.countDown();
+                        try {
+                            if (!release.await(10, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("test_release_timeout");
+                        } catch (InterruptedException error) {
+                            Thread.currentThread().interrupt();
+                            throw new IllegalStateException("test_interrupted");
+                        }
+                        return result;
+                    }));
+            assertTrue(ready.await(10, java.util.concurrent.TimeUnit.SECONDS));
+            var deletion = executor.submit(() -> {
+                deleting.countDown();
+                personas.deleteConversation("viewer", conversation);
+                return true;
+            });
+            assertTrue(deleting.await(10, java.util.concurrent.TimeUnit.SECONDS));
+            assertThrows(java.util.concurrent.TimeoutException.class,
+                    () -> deletion.get(250, java.util.concurrent.TimeUnit.MILLISECONDS));
+            release.countDown();
+            var result = completing.get(10, java.util.concurrent.TimeUnit.SECONDS);
+            assertTrue(deletion.get(10, java.util.concurrent.TimeUnit.SECONDS));
+            assertTrue(personas.memories("viewer", persona).isEmpty());
+            assertEquals("SUCCEEDED", personas.job("viewer", job.get("id").toString()).get("status"));
+            assertEquals(result, personas.complete(job.get("id").toString(), lease.get("lease_token").toString(), reply(id, "")));
+            assertEquals(2, items(personas.session("viewer", other).get("messages")).size());
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
     void longHistoryKeepsPinnedIdentityCurrentInputAndRelevantMemoryWithinBudget() {
         String id = memory(conversation, persona, "viewer", "青岛海边拍照", "CONFIRMED", 1);
         for (int i = 0; i < 40; i++)
@@ -183,7 +365,8 @@ class ConversationContextTest {
                 committed.get() ? List.of(Map.of("result", result)) : List.of());
         var service = new internal.distilly.modules.conversation.service.ConversationService(repository, json,
                 org.mockito.Mockito.mock(internal.distilly.common.persistence.ResourceRepository.class), access,
-                org.mockito.Mockito.mock(internal.distilly.modules.task.service.PersonaTaskService.class));
+                org.mockito.Mockito.mock(internal.distilly.modules.task.service.PersonaTaskService.class),
+                org.mockito.Mockito.mock(internal.distilly.modules.memory.service.MemoryService.class));
         assertTrue(items(service.session("viewer", conversation).get("messages")).get(0).containsKey("context_scope"));
     }
 

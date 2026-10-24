@@ -113,6 +113,59 @@ class Runtime:
         self.api(f'/api/personas/{p}/versions/{version}/review', {'approve': True})
         return p, version
 
+    def run_source_deletion_probe(self):
+        """New regression outside the frozen 30 cases; actual mock memory lifecycle."""
+        project = self.api('/api/projects', {'title': 'Synthetic cross-conversation source deletion'})['id']
+        self.api(f'/api/projects/{project}/members', {'user_id': 'viewer', 'role': 'VIEWER'}, method='PUT')
+        person, _ = self.create_persona(project, {
+            'name': 'Synthetic source boundary', 'family': 'relationship', 'origin': 'original',
+            'personality': '简洁', 'expression': '短句', 'background': '合成角色',
+            'relationship': '合成朋友', 'boundaries': '不冒充真人', 'consent': False})
+        source = self.api(f'/api/personas/{person}/conversations', {}, actor='viewer')['id']
+        first = self.api(f'/api/conversations/{source}/messages',
+                         {'message': '请记住，我喜欢青岛海边拍照。', 'request_id': str(uuid.uuid4())}, actor='viewer')
+        self.execute(first)
+        self.result(first, actor='viewer')
+        memories = self.api(f'/api/personas/{person}/memories', actor='viewer')
+        require(len(memories) == 1 and memories[0]['status'] == 'PENDING', 'source_probe_pending')
+        memory = memories[0]['id']
+        self.api(f'/api/personas/{person}/memories/{memory}', {'status': 'CONFIRMED'}, actor='viewer', method='PUT')
+        target = self.api(f'/api/personas/{person}/conversations', {}, actor='viewer')['id']
+        held = self.api(f'/api/conversations/{target}/messages', {'message': '青岛海边拍照'}, actor='viewer')
+        claimed = self.worker.request('/internal/persona-jobs/claim', {})
+        require(claimed['id'] == held['id'], 'source_probe_claim_identity')
+        require([m['id'] for m in claimed['payload']['memories']] == [memory], 'source_probe_memory_selected')
+        self.worker.request(f'/internal/persona-jobs/{held["id"]}/delta',
+                            {'lease_token': claimed['lease_token'], 'partial': '合成在途片段'})
+        self.api(f'/api/conversations/{source}', method='DELETE', expected=403)
+        require(self.api('/api/persona-jobs/' + held['id'], actor='viewer')['status'] == 'RUNNING', 'source_probe_unauthorized_no_cancel')
+        waiting = self.api(f'/api/personas/{person}/conversations', {}, actor='viewer')['id']
+        queued = self.api(f'/api/conversations/{waiting}/messages', {'message': '青岛海边拍照'}, actor='viewer')
+        owner = self.api(f'/api/personas/{person}/conversations', {})['id']
+        independent = self.api(f'/api/conversations/{owner}/messages', {'message': '合成独立交流'})
+        self.api(f'/api/conversations/{source}', actor='viewer', method='DELETE')
+        self.api(f'/api/conversations/{source}', actor='viewer', expected=404)
+        require(self.api(f'/api/personas/{person}/memories', actor='viewer') == [], 'source_probe_memory_removed')
+        for job in (held, queued):
+            row = self.api('/api/persona-jobs/' + job['id'], actor='viewer')
+            require(row['status'] == 'CANCELLED' and row['partial_reply'] == '', 'source_probe_cancelled')
+        require(self.api('/api/persona-jobs/' + independent['id'])['status'] == 'QUEUED', 'source_probe_other_user_unaffected')
+        import persona
+        persona.execute(self.worker, claimed)
+        before = self.api('/api/conversations/' + target, actor='viewer')
+        require(len(before['messages']) == 1 and before['active_job'] == [], 'source_probe_no_late_reply')
+        require(before['latest_chat_job']['status'] == 'CANCELLED', 'source_probe_terminal_after_worker')
+        self.execute(independent)
+        self.result(independent)
+        fresh = self.api(f'/api/conversations/{target}/messages', {'message': '青岛海边拍照'}, actor='viewer')
+        current = self.execute(fresh)
+        require(current['payload']['memories'] == [], 'source_probe_fresh_context_empty')
+        self.result(fresh, actor='viewer')
+        require(len(self.api('/api/conversations/' + target, actor='viewer')['messages']) == 3, 'source_probe_fresh_unique_reply')
+        return {'status': 'PASS', 'fixture': 'new independent source-deletion protocol probe; not part of frozen 30',
+                'confirmed_memories_removed': 1, 'held_and_queued_cancelled': 2, 'late_assistant_messages': 0,
+                'other_user_job_preserved': True, 'fresh_context_memories': 0, 'browser': 'NOT_RUN'}
+
     def run_case(self, case):
         project = self.api('/api/projects', {'title': 'Synthetic ' + case['id']})['id']
         self.api(f'/api/projects/{project}/members', {'user_id': 'viewer', 'role': 'VIEWER'}, method='PUT')
@@ -333,6 +386,8 @@ def run(output):
                             print(row['status'] + ': ' + case['id'], flush=True)
                         report.setdefault('completed_chat_turns', 0)
                         report['completed_chat_turns'] += runtime.chat_count
+                        if family == 'relationship':
+                            report['additional_source_deletion_probe'] = runtime.run_source_deletion_probe()
                     finally:
                         if process.poll() is None:
                             process.terminate()

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import static internal.distilly.common.validation.InputChecks.error;
 
 @Service
 public class MemoryRetrieval {
@@ -24,6 +25,15 @@ public class MemoryRetrieval {
     public MemoryRetrieval(MemoryRepository repository, PersonaAccessService access) {
         this.repository = repository;
         this.access = access;
+    }
+
+    public void validateAccess(String actor, String personaId, Object selectedIds) {
+        access.persona(actor, personaId);
+        if (!(selectedIds instanceof List<?> ids) || ids.size() > LIMIT)
+            throw error(409, "memory_access_changed");
+        for (Object id : ids)
+            if (!(id instanceof String memoryId) || repository.countConfirmedSource(memoryId, personaId, actor) != 1)
+                throw error(409, "memory_access_changed");
     }
 
     @Transactional(readOnly = true)

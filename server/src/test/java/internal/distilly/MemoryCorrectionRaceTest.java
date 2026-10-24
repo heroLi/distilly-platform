@@ -27,7 +27,7 @@ class MemoryCorrectionRaceTest {
         var db = new JdbcTemplate(source);
         db.execute("CREATE TABLE persona(id VARCHAR PRIMARY KEY,project_id VARCHAR,deleted BOOLEAN)");
         db.execute("CREATE TABLE persona_memory(id VARCHAR PRIMARY KEY,persona_id VARCHAR,user_id VARCHAR,body VARCHAR,status VARCHAR)");
-        db.execute("CREATE TABLE persona_job(persona_id VARCHAR,creator VARCHAR,kind VARCHAR,status VARCHAR,payload VARCHAR,result VARCHAR,partial_reply VARCHAR,lease_token VARCHAR)");
+        db.execute("CREATE TABLE persona_job(persona_id VARCHAR,creator VARCHAR,kind VARCHAR,status VARCHAR,payload VARCHAR,result VARCHAR,partial_reply VARCHAR,lease_token VARCHAR,knowledge_snapshot VARCHAR DEFAULT '[]')");
         db.update("INSERT INTO persona VALUES ('persona','project',FALSE)");
         db.update("INSERT INTO persona_memory VALUES ('memory','persona','alice','旧正文','CONFIRMED')");
         var read = new CountDownLatch(1);

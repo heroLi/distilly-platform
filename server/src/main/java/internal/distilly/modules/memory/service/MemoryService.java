@@ -34,7 +34,9 @@ public class MemoryService {
         return repository.findByPersonaAndUser(id, actorId);
     }
 
-    private void invalidateMemoryJobs(String actorId, String persona) {
+    @Transactional
+    public void invalidatePendingChats(String actorId, String persona) {
+        personaAccess.persona(actorId, persona);
         repository.cancelPendingChatsForUser(persona, actorId);
     }
 
@@ -44,6 +46,7 @@ public class MemoryService {
         var memoryRow = resources.one("persona_memory", memoryId);
         if (!actorId.equals(memoryRow.get("user_id")) || !id.equals(memoryRow.get("persona_id")))
             throw error(403, "private_memory");
+        personaAccess.lock("persona", id);
         personaAccess.lock("persona_memory", memoryId);
         // A status-only update must retain the body committed before this lock was acquired.
         memoryRow = resources.one("persona_memory", memoryId);
@@ -51,7 +54,7 @@ public class MemoryService {
         if (!Set.of("CONFIRMED", "REJECTED").contains(status))
             throw error(422, "invalid_memory_status");
         repository.updateStatusAndBody(status, text(body.getOrDefault("body", memoryRow.get("body")), 1000), memoryId);
-        invalidateMemoryJobs(actorId, id);
+        invalidatePendingChats(actorId, id);
     }
 
     @Transactional
@@ -60,8 +63,9 @@ public class MemoryService {
         var memoryRow = resources.one("persona_memory", memoryId);
         if (!actorId.equals(memoryRow.get("user_id")) || !id.equals(memoryRow.get("persona_id")))
             throw error(403, "private_memory");
+        personaAccess.lock("persona", id);
         repository.deleteById(memoryId);
-        invalidateMemoryJobs(actorId, id);
+        invalidatePendingChats(actorId, id);
     }
 
 }
