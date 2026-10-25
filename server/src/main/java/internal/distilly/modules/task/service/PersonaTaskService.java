@@ -144,6 +144,10 @@ public class PersonaTaskService {
         var rows = repository.findClaimableTasks(timestamp, properties.getMaxAttempts(),
                 timestamp - properties.getTaskAgingSeconds() * 1000);
         for (var taskRow : rows) {
+            // Memory mutations lock the same persona before cancellation. Do not
+            // assemble an old context while their commit is still pending.
+            if ("CHAT".equals(taskRow.get("kind")) && !repository.tryLockChatContext(taskRow.get("persona_id")))
+                continue;
             String token = id();
             if (repository.acquireLease(token, timestamp + properties.getLeaseSeconds() * 1000, taskRow.get("id"),
                     timestamp, properties.getMaxAttempts()) != 1)

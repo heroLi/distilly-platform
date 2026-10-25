@@ -56,6 +56,10 @@ public class PersonaTaskRepository {
                 leaseUntil, maxAttempts, agingBefore);
     }
 
+    public boolean tryLockChatContext(Object personaId) {
+        return !db.queryForList("SELECT id FROM persona WHERE id=? FOR UPDATE SKIP LOCKED", personaId).isEmpty();
+    }
+
     public int acquireLease(String leaseToken, long leaseUntil, Object id, long now, int maxAttempts) {
         return db.update(
                 "UPDATE persona_job SET status='RUNNING',lease_token=?,lease_until=?,attempt=attempt+1,partial_reply='' WHERE id=? AND (status='QUEUED' OR (status='RUNNING' AND lease_until<? AND attempt<?))",

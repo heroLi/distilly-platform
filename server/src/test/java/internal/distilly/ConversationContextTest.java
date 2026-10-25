@@ -144,6 +144,158 @@ class ConversationContextTest {
     }
 
     @Test
+    void chatCreatedAfterCorrectionCancellationCannotDeliverPreCommitMemoryBody() throws Exception {
+        String original = "合成约定：青岛海边拍照安排周五。";
+        String corrected = "合成约定：青岛海边拍照改为周六。";
+        String id = memory(conversation, persona, "viewer", original, "CONFIRMED", 1);
+        String target = personas.start("viewer", persona, null).get("id").toString();
+        var updated = new java.util.concurrent.CountDownLatch(1);
+        var release = new java.util.concurrent.CountDownLatch(1);
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            var correction = executor.submit(() -> new org.springframework.transaction.support.TransactionTemplate(transactions)
+                    .executeWithoutResult(transaction -> {
+                        personas.memory("viewer", persona, id, Map.of("status", "CONFIRMED", "body", corrected));
+                        updated.countDown(); // The cancellation scan ran; outer commit is deliberately held.
+                        try {
+                            if (!release.await(10, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("test_release_timeout");
+                        } catch (InterruptedException error) {
+                            Thread.currentThread().interrupt();
+                            throw new IllegalStateException("test_interrupted");
+                        }
+                    }));
+            assertTrue(updated.await(10, java.util.concurrent.TimeUnit.SECONDS));
+            var job = personas.chat("viewer", target, "青岛海边拍照");
+            var claiming = executor.submit(() -> personas.claim());
+            Map<String, Object> lease = null;
+            try { lease = claiming.get(250, java.util.concurrent.TimeUnit.MILLISECONDS); }
+            catch (java.util.concurrent.TimeoutException waitingForCommit) { }
+            boolean finishedBeforeCommit = claiming.isDone();
+            boolean issuedBeforeCommit = finishedBeforeCommit && lease != null;
+            release.countDown();
+            correction.get(10, java.util.concurrent.TimeUnit.SECONDS);
+            if (!finishedBeforeCommit) lease = claiming.get(10, java.util.concurrent.TimeUnit.SECONDS);
+            if (lease == null) lease = personas.claim(); // A skipped busy scope is retried by polling, not resubmitting.
+            assertNotNull(lease);
+            assertEquals(job.get("id"), lease.get("id"));
+            var selected = items(((Map<?, ?>) lease.get("payload")).get("memories"));
+            assertEquals(1, selected.size());
+            boolean snapshotCurrent = corrected.equals(selected.get(0).get("body"));
+            var output = new LinkedHashMap<>(reply(id, ""));
+            output.put("answer", selected.get(0).get("body"));
+            var answer = personas.complete(job.get("id").toString(), lease.get("lease_token").toString(), output);
+            boolean replyCurrent = corrected.equals(answer.get("answer"));
+            java.nio.file.Files.writeString(java.nio.file.Path.of("target/memory-claim-correction-race.json"),
+                    json.encode(Map.of("claim_finished_before_commit", finishedBeforeCommit,
+                            "lease_issued_before_commit", issuedBeforeCommit,
+                            "snapshot_current_body", snapshotCurrent, "reply_current_body", replyCurrent,
+                            "assistant_messages", items(personas.session("viewer", target).get("messages")).size() - 1)));
+            assertEquals("true/true", snapshotCurrent + "/" + replyCurrent, "snapshot/reply current-body flags only");
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void busyMemoryScopeSkipsOldestChatWithoutBlockingAnotherPersona() throws Exception {
+        String id = memory(conversation, persona, "viewer", "青岛海边拍照", "CONFIRMED", 1);
+        String otherPersona = personas.create("owner", project, definition("独立合成人物")).get("id").toString();
+        publish(otherPersona, "# 独立合成人物");
+        String other = personas.start("owner", otherPersona, null).get("id").toString();
+        var ready = new java.util.concurrent.CountDownLatch(1);
+        var release = new java.util.concurrent.CountDownLatch(1);
+        var executor = java.util.concurrent.Executors.newSingleThreadExecutor();
+        try {
+            var mutation = executor.submit(() -> new org.springframework.transaction.support.TransactionTemplate(transactions)
+                    .executeWithoutResult(transaction -> {
+                        personas.memory("viewer", persona, id, Map.of("status", "REJECTED"));
+                        ready.countDown();
+                        try {
+                            if (!release.await(10, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("test_release_timeout");
+                        } catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new IllegalStateException("test_interrupted"); }
+                    }));
+            assertTrue(ready.await(10, java.util.concurrent.TimeUnit.SECONDS));
+            var busy = personas.chat("viewer", conversation, "青岛海边拍照");
+            db.update("UPDATE persona_job SET created_at=1 WHERE id=?", busy.get("id"));
+            var independent = personas.chat("owner", other, "合成独立问题");
+            var claimed = personas.claim();
+            assertNotNull(claimed);
+            assertEquals(independent.get("id"), claimed.get("id"));
+            assertEquals("QUEUED", personas.job("viewer", busy.get("id").toString()).get("status"));
+            assertEquals(0, db.queryForObject("SELECT attempt FROM persona_job WHERE id=?", Integer.class, busy.get("id")));
+            personas.complete(claimed.get("id").toString(), claimed.get("lease_token").toString(), reply("", ""));
+            release.countDown(); mutation.get(10, java.util.concurrent.TimeUnit.SECONDS);
+            var fresh = personas.claim();
+            assertEquals(busy.get("id"), fresh.get("id"));
+            assertTrue(items(((Map<?, ?>) fresh.get("payload")).get("memories")).isEmpty());
+            personas.complete(fresh.get("id").toString(), fresh.get("lease_token").toString(), reply("", ""));
+        } finally { release.countDown(); executor.shutdownNow(); }
+    }
+
+    @Test
+    void rolledBackCorrectionReleasesScopeAndKeepsOriginalMemoryForNewChat() throws Exception {
+        String original = "合成约定：青岛海边拍照安排周五。";
+        String id = memory(conversation, persona, "viewer", original, "CONFIRMED", 1);
+        var ready = new java.util.concurrent.CountDownLatch(1);
+        var release = new java.util.concurrent.CountDownLatch(1);
+        var executor = java.util.concurrent.Executors.newSingleThreadExecutor();
+        try {
+            var mutation = executor.submit(() -> new org.springframework.transaction.support.TransactionTemplate(transactions)
+                    .executeWithoutResult(transaction -> {
+                        personas.memory("viewer", persona, id, Map.of("status", "CONFIRMED", "body", "合成约定：青岛海边拍照改为周六。"));
+                        ready.countDown();
+                        try {
+                            if (!release.await(10, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("test_release_timeout");
+                        } catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new IllegalStateException("test_interrupted"); }
+                        transaction.setRollbackOnly();
+                    }));
+            assertTrue(ready.await(10, java.util.concurrent.TimeUnit.SECONDS));
+            var queued = personas.chat("viewer", conversation, "青岛海边拍照");
+            assertNull(personas.claim());
+            assertEquals("QUEUED", personas.job("viewer", queued.get("id").toString()).get("status"));
+            release.countDown(); mutation.get(10, java.util.concurrent.TimeUnit.SECONDS);
+            var lease = personas.claim();
+            assertEquals(queued.get("id"), lease.get("id"));
+            assertTrue(original.equals(items(((Map<?, ?>) lease.get("payload")).get("memories")).get(0).get("body")));
+            personas.complete(lease.get("id").toString(), lease.get("lease_token").toString(), reply(id, ""));
+        } finally { release.countDown(); executor.shutdownNow(); }
+    }
+
+    @Test
+    void simultaneousClaimsDoNotDuplicateLeasesAndPollingFindsRemainingConversation() throws Exception {
+        String other = personas.start("viewer", persona, null).get("id").toString();
+        var first = personas.chat("viewer", conversation, "合成第一会话");
+        var second = personas.chat("viewer", other, "合成第二会话");
+        var ready = new java.util.concurrent.CountDownLatch(2);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        var leases = new LinkedHashMap<String, Map<String, Object>>();
+        try {
+            var futures = java.util.stream.IntStream.range(0, 2).mapToObj(i -> executor.submit(() -> {
+                ready.countDown(); assertTrue(start.await(10, java.util.concurrent.TimeUnit.SECONDS));
+                return personas.claim();
+            })).toList();
+            assertTrue(ready.await(10, java.util.concurrent.TimeUnit.SECONDS)); start.countDown();
+            for (var future : futures) {
+                var lease = future.get(10, java.util.concurrent.TimeUnit.SECONDS);
+                if (lease != null) assertNull(leases.put(lease.get("id").toString(), lease), "one lease per task");
+            }
+            for (int i = 0; i < 2 && leases.size() < 2; i++) {
+                var lease = personas.claim();
+                if (lease != null) assertNull(leases.put(lease.get("id").toString(), lease), "poll must not duplicate a lease");
+            }
+            assertEquals(Set.of(first.get("id"), second.get("id")), leases.keySet());
+            for (var lease : leases.values()) {
+                assertEquals(1, db.queryForObject("SELECT attempt FROM persona_job WHERE id=?", Integer.class, lease.get("id")));
+                personas.complete(lease.get("id").toString(), lease.get("lease_token").toString(), reply("", ""));
+            }
+            assertEquals(2, items(personas.session("viewer", conversation).get("messages")).size());
+            assertEquals(2, items(personas.session("viewer", other).get("messages")).size());
+        } finally { start.countDown(); executor.shutdownNow(); }
+    }
+
+    @Test
     void sourceDeletionCancelsOnlySameUserAndPersonaAcrossConversations() {
         memory(conversation, persona, "viewer", "青岛海边拍照", "CONFIRMED", 1);
         String secondPersona = personas.create("owner", project, definition("另一个合成人物")).get("id").toString();
