@@ -38,6 +38,12 @@ public class PersonaTaskRepository {
                 id);
     }
 
+    public int cancelUnavailableChat(Object id) {
+        return db.update(
+                "UPDATE persona_job SET status='CANCELLED',payload='{}',result=NULL,lease_token=NULL,lease_until=NULL,partial_reply='',knowledge_snapshot='[]',error_code=NULL WHERE id=? AND kind='CHAT' AND status IN ('QUEUED','RUNNING')",
+                id);
+    }
+
     public List<Map<String, Object>> findVisibleTasks(boolean editor, String personaId, String creator) {
         return db.queryForList("SELECT id FROM persona_job WHERE persona_id=? AND (creator=?"
                 + (editor ? " OR kind NOT IN ('CHAT','TTS','ASR')" : "") + ") ORDER BY created_at DESC,id LIMIT 100",

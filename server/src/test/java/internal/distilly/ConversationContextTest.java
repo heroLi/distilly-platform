@@ -75,6 +75,14 @@ class ConversationContextTest {
                 "experience_citations", experience.isEmpty() ? List.of() : List.of(experience));
     }
 
+    void assertUnavailableChatCleared(Object job) {
+        var row = db.queryForMap("SELECT status,payload,result,lease_token,lease_until,partial_reply,knowledge_snapshot FROM persona_job WHERE id=?", job);
+        assertEquals("CANCELLED", row.get("status"));
+        assertTrue(json.decode(row.get("payload")).isEmpty());
+        assertTrue(row.get("result") == null && row.get("lease_token") == null && row.get("lease_until") == null);
+        assertTrue("".equals(row.get("partial_reply")) && "[]".equals(row.get("knowledge_snapshot")));
+    }
+
     @Test
     void oldRelevantMemoryBeatsFortyNewUnrelatedItemsAndScopeIsStrict() {
         String expected = memory(conversation, persona, "viewer", "我们共同确认：雨天在青岛海边拍照。", "CONFIRMED", 1);
@@ -195,6 +203,101 @@ class ConversationContextTest {
             release.countDown();
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void revokedQueuedCreatorCannotPoisonAnotherUsersClaim() throws Exception {
+        var revoked = personas.chat("viewer", conversation, "合成撤权前排队消息");
+        db.update("UPDATE persona_job SET created_at=1 WHERE id=?", revoked.get("id"));
+        String healthyConversation = personas.start("owner", persona, null).get("id").toString();
+        var healthy = personas.chat("owner", healthyConversation, "合成仍获授权消息");
+        // Simulate membership revocation only in this dedicated test database.
+        db.update("DELETE FROM member WHERE project_id=? AND user_id=?", project, "viewer");
+        int claimStatus = 200;
+        Map<String, Object> claimed = null;
+        try { claimed = personas.claim(); }
+        catch (ResponseStatusException error) { claimStatus = error.getStatusCode().value(); }
+        boolean healthyClaimed = claimed != null && healthy.get("id").equals(claimed.get("id"));
+        String revokedStatus = db.queryForObject("SELECT status FROM persona_job WHERE id=?", String.class, revoked.get("id"));
+        java.nio.file.Files.writeString(java.nio.file.Path.of("target/revoked-claim-evaluation.json"),
+                json.encode(Map.of("claim_status", claimStatus, "healthy_task_claimed", healthyClaimed,
+                        "revoked_task_status", revokedStatus, "revoked_attempt",
+                        db.queryForObject("SELECT attempt FROM persona_job WHERE id=?", Integer.class, revoked.get("id")))));
+        assertEquals("200/true/CANCELLED", claimStatus + "/" + healthyClaimed + "/" + revokedStatus,
+                "claim status/healthy task/revoked task state only");
+        assertUnavailableChatCleared(revoked.get("id"));
+        assertEquals(0, db.queryForObject("SELECT attempt FROM persona_job WHERE id=?", Integer.class, revoked.get("id")));
+        assertEquals(0, db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND role='assistant'", Integer.class, conversation));
+        personas.complete(claimed.get("id").toString(), claimed.get("lease_token").toString(), reply("", ""));
+        assertEquals(2, items(personas.session("owner", healthyConversation).get("messages")).size());
+    }
+
+    @Test
+    void expiredRevokedLeaseIsCancelledAndOldCallbacksStayInvalidAfterRegrant() {
+        String id = memory(conversation, persona, "viewer", "青岛海边拍照", "CONFIRMED", 1);
+        var job = personas.chat("viewer", conversation, "青岛海边拍照");
+        var old = personas.claim();
+        assertEquals(job.get("id"), old.get("id"));
+        assertEquals(1, items(((Map<?, ?>) old.get("payload")).get("memories")).size());
+        personas.delta(job.get("id").toString(), old.get("lease_token").toString(), "合成旧片段");
+        db.update("UPDATE persona_job SET lease_until=0 WHERE id=?", job.get("id"));
+        db.update("DELETE FROM member WHERE project_id=? AND user_id=?", project, "viewer");
+        assertNull(personas.claim());
+        assertUnavailableChatCleared(job.get("id"));
+        assertEquals(1, db.queryForObject("SELECT attempt FROM persona_job WHERE id=?", Integer.class, job.get("id")));
+        platform.member("owner", project, "viewer", "VIEWER");
+        var error = assertThrows(ResponseStatusException.class,
+                () -> personas.complete(job.get("id").toString(), old.get("lease_token").toString(), reply(id, "")));
+        assertEquals(409, error.getStatusCode().value());
+        assertEquals(0, db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND role='assistant'", Integer.class, conversation));
+    }
+
+    @Test
+    void restoredMembershipDoesNotReviveCancelledTaskButAllowsExplicitNewTurn() {
+        var old = personas.chat("viewer", conversation, "合成撤权前消息");
+        db.update("DELETE FROM member WHERE project_id=? AND user_id=?", project, "viewer");
+        assertEquals(403, assertThrows(ResponseStatusException.class,
+                () -> personas.job("viewer", old.get("id").toString())).getStatusCode().value());
+        assertNull(personas.claim());
+        platform.member("owner", project, "viewer", "VIEWER");
+        assertNull(personas.claim());
+        assertEquals("CANCELLED", personas.job("viewer", old.get("id").toString()).get("status"));
+        assertEquals(409, assertThrows(ResponseStatusException.class,
+                () -> personas.retry("viewer", old.get("id").toString())).getStatusCode().value());
+        var next = personas.chat("viewer", conversation, "合成恢复授权后显式新消息");
+        var lease = personas.claim();
+        assertEquals(next.get("id"), lease.get("id"));
+        assertNotEquals(old.get("id"), lease.get("id"));
+        personas.complete(lease.get("id").toString(), lease.get("lease_token").toString(), reply("", ""));
+        assertEquals(3, items(personas.session("viewer", conversation).get("messages")).size());
+    }
+
+    @Test
+    void publishedChatRemainsAuthorizedAfterEditorBecomesViewer() {
+        platform.member("owner", project, "editor", "EDITOR");
+        String own = personas.start("editor", persona, null).get("id").toString();
+        var job = personas.chat("editor", own, "合成已发布人物交流");
+        platform.member("owner", project, "editor", "VIEWER");
+        var lease = personas.claim();
+        assertEquals(job.get("id"), lease.get("id"));
+        personas.complete(lease.get("id").toString(), lease.get("lease_token").toString(), reply("", ""));
+        assertEquals(2, items(personas.session("editor", own).get("messages")).size());
+    }
+
+    @Test
+    void unavailablePersonaCandidateDoesNotPoisonAnotherPersonasClaim() {
+        String available = personas.create("owner", project, definition("另一合成人物")).get("id").toString();
+        publish(available, "# 另一合成人物");
+        String healthyConversation = personas.start("owner", available, null).get("id").toString();
+        var old = personas.chat("viewer", conversation, "合成不可用人物消息");
+        db.update("UPDATE persona_job SET created_at=1 WHERE id=?", old.get("id"));
+        // Defensive fixture state: the public archive command rejects active jobs.
+        db.update("UPDATE persona SET deleted=TRUE WHERE id=?", persona);
+        var healthy = personas.chat("owner", healthyConversation, "合成仍可用人物消息");
+        var lease = personas.claim();
+        assertEquals(healthy.get("id"), lease.get("id"));
+        assertUnavailableChatCleared(old.get("id"));
+        personas.complete(lease.get("id").toString(), lease.get("lease_token").toString(), reply("", ""));
     }
 
     @Test

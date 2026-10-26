@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import static internal.distilly.common.support.Identifiers.id;
 import static internal.distilly.common.support.Identifiers.now;
 import static internal.distilly.common.validation.InputChecks.error;
@@ -148,6 +149,16 @@ public class PersonaTaskService {
             // assemble an old context while their commit is still pending.
             if ("CHAT".equals(taskRow.get("kind")) && !repository.tryLockChatContext(taskRow.get("persona_id")))
                 continue;
+            if ("CHAT".equals(taskRow.get("kind"))) {
+                try {
+                    personaAccess.conversation((String) taskRow.get("creator"), (String) taskRow.get("conversation_id"));
+                } catch (ResponseStatusException unavailable) {
+                    int status = unavailable.getStatusCode().value();
+                    if (status != 403 && status != 404) throw unavailable;
+                    repository.cancelUnavailableChat(taskRow.get("id"));
+                    continue;
+                }
+            }
             String token = id();
             if (repository.acquireLease(token, timestamp + properties.getLeaseSeconds() * 1000, taskRow.get("id"),
                     timestamp, properties.getMaxAttempts()) != 1)
