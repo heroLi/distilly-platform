@@ -1,12 +1,12 @@
 package internal.distilly.modules.memory.service;
 
-import internal.distilly.common.search.TextRelevance;
+import internal.distilly.modules.memory.domain.MemoryProvider;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import internal.distilly.modules.memory.repository.MemoryRepository;
 import internal.distilly.modules.persona.service.PersonaAccessService;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import static internal.distilly.common.validation.InputChecks.error;
@@ -14,17 +14,16 @@ import static internal.distilly.common.validation.InputChecks.error;
 @Service
 public class MemoryRetrieval {
     private static final int LIMIT = 12;
-    private record Ranked(Map<String, Object> row, int score) { }
-    private static final Comparator<Ranked> BEST_FIRST = Comparator.comparingInt(Ranked::score).reversed()
-        .thenComparing(value -> ((Number) value.row().get("created_at")).longValue(), Comparator.reverseOrder())
-        .thenComparing(value -> (String) value.row().get("id"));
-
     private final MemoryRepository repository;
     private final PersonaAccessService access;
+    private final MemoryProvider provider;
+    private final SqlMemoryProvider fallback;
 
-    public MemoryRetrieval(MemoryRepository repository, PersonaAccessService access) {
+    public MemoryRetrieval(MemoryRepository repository, PersonaAccessService access, MemoryProvider provider, SqlMemoryProvider fallback) {
         this.repository = repository;
         this.access = access;
+        this.provider=provider;
+        this.fallback=fallback;
     }
 
     public void validateAccess(String actor, String personaId, Object selectedIds) {
@@ -38,25 +37,24 @@ public class MemoryRetrieval {
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> retrieve(String actor, String personaId, String query) {
-        access.persona(actor, personaId);
-        boolean overview = query.strip().matches("(?s)(?:请问[，,\\s]*)?(?:你记得我什么|(?:你)?记得我的哪些(?:偏好|经历|事情)?|(?:我们)?有哪些共同经历|关于我的偏好)[？?！!。\\s]*");
-        var queryTerms = TextRelevance.recallTerms(query);
-        if (!overview && queryTerms.isEmpty()) return List.of();
-        var relevance = TextRelevance.prepare(queryTerms);
-        var best = new PriorityQueue<Ranked>(LIMIT, BEST_FIRST.reversed());
-        repository.scanConfirmedForRecall(personaId, actor, row -> {
-            int score = relevance.score((String) row.get("body"));
-            if (!overview && !TextRelevance.sufficientRecallCoverage(queryTerms, score)) return;
-            var candidate = new Ranked(row, score);
-            if (best.size() < LIMIT) best.add(candidate);
-            else if (BEST_FIRST.compare(candidate, best.peek()) < 0) {
-                best.poll();
-                best.add(candidate);
-            }
-        });
-        return best.stream().sorted(BEST_FIRST)
-            .map(value -> Map.<String, Object>of("id", value.row().get("id"), "body", value.row().get("body"),
-                    "source_id", value.row().get("source_id"), "origin", "confirmed_interaction"))
-            .toList();
+        var persona=access.persona(actor,personaId);
+        var scope=new MemoryProvider.Scope((String)persona.get("project_id"),personaId,actor);
+        List<MemoryProvider.SourceRef> refs;
+        try {
+            refs=provider.recall(scope,query);
+            if(refs==null||refs.size()>LIMIT||refs.stream().anyMatch(java.util.Objects::isNull))throw new MemoryProvider.Unavailable();
+        } catch(MemoryProvider.Unavailable unavailable) { refs=fallback.recall(scope,query); }
+        // Provider routing and metadata are never authorization. Recheck current membership and SQL sources.
+        access.persona(actor,personaId);
+        var result=new ArrayList<Map<String,Object>>();
+        var seen=new LinkedHashSet<String>();
+        for(var ref:refs){
+            if(!seen.add(ref.memoryId()))continue;
+            var rows=repository.findConfirmedSource(ref.memoryId(),personaId,actor);
+            if(rows.isEmpty()||!ref.equals(MemoryProvider.reference(rows.get(0))))continue;
+            var row=rows.get(0);
+            result.add(Map.of("id",row.get("id"),"body",row.get("body"),"source_id",row.get("source_id"),"origin","confirmed_interaction"));
+        }
+        return List.copyOf(result);
     }
 }

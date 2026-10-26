@@ -1,0 +1,1458 @@
+{
+  "dataset_id": "memory_provider_zh_v1",
+  "synthetic": true,
+  "historical_corpus_restored": false,
+  "independence": "new corpus independent of old 247; same author, not blind; no product retrieval rules tuned",
+  "confirmed_self_count": 200,
+  "memories": [
+    {
+      "key": "photo",
+      "body": "用户记录过青岛海边拍照。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "walk",
+      "body": "用户喜欢在北京公园安静散步。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "coffee",
+      "body": "用户不喝咖啡。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "quiet",
+      "body": "用户选择宁静的房间读书。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "corrected",
+      "body": "合成偏好已纠正为周六海边拍照",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "allergy",
+      "body": "用户对花生过敏，点餐时须避开花生。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "library",
+      "body": "用户每周二下午去图书馆借书。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "cat",
+      "body": "用户养了一只名叫小麦的橘猫。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "home",
+      "body": "用户出生在武汉，后来搬到南京。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "food",
+      "body": "用户不吃辣，尤其不吃麻辣火锅。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "rain",
+      "body": "用户雨天不去爬山。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "music",
+      "body": "用户学习时听古典音乐。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_000",
+      "body": "合成设备维护记录编号 QX000，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_001",
+      "body": "合成设备维护记录编号 QX001，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_002",
+      "body": "合成设备维护记录编号 QX002，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_003",
+      "body": "合成设备维护记录编号 QX003，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_004",
+      "body": "合成设备维护记录编号 QX004，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_005",
+      "body": "合成设备维护记录编号 QX005，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_006",
+      "body": "合成设备维护记录编号 QX006，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_007",
+      "body": "合成设备维护记录编号 QX007，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_008",
+      "body": "合成设备维护记录编号 QX008，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_009",
+      "body": "合成设备维护记录编号 QX009，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_010",
+      "body": "合成设备维护记录编号 QX010，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_011",
+      "body": "合成设备维护记录编号 QX011，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_012",
+      "body": "合成设备维护记录编号 QX012，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_013",
+      "body": "合成设备维护记录编号 QX013，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_014",
+      "body": "合成设备维护记录编号 QX014，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_015",
+      "body": "合成设备维护记录编号 QX015，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_016",
+      "body": "合成设备维护记录编号 QX016，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_017",
+      "body": "合成设备维护记录编号 QX017，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_018",
+      "body": "合成设备维护记录编号 QX018，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_019",
+      "body": "合成设备维护记录编号 QX019，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_020",
+      "body": "合成设备维护记录编号 QX020，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_021",
+      "body": "合成设备维护记录编号 QX021，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_022",
+      "body": "合成设备维护记录编号 QX022，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_023",
+      "body": "合成设备维护记录编号 QX023，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_024",
+      "body": "合成设备维护记录编号 QX024，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_025",
+      "body": "合成设备维护记录编号 QX025，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_026",
+      "body": "合成设备维护记录编号 QX026，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_027",
+      "body": "合成设备维护记录编号 QX027，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_028",
+      "body": "合成设备维护记录编号 QX028，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_029",
+      "body": "合成设备维护记录编号 QX029，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_030",
+      "body": "合成设备维护记录编号 QX030，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_031",
+      "body": "合成设备维护记录编号 QX031，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_032",
+      "body": "合成设备维护记录编号 QX032，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_033",
+      "body": "合成设备维护记录编号 QX033，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_034",
+      "body": "合成设备维护记录编号 QX034，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_035",
+      "body": "合成设备维护记录编号 QX035，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_036",
+      "body": "合成设备维护记录编号 QX036，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_037",
+      "body": "合成设备维护记录编号 QX037，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_038",
+      "body": "合成设备维护记录编号 QX038，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_039",
+      "body": "合成设备维护记录编号 QX039，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_040",
+      "body": "合成设备维护记录编号 QX040，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_041",
+      "body": "合成设备维护记录编号 QX041，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_042",
+      "body": "合成设备维护记录编号 QX042，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_043",
+      "body": "合成设备维护记录编号 QX043，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_044",
+      "body": "合成设备维护记录编号 QX044，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_045",
+      "body": "合成设备维护记录编号 QX045，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_046",
+      "body": "合成设备维护记录编号 QX046，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_047",
+      "body": "合成设备维护记录编号 QX047，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_048",
+      "body": "合成设备维护记录编号 QX048，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_049",
+      "body": "合成设备维护记录编号 QX049，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_050",
+      "body": "合成设备维护记录编号 QX050，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_051",
+      "body": "合成设备维护记录编号 QX051，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_052",
+      "body": "合成设备维护记录编号 QX052，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_053",
+      "body": "合成设备维护记录编号 QX053，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_054",
+      "body": "合成设备维护记录编号 QX054，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_055",
+      "body": "合成设备维护记录编号 QX055，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_056",
+      "body": "合成设备维护记录编号 QX056，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_057",
+      "body": "合成设备维护记录编号 QX057，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_058",
+      "body": "合成设备维护记录编号 QX058，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_059",
+      "body": "合成设备维护记录编号 QX059，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_060",
+      "body": "合成设备维护记录编号 QX060，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_061",
+      "body": "合成设备维护记录编号 QX061，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_062",
+      "body": "合成设备维护记录编号 QX062，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_063",
+      "body": "合成设备维护记录编号 QX063，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_064",
+      "body": "合成设备维护记录编号 QX064，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_065",
+      "body": "合成设备维护记录编号 QX065，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_066",
+      "body": "合成设备维护记录编号 QX066，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_067",
+      "body": "合成设备维护记录编号 QX067，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_068",
+      "body": "合成设备维护记录编号 QX068，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_069",
+      "body": "合成设备维护记录编号 QX069，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_070",
+      "body": "合成设备维护记录编号 QX070，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_071",
+      "body": "合成设备维护记录编号 QX071，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_072",
+      "body": "合成设备维护记录编号 QX072，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_073",
+      "body": "合成设备维护记录编号 QX073，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_074",
+      "body": "合成设备维护记录编号 QX074，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_075",
+      "body": "合成设备维护记录编号 QX075，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_076",
+      "body": "合成设备维护记录编号 QX076，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_077",
+      "body": "合成设备维护记录编号 QX077，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_078",
+      "body": "合成设备维护记录编号 QX078，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_079",
+      "body": "合成设备维护记录编号 QX079，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_080",
+      "body": "合成设备维护记录编号 QX080，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_081",
+      "body": "合成设备维护记录编号 QX081，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_082",
+      "body": "合成设备维护记录编号 QX082，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_083",
+      "body": "合成设备维护记录编号 QX083，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_084",
+      "body": "合成设备维护记录编号 QX084，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_085",
+      "body": "合成设备维护记录编号 QX085，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_086",
+      "body": "合成设备维护记录编号 QX086，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_087",
+      "body": "合成设备维护记录编号 QX087，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_088",
+      "body": "合成设备维护记录编号 QX088，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_089",
+      "body": "合成设备维护记录编号 QX089，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_090",
+      "body": "合成设备维护记录编号 QX090，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_091",
+      "body": "合成设备维护记录编号 QX091，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_092",
+      "body": "合成设备维护记录编号 QX092，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_093",
+      "body": "合成设备维护记录编号 QX093，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_094",
+      "body": "合成设备维护记录编号 QX094，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_095",
+      "body": "合成设备维护记录编号 QX095，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_096",
+      "body": "合成设备维护记录编号 QX096，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_097",
+      "body": "合成设备维护记录编号 QX097，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_098",
+      "body": "合成设备维护记录编号 QX098，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_099",
+      "body": "合成设备维护记录编号 QX099，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_100",
+      "body": "合成设备维护记录编号 QX100，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_101",
+      "body": "合成设备维护记录编号 QX101，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_102",
+      "body": "合成设备维护记录编号 QX102，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_103",
+      "body": "合成设备维护记录编号 QX103，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_104",
+      "body": "合成设备维护记录编号 QX104，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_105",
+      "body": "合成设备维护记录编号 QX105，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_106",
+      "body": "合成设备维护记录编号 QX106，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_107",
+      "body": "合成设备维护记录编号 QX107，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_108",
+      "body": "合成设备维护记录编号 QX108，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_109",
+      "body": "合成设备维护记录编号 QX109，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_110",
+      "body": "合成设备维护记录编号 QX110，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_111",
+      "body": "合成设备维护记录编号 QX111，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_112",
+      "body": "合成设备维护记录编号 QX112，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_113",
+      "body": "合成设备维护记录编号 QX113，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_114",
+      "body": "合成设备维护记录编号 QX114，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_115",
+      "body": "合成设备维护记录编号 QX115，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_116",
+      "body": "合成设备维护记录编号 QX116，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_117",
+      "body": "合成设备维护记录编号 QX117，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_118",
+      "body": "合成设备维护记录编号 QX118，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_119",
+      "body": "合成设备维护记录编号 QX119，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_120",
+      "body": "合成设备维护记录编号 QX120，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_121",
+      "body": "合成设备维护记录编号 QX121，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_122",
+      "body": "合成设备维护记录编号 QX122，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_123",
+      "body": "合成设备维护记录编号 QX123，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_124",
+      "body": "合成设备维护记录编号 QX124，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_125",
+      "body": "合成设备维护记录编号 QX125，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_126",
+      "body": "合成设备维护记录编号 QX126，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_127",
+      "body": "合成设备维护记录编号 QX127，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_128",
+      "body": "合成设备维护记录编号 QX128，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_129",
+      "body": "合成设备维护记录编号 QX129，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_130",
+      "body": "合成设备维护记录编号 QX130，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_131",
+      "body": "合成设备维护记录编号 QX131，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_132",
+      "body": "合成设备维护记录编号 QX132，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_133",
+      "body": "合成设备维护记录编号 QX133，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_134",
+      "body": "合成设备维护记录编号 QX134，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_135",
+      "body": "合成设备维护记录编号 QX135，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_136",
+      "body": "合成设备维护记录编号 QX136，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_137",
+      "body": "合成设备维护记录编号 QX137，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_138",
+      "body": "合成设备维护记录编号 QX138，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_139",
+      "body": "合成设备维护记录编号 QX139，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_140",
+      "body": "合成设备维护记录编号 QX140，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_141",
+      "body": "合成设备维护记录编号 QX141，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_142",
+      "body": "合成设备维护记录编号 QX142，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_143",
+      "body": "合成设备维护记录编号 QX143，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_144",
+      "body": "合成设备维护记录编号 QX144，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_145",
+      "body": "合成设备维护记录编号 QX145，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_146",
+      "body": "合成设备维护记录编号 QX146，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_147",
+      "body": "合成设备维护记录编号 QX147，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_148",
+      "body": "合成设备维护记录编号 QX148，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_149",
+      "body": "合成设备维护记录编号 QX149，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_150",
+      "body": "合成设备维护记录编号 QX150，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_151",
+      "body": "合成设备维护记录编号 QX151，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_152",
+      "body": "合成设备维护记录编号 QX152，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_153",
+      "body": "合成设备维护记录编号 QX153，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_154",
+      "body": "合成设备维护记录编号 QX154，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_155",
+      "body": "合成设备维护记录编号 QX155，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_156",
+      "body": "合成设备维护记录编号 QX156，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_157",
+      "body": "合成设备维护记录编号 QX157，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_158",
+      "body": "合成设备维护记录编号 QX158，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_159",
+      "body": "合成设备维护记录编号 QX159，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_160",
+      "body": "合成设备维护记录编号 QX160，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_161",
+      "body": "合成设备维护记录编号 QX161，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_162",
+      "body": "合成设备维护记录编号 QX162，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_163",
+      "body": "合成设备维护记录编号 QX163，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_164",
+      "body": "合成设备维护记录编号 QX164，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_165",
+      "body": "合成设备维护记录编号 QX165，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_166",
+      "body": "合成设备维护记录编号 QX166，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_167",
+      "body": "合成设备维护记录编号 QX167，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_168",
+      "body": "合成设备维护记录编号 QX168，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_169",
+      "body": "合成设备维护记录编号 QX169，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_170",
+      "body": "合成设备维护记录编号 QX170，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_171",
+      "body": "合成设备维护记录编号 QX171，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_172",
+      "body": "合成设备维护记录编号 QX172，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_173",
+      "body": "合成设备维护记录编号 QX173，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_174",
+      "body": "合成设备维护记录编号 QX174，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_175",
+      "body": "合成设备维护记录编号 QX175，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_176",
+      "body": "合成设备维护记录编号 QX176，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_177",
+      "body": "合成设备维护记录编号 QX177，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_178",
+      "body": "合成设备维护记录编号 QX178，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_179",
+      "body": "合成设备维护记录编号 QX179，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_180",
+      "body": "合成设备维护记录编号 QX180，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_181",
+      "body": "合成设备维护记录编号 QX181，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_182",
+      "body": "合成设备维护记录编号 QX182，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_183",
+      "body": "合成设备维护记录编号 QX183，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_184",
+      "body": "合成设备维护记录编号 QX184，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_185",
+      "body": "合成设备维护记录编号 QX185，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_186",
+      "body": "合成设备维护记录编号 QX186，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "neutral_187",
+      "body": "合成设备维护记录编号 QX187，阀门巡检已完成。",
+      "scope": "self",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "foreign_user",
+      "body": "用户收藏鹦鹉螺邮票。",
+      "scope": "other_user",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "foreign_persona",
+      "body": "用户喜欢珊瑚礁潜水。",
+      "scope": "other_persona",
+      "status": "CONFIRMED"
+    },
+    {
+      "key": "pending",
+      "body": "用户计划去冰川露营。",
+      "scope": "self",
+      "status": "PENDING"
+    },
+    {
+      "key": "rejected",
+      "body": "用户热爱沙漠越野。",
+      "scope": "self",
+      "status": "REJECTED"
+    }
+  ],
+  "cases": [
+    {
+      "id": "literal_photo",
+      "query": "青岛海边拍照",
+      "expected": [
+        "photo"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "literal_walk",
+      "query": "北京公园安静散步",
+      "expected": [
+        "walk"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "literal_coffee",
+      "query": "不喝咖啡",
+      "expected": [
+        "coffee"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "literal_quiet",
+      "query": "宁静的房间读书",
+      "expected": [
+        "quiet"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "literal_corrected",
+      "query": "合成偏好已纠正为周六海边拍照",
+      "expected": [
+        "corrected"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "literal_allergy",
+      "query": "花生过敏",
+      "expected": [
+        "allergy"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "literal_library",
+      "query": "周二下午图书馆",
+      "expected": [
+        "library"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "literal_cat",
+      "query": "小麦橘猫",
+      "expected": [
+        "cat"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "literal_home",
+      "query": "武汉搬到南京",
+      "expected": [
+        "home"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "literal_food",
+      "query": "不吃麻辣火锅",
+      "expected": [
+        "food"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "literal_rain",
+      "query": "雨天不去爬山",
+      "expected": [
+        "rain"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "literal_music",
+      "query": "学习时听古典音乐",
+      "expected": [
+        "music"
+      ],
+      "category": "literal"
+    },
+    {
+      "id": "camera",
+      "query": "青岛摄影",
+      "expected": [
+        "photo"
+      ],
+      "category": "paraphrase_diagnostic"
+    },
+    {
+      "id": "relax",
+      "query": "北京公园散心",
+      "expected": [
+        "walk"
+      ],
+      "category": "paraphrase_diagnostic"
+    },
+    {
+      "id": "cross_language",
+      "query": "coffee preference",
+      "expected": [
+        "coffee"
+      ],
+      "category": "paraphrase_diagnostic"
+    },
+    {
+      "id": "calm",
+      "query": "安静房间看书",
+      "expected": [
+        "quiet"
+      ],
+      "category": "paraphrase_diagnostic"
+    },
+    {
+      "id": "new_corrected_probe",
+      "query": "海边拍照偏好是什么？",
+      "expected": [
+        "corrected"
+      ],
+      "category": "paraphrase_diagnostic"
+    },
+    {
+      "id": "food_rephrase",
+      "query": "我能吃麻辣口味吗",
+      "expected": [
+        "food"
+      ],
+      "category": "paraphrase_diagnostic"
+    },
+    {
+      "id": "allergy_rephrase",
+      "query": "点菜时哪些坚果要避免",
+      "expected": [
+        "allergy"
+      ],
+      "category": "paraphrase_diagnostic"
+    },
+    {
+      "id": "cat_rephrase",
+      "query": "我的宠物叫什么",
+      "expected": [
+        "cat"
+      ],
+      "category": "paraphrase_diagnostic"
+    },
+    {
+      "id": "unrelated",
+      "query": "量子纠缠实验设备",
+      "expected": [],
+      "category": "empty_or_access_boundary"
+    },
+    {
+      "id": "unrelated2",
+      "query": "土星环的成因",
+      "expected": [],
+      "category": "empty_or_access_boundary"
+    },
+    {
+      "id": "private_user",
+      "query": "鹦鹉螺邮票",
+      "expected": [],
+      "category": "empty_or_access_boundary"
+    },
+    {
+      "id": "private_persona",
+      "query": "珊瑚礁潜水",
+      "expected": [],
+      "category": "empty_or_access_boundary"
+    },
+    {
+      "id": "pending",
+      "query": "冰川露营",
+      "expected": [],
+      "category": "empty_or_access_boundary"
+    },
+    {
+      "id": "rejected",
+      "query": "沙漠越野",
+      "expected": [],
+      "category": "empty_or_access_boundary"
+    },
+    {
+      "id": "negation_question",
+      "query": "用户喜欢咖啡吗",
+      "expected": [
+        "coffee"
+      ],
+      "category": "negation_preserve_original_not_entailment"
+    },
+    {
+      "id": "changed_location",
+      "query": "用户在杭州出生吗",
+      "expected": [],
+      "category": "entity_mismatch"
+    },
+    {
+      "id": "changed_day",
+      "query": "用户周四去图书馆吗",
+      "expected": [],
+      "category": "time_mismatch"
+    },
+    {
+      "id": "overview",
+      "query": "你记得我的哪些偏好",
+      "expected": [],
+      "category": "overview_diagnostic_no_single_gold_set",
+      "score_quality": false
+    }
+  ]
+}

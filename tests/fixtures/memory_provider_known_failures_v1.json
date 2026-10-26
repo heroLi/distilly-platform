@@ -1,0 +1,30 @@
+{
+  "historical_corpus_restored": false,
+  "record_card_narrow_semantics": {
+    "matched": 0,
+    "total": 4,
+    "scope": "workspace shared record cards; not private-memory corpus",
+    "original_raw_artifacts_retained": true
+  },
+  "corrected_memory_paraphrase": {
+    "matched": false,
+    "query": "海边拍照偏好是什么？",
+    "body": "合成偏好已纠正为周六海边拍照",
+    "scope": "private confirmed memory"
+  },
+  "local_evidence_hashes": [
+    {
+      "path": "data/resume-20261021/retrieval/before-four-probes.raw.json",
+      "sha256": "9f5442014040db41f42d23db51df158f1882d6065e8397eb4a86e197838d03a6"
+    },
+    {
+      "path": "data/resume-20261021/retrieval/after-four-probes.raw.json",
+      "sha256": "6ba20df433cf613caf36cda7e5153e8b4d88279ae3ea2d3641c806792e280fe3"
+    },
+    {
+      "path": "data/resume-20261026/memory-voice/final-native/result.json",
+      "sha256": "3576a9aa45adab2e8371b128c36466e3c4decf3079510ce30a67b96961a59992"
+    }
+  ],
+  "these_are_not_recovered_247": true
+}

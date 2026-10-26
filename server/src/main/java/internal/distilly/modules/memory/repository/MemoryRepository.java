@@ -56,6 +56,11 @@ public class MemoryRepository {
                 Integer.class, id, personaId, userId, personaId, userId);
     }
 
+    public List<Map<String,Object>> findConfirmedSource(String id,String personaId,String userId) {
+        return db.queryForList("SELECT m.id,m.body,m.source_id,m.created_at FROM persona_memory m JOIN persona_message s ON s.id=m.source_id JOIN persona_conversation c ON c.id=s.conversation_id WHERE m.id=? AND m.persona_id=? AND m.user_id=? AND m.status='CONFIRMED' AND c.persona_id=? AND c.user_id=?",
+                id,personaId,userId,personaId,userId);
+    }
+
     public int updateStatusAndBody(String status, Object body, String id) {
         return db.update("UPDATE persona_memory SET status=?,body=? WHERE id=?", status, body, id);
     }

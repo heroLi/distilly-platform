@@ -1,0 +1,7 @@
+{
+  "fixture": "tests/fixtures/memory_provider_zh_v1.json",
+  "sha256": "69d43c2e13a1711e86f820c8c415f79594f42d418917e3e7701b9653125b6603",
+  "frozen_before_provider_refactor": true,
+  "quality_failures_are_not_test_success": true,
+  "hindsight_actual_quality": "NOT_RUN"
+}

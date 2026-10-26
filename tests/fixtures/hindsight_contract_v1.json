@@ -1,0 +1,25 @@
+{
+  "kind": "offline_argument_contract_not_a_server_response_capture",
+  "reviewed_date": "2026-10-26",
+  "sources": [
+    "https://github.com/vectorize-io/hindsight",
+    "https://hindsight.vectorize.io/developer/api/retain",
+    "https://hindsight.vectorize.io/developer/api/recall",
+    "https://hindsight.vectorize.io/developer/api/documents",
+    "https://hindsight.vectorize.io/developer/extensions",
+    "https://hindsight.vectorize.io/developer/multilingual"
+  ],
+  "real_network_transport": false,
+  "real_hindsight_quality": "NOT_RUN",
+  "retain_required": ["items", "async", "operation_id"],
+  "item_required": ["content", "document_id", "metadata", "update_mode"],
+  "metadata_required": ["memory_id", "source_id", "source_version"],
+  "update_mode": "replace",
+  "async": true,
+  "recall_types": ["world", "experience"],
+  "bank_id_is_authorization": false,
+  "caller_must_persist_operation_id_before_send": true,
+  "document_replacement_does_not_prevent_out_of_order_writes": true,
+  "real_deletion_acknowledgement_tested": false,
+  "reflect_allowed": false
+}
