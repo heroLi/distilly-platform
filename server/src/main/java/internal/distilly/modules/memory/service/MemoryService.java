@@ -9,6 +9,7 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import static internal.distilly.common.support.Identifiers.id;
+import static internal.distilly.common.support.Digests.sha256;
 import static internal.distilly.common.validation.InputChecks.error;
 import static internal.distilly.common.validation.InputChecks.text;
 
@@ -31,7 +32,21 @@ public class MemoryService {
 
     public List<Map<String, Object>> memories(String actorId, String id) {
         personaAccess.persona(actorId, id);
-        return repository.findByPersonaAndUser(id, actorId);
+        return repository.findByPersonaAndUser(id, actorId).stream().map(row -> {
+            row.put("revision", revision(row));
+            return row;
+        }).toList();
+    }
+
+    private String revision(Map<String, Object> row) {
+        return sha256(row.get("id") + "\n" + row.get("status") + "\n" + row.get("body"));
+    }
+
+    public Map<String, Object> source(String actorId, String id, String memoryId) {
+        personaAccess.persona(actorId, id);
+        var rows = repository.findSource(id, actorId, memoryId);
+        if (rows.isEmpty()) throw error(404, "memory_source_unavailable");
+        return rows.get(0);
     }
 
     @Transactional
@@ -50,6 +65,8 @@ public class MemoryService {
         personaAccess.lock("persona_memory", memoryId);
         // A status-only update must retain the body committed before this lock was acquired.
         memoryRow = resources.one("persona_memory", memoryId);
+        if (body.containsKey("expected_revision") && !revision(memoryRow).equals(body.get("expected_revision")))
+            throw error(409, "memory_revision_conflict");
         String status = text(body.get("status"), 12);
         if (!Set.of("CONFIRMED", "REJECTED").contains(status))
             throw error(422, "invalid_memory_status");

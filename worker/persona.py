@@ -205,7 +205,8 @@ def execute(worker, job):
     thread.start()
     with execution_context(worker, "PERSONA", job):
         try:
-            handler = {'PERSONA': generate, 'CHAT': chat, 'IMAGE': image, 'TTS': speech, 'ASR': speech}.get(job['kind'])
+            from voice_clone import process as clone_voice
+            handler = {'VOICE_CLONE': clone_voice, 'VOICE_PREVIEW': clone_voice, 'PERSONA': generate, 'CHAT': chat, 'IMAGE': image, 'TTS': speech, 'ASR': speech}.get(job['kind'])
             if handler is None:
                 raise ValueError('unknown persona job')
             if job['kind'] == 'CHAT':

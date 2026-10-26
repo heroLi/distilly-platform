@@ -10,6 +10,7 @@ import internal.distilly.config.PlatformProperties;
 import internal.distilly.modules.knowledge.service.PersonaKnowledgeService;
 import internal.distilly.modules.persona.service.PersonaAccessService;
 import internal.distilly.modules.task.repository.PersonaTaskRepository;
+import internal.distilly.modules.media.repository.VoiceProfileRepository;
 import internal.distilly.modules.workspace.service.AuditService;
 import internal.distilly.modules.workspace.service.WorkspaceAccessService;
 import java.util.ArrayList;
@@ -39,6 +40,8 @@ public class PersonaTaskService {
 
     private final PersonaTaskRepository repository;
 
+    private final VoiceProfileRepository voices;
+
     private final JsonCodec json;
 
     private final ResourceRepository resources;
@@ -61,7 +64,7 @@ public class PersonaTaskService {
 
     public PersonaTaskService(PlatformProperties properties, PersonaTaskRepository repository, JsonCodec json,
             ResourceRepository resources, WorkspaceAccessService access, AuditService audits,
-            PersonaAccessService personaAccess, PersonaKnowledgeService knowledge, ContextAssembler contexts, MemoryRetrieval memories, TaskAdmissionService admission) {
+            PersonaAccessService personaAccess, PersonaKnowledgeService knowledge, ContextAssembler contexts, MemoryRetrieval memories, TaskAdmissionService admission, VoiceProfileRepository voices) {
         this.properties = properties;
         this.repository = repository;
         this.json = json;
@@ -73,6 +76,7 @@ public class PersonaTaskService {
         this.contexts = contexts;
         this.memories = memories;
         this.admission = admission;
+        this.voices = voices;
     }
 
     @Transactional
@@ -87,10 +91,11 @@ public class PersonaTaskService {
     public Map<String, Object> job(String actorId, String id) {
         var taskRow = resources.one("persona_job", id);
         var personaRow = personaAccess.persona(actorId, (String) taskRow.get("persona_id"));
-        if (Set.of("CHAT", "TTS", "ASR").contains(taskRow.get("kind")) && !actorId.equals(taskRow.get("creator")))
+        if (Set.of("CHAT", "TTS", "ASR", "VOICE_CLONE", "VOICE_PREVIEW").contains(taskRow.get("kind")) && !actorId.equals(taskRow.get("creator")))
             throw error(403, "private_job");
-        if (!Set.of("CHAT", "TTS", "ASR").contains(taskRow.get("kind")))
+        if (!Set.of("CHAT", "TTS", "ASR", "VOICE_CLONE", "VOICE_PREVIEW").contains(taskRow.get("kind")))
             personaAccess.edit(actorId, personaRow);
+        if (voiceKind(taskRow)) validateVoiceAccess(taskRow, false);
         var out = new LinkedHashMap<String, Object>();
         for (String k : List.of("id", "persona_id", "conversation_id", "kind", "status", "error_code", "attempt",
                 "created_at", "partial_reply"))
@@ -130,7 +135,7 @@ public class PersonaTaskService {
     public List<Map<String, Object>> jobs(String actorId, String id) {
         var personaRow = personaAccess.persona(actorId, id);
         boolean editor = !access.role(actorId, (String) personaRow.get("project_id")).equals("VIEWER");
-        return repository.findVisibleTasks(editor, id, actorId).stream().map(taskRow -> {
+        return repository.findVisibleTasks(editor, id, actorId).stream().filter(row -> editor || !Set.of("VOICE_CLONE", "VOICE_PREVIEW").contains(row.get("kind"))).map(taskRow -> {
             var out = job(actorId, (String) taskRow.get("id"));
             if (Set.of("TTS", "ASR").contains(out.get("kind")))
                 out.remove("result");
@@ -156,6 +161,16 @@ public class PersonaTaskService {
                     int status = unavailable.getStatusCode().value();
                     if (status != 403 && status != 404) throw unavailable;
                     repository.cancelUnavailableChat(taskRow.get("id"));
+                    continue;
+                }
+            }
+            if (voiceKind(taskRow)) {
+                if (!repository.tryLockChatContext(taskRow.get("persona_id"))) continue;
+                try { validateVoiceAccess(taskRow); }
+                catch (ResponseStatusException unavailable) {
+                    int status = unavailable.getStatusCode().value();
+                    if (status != 403 && status != 404 && status != 409) throw unavailable;
+                    voices.cancelJob(taskRow.get("id"));
                     continue;
                 }
             }
@@ -252,6 +267,7 @@ public class PersonaTaskService {
             personaAccess.lock("persona", (String) taskRow.get("persona_id"));
         personaAccess.lock("persona_job", id);
         taskRow = resources.one("persona_job", id);
+        if (voiceKind(taskRow)) validateVoiceAccess(taskRow);
         if ("SUCCEEDED".equals(taskRow.get("status")) && token.equals(taskRow.get("lease_token")))
             return json.decode(taskRow.get("result"));
         if (!"RUNNING".equals(taskRow.get("status")) || !token.equals(taskRow.get("lease_token"))
@@ -329,6 +345,21 @@ public class PersonaTaskService {
                     conversationRow.get("version_id"), "citations", citations, "memory_citations", memoryCitations,
                     "experience_citations", experienceCitations, "context_budget", payload.getOrDefault("context_budget", Map.of()));
         }
+        else if (voiceKind(taskRow)) {
+            if (!"mock".equals(output.get("provider")) || !Boolean.TRUE.equals(output.get("synthetic")))
+                throw error(422, "real_voice_clone_disabled");
+            var profile = voices.profileForJob(id).get(0);
+            if ("VOICE_CLONE".equals(taskRow.get("kind"))) {
+                if (!("mock-" + profile.get("id")).equals(output.get("profile_ref")))
+                    throw error(422, "invalid_mock_voice_profile");
+                result = Map.of("provider", "mock", "synthetic", true, "profile_ref", output.get("profile_ref"));
+            } else {
+                String preview = audio(output.get("audio"));
+                if (!preview.startsWith("data:audio/wav;base64,") || preview.length() > 100000)
+                    throw error(422, "invalid_mock_voice_preview");
+                result = Map.of("provider", "mock", "synthetic", true, "audio", preview);
+            }
+        }
         else if ("IMAGE".equals(taskRow.get("kind"))) {
             String avatar = avatar(output.get("avatar"));
             repository.saveAvatar(avatar, taskRow.get("persona_id"));
@@ -346,6 +377,22 @@ public class PersonaTaskService {
         var personaRow = resources.one("persona", (String) taskRow.get("persona_id"));
         audits.record((String) personaRow.get("project_id"), "worker", "PERSONA_JOB_COMPLETED", id);
         return result;
+    }
+
+    private boolean voiceKind(Map<String,Object> row) {
+        return Set.of("VOICE_CLONE", "VOICE_PREVIEW").contains(row.get("kind"));
+    }
+
+    private void validateVoiceAccess(Map<String,Object> job) { validateVoiceAccess(job, true); }
+
+    private void validateVoiceAccess(Map<String,Object> job, boolean requireActive) {
+        var rows = voices.profileForJob(job.get("id"));
+        if (rows.isEmpty()) throw error(404, "voice_profile_unavailable");
+        var profile = rows.get(0);
+        if (!Objects.equals(profile.get("persona_id"),job.get("persona_id")) || !Objects.equals(profile.get("user_id"),job.get("creator")))
+            throw error(403, "private_voice_profile");
+        personaAccess.edit((String)job.get("creator"),personaAccess.persona((String)job.get("creator"),(String)job.get("persona_id")));
+        if (requireActive && !"ACTIVE".equals(profile.get("authorization_status"))) throw error(409,"voice_authorization_closed");
     }
 
     private List<String> recallCitations(Map<String, Object> output, String key, Object selectedIds) {

@@ -45,8 +45,8 @@ public class PersonaTaskRepository {
     }
 
     public List<Map<String, Object>> findVisibleTasks(boolean editor, String personaId, String creator) {
-        return db.queryForList("SELECT id FROM persona_job WHERE persona_id=? AND (creator=?"
-                + (editor ? " OR kind NOT IN ('CHAT','TTS','ASR')" : "") + ") ORDER BY created_at DESC,id LIMIT 100",
+        return db.queryForList("SELECT id,kind FROM persona_job WHERE persona_id=? AND (creator=?"
+                + (editor ? " OR kind NOT IN ('CHAT','TTS','ASR','VOICE_CLONE','VOICE_PREVIEW')" : "") + ") ORDER BY created_at DESC,id LIMIT 100",
                 personaId, creator);
     }
 

@@ -39,6 +39,11 @@ public class MemoryRepository {
         });
     }
 
+    public List<Map<String, Object>> findSource(String personaId, String userId, String memoryId) {
+        return db.queryForList("SELECT s.id AS message_id,s.conversation_id,s.body,s.created_at,c.title FROM persona_memory m JOIN persona_message s ON s.id=m.source_id JOIN persona_conversation c ON c.id=s.conversation_id WHERE m.id=? AND m.persona_id=? AND m.user_id=? AND c.persona_id=? AND c.user_id=? AND s.role='user'",
+                memoryId, personaId, userId, personaId, userId);
+    }
+
     public int cancelPendingChatsForUser(String personaId, String creator) {
         return db.update(
                 "UPDATE persona_job SET status='CANCELLED',payload='{}',result=NULL,partial_reply='',lease_token=NULL,knowledge_snapshot='[]' WHERE persona_id=? AND creator=? AND kind='CHAT' AND status IN ('QUEUED','RUNNING')",

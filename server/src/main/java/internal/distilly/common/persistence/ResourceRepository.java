@@ -10,7 +10,7 @@ import static internal.distilly.common.validation.InputChecks.error;
 public class ResourceRepository {
 
     private static final Set<String> TABLES = Set.of("app_user", "project", "material", "profile", "profile_version", "job",
-            "persona", "persona_version", "persona_conversation", "persona_memory", "persona_message", "persona_job");
+            "persona", "persona_version", "persona_conversation", "persona_memory", "persona_message", "persona_job", "voice_profile");
 
     private final JdbcTemplate db;
 

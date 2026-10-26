@@ -32,6 +32,12 @@ public class MemoryController {
         memoryService.memory(actor(httpRequest), id, memoryId, body);
     }
 
+    @GetMapping("/api/personas/{id}/memories/{m}/source")
+    public Map<String, Object> source(HttpServletRequest request, @PathVariable("id") String id,
+            @PathVariable("m") String memoryId) {
+        return memoryService.source(actor(request), id, memoryId);
+    }
+
     @DeleteMapping("/api/personas/{id}/memories/{m}")
     public void forget(HttpServletRequest httpRequest, @PathVariable("id") String id,
             @PathVariable("m") String memoryId) {
