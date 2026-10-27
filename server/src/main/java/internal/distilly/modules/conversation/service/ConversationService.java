@@ -175,6 +175,7 @@ public class ConversationService {
         personaAccess.lock("persona_conversation", id);
         repository.deleteSubmissions(id);
         repository.clearTaskPayloads(id);
+        memories.withdrawSourceMemories(actor,(String)conversation.get("persona_id"),id);
         if (repository.deleteDerivedMemories(id) > 0)
             memories.invalidatePendingChats(actor, (String) conversation.get("persona_id"));
         repository.deleteTasks(id);

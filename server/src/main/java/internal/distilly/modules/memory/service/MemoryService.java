@@ -22,12 +22,14 @@ public class MemoryService {
     private final ResourceRepository resources;
 
     private final PersonaAccessService personaAccess;
+    private final MemorySyncService sync;
 
     public MemoryService(MemoryRepository repository, ResourceRepository resources,
-            PersonaAccessService personaAccess) {
+            PersonaAccessService personaAccess, MemorySyncService sync) {
         this.repository = repository;
         this.resources = resources;
         this.personaAccess = personaAccess;
+        this.sync = sync;
     }
 
     public List<Map<String, Object>> memories(String actorId, String id) {
@@ -71,6 +73,7 @@ public class MemoryService {
         if (!Set.of("CONFIRMED", "REJECTED").contains(status))
             throw error(422, "invalid_memory_status");
         repository.updateStatusAndBody(status, text(body.getOrDefault("body", memoryRow.get("body")), 1000), memoryId);
+        sync.track(actorId,id,memoryId);
         invalidatePendingChats(actorId, id);
     }
 
@@ -81,8 +84,16 @@ public class MemoryService {
         if (!actorId.equals(memoryRow.get("user_id")) || !id.equals(memoryRow.get("persona_id")))
             throw error(403, "private_memory");
         personaAccess.lock("persona", id);
+        sync.withdraw(actorId,id,memoryId);
         repository.deleteById(memoryId);
         invalidatePendingChats(actorId, id);
+    }
+
+    @Transactional
+    public void withdrawSourceMemories(String actor,String persona,String conversation) {
+        personaAccess.persona(actor,persona);personaAccess.lock("persona",persona);
+        for(var memory:repository.findBySourceConversation(persona,actor,conversation))
+            sync.withdraw(actor,persona,memory.get("id").toString());
     }
 
 }

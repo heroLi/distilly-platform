@@ -32,7 +32,7 @@ class VoiceMigrationTest {
         db.update("INSERT INTO persona_memory VALUES ('synthetic-memory','synthetic-persona','synthetic-user','合成保留记忆','synthetic-source','CONFIRMED',1)");
         var migration=new PersonaMigration(db,new DataSourceTransactionManager(source));
         ReflectionTestUtils.invokeMethod(migration,"migrate");ReflectionTestUtils.invokeMethod(migration,"migrate");
-        assertEquals(11,db.queryForObject("SELECT MAX(version) FROM persona_schema_version",Integer.class));
+        assertEquals(12,db.queryForObject("SELECT MAX(version) FROM persona_schema_version",Integer.class));
         assertEquals("合成保留记忆",db.queryForObject("SELECT body FROM persona_memory WHERE id='synthetic-memory'",String.class));
         assertEquals(0,db.queryForObject("SELECT COUNT(*) FROM voice_profile",Integer.class));
         assertEquals(0,db.queryForObject("SELECT COUNT(*) FROM voice_profile_job",Integer.class));

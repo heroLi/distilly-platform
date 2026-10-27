@@ -3,6 +3,7 @@ package internal.distilly;
 import internal.distilly.common.persistence.ResourceRepository;
 import internal.distilly.modules.memory.repository.MemoryRepository;
 import internal.distilly.modules.memory.service.MemoryService;
+import internal.distilly.modules.memory.service.MemorySyncService;
 import internal.distilly.modules.persona.service.PersonaAccessService;
 import internal.distilly.modules.workspace.service.WorkspaceAccessService;
 import java.util.Map;
@@ -53,7 +54,7 @@ class MemoryCorrectionRaceTest {
         var workspace = mock(WorkspaceAccessService.class);
         when(workspace.role("alice", "project")).thenReturn("VIEWER");
         var access = new PersonaAccessService(resources, workspace);
-        var service = new MemoryService(new MemoryRepository(db), resources, access);
+        var service = new MemoryService(new MemoryRepository(db), resources, access, mock(MemorySyncService.class));
         var tx = new TransactionTemplate(new DataSourceTransactionManager(source));
         var executor = Executors.newSingleThreadExecutor();
         try {

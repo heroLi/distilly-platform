@@ -69,4 +69,8 @@ public class MemoryRepository {
         return db.update("DELETE FROM persona_memory WHERE id=?", id);
     }
 
+    public List<Map<String,Object>> findBySourceConversation(String persona,String actor,String conversation) {
+        return db.queryForList("SELECT m.id FROM persona_memory m JOIN persona_message s ON s.id=m.source_id JOIN persona_conversation c ON c.id=s.conversation_id WHERE m.persona_id=? AND m.user_id=? AND c.persona_id=? AND c.user_id=? AND c.id=?",persona,actor,persona,actor,conversation);
+    }
+
 }
