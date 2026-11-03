@@ -35,6 +35,7 @@ if args.e2e:
     commands.append([sys.executable, 'tests/first_text_walkthrough_e2e.py', '--completion-between-detail-reads'])
     commands.append([sys.executable, 'tests/memory_voice_e2e.py'])
     commands.append([sys.executable, 'tests/memory_sync_consumer_e2e.py'])
+    commands.append([sys.executable, 'tests/memory_reference_ui_e2e.py'])
 commands.append(['git', 'diff', '--check'])
 for command in commands:
     print('RUN:', ' '.join(command), flush=True)
