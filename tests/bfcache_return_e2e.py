@@ -195,4 +195,3 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT / 'server/target/bfcache-return-e2e')
     raise SystemExit(run(parser.parse_args().output.resolve()))
-
