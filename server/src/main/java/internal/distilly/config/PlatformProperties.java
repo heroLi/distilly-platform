@@ -10,6 +10,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class PlatformProperties {
 
     private boolean demo;
+    private String memorySyncMode="disabled";
+    public String getMemorySyncMode(){return memorySyncMode;}
+    public void setMemorySyncMode(String mode){this.memorySyncMode=mode;}
 
     private int maxActiveTasksPerUser = 32;
     private int taskSubmissionsPerMinute = 60;

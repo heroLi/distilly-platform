@@ -215,8 +215,17 @@ def run(output, baseline=False, observe_readiness_gap=False):
                     assert page.locator('#messages .bubble').count()==0
                     result['checks'].append('late403 from old conversation read cannot clear or label the newly selected conversation, and preserves its unsent draft')
                     result['stage']='actual access loss and logout'
+                    # Exercise the explicit refresh path deterministically: a concurrent automatic
+                    # poll may correctly process revocation and disable the button before a click.
+                    page.evaluate('clearInterval(state.timer)')
+                    page.wait_for_function('()=>!state.pollBusy')
+                    current_conversation=page.locator('#conversations').input_value()
+                    assert current_conversation
                     api('/api/personas/'+person,method='DELETE')
-                    page.locator('#chat-refresh').click();page.locator('#chat-status').filter(has_text='不可访问').wait_for()
+                    with page.expect_response(lambda response:response.url==base+'/api/conversations/'+current_conversation and response.request.method=='GET') as denied:
+                        page.locator('#chat-refresh').click()
+                    assert denied.value.status==404
+                    page.locator('#chat-status').filter(has_text='不可访问').wait_for()
                     assert page.locator('#messages .bubble').count()==0
                     assert page.locator('#chat-refresh').is_disabled();assert page.locator('#send').is_disabled()
                     shot('archived-access-clears-chat')

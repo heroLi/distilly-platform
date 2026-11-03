@@ -26,6 +26,10 @@ class DemoIsolationTest(unittest.TestCase):
         self.assertEqual('mock', result['MODEL_MODE'])
         self.assertEqual('127.0.0.1', result['PLATFORM_BIND'])
 
+    def test_memory_sync_is_closed_unless_explicitly_requested(self):
+        self.assertEqual("disabled", module.environment({"PLATFORM_MEMORY_SYNC_MODE":"offline"}, ROOT)["PLATFORM_MEMORY_SYNC_MODE"])
+        self.assertEqual("offline", module.environment({}, ROOT, memory_sync_offline=True)["PLATFORM_MEMORY_SYNC_MODE"])
+
     def test_empty_source_still_selects_isolated_mock_database(self):
         result = module.environment({}, ROOT)
         self.assertEqual('sa', result['PLATFORM_DB_USER'])

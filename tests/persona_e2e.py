@@ -15,6 +15,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from persona_startup_capture import capture_startup, record_cleanup, close_startup_fixture
 
 ROOT=Path(__file__).resolve().parents[1]
 TOKEN='persona-e2e-worker-token-at-least-32-characters'
@@ -150,22 +151,42 @@ def main():
             try:api(path,token=token)
             except urllib.error.HTTPError as e:assert e.code==403
             else:raise AssertionError('private resource exposed')
-        log=open(Path(tmp)/'runtime.log','w')
+        log_path=Path(tmp)/'runtime.log'
+        log=log_path.open('w');startup_checks=[];api_processes=[]
+        def persist_startup():
+            if not real:
+                target=ROOT/'server/target/persona-e2e-startup.json'
+                temporary=target.with_suffix('.json.tmp')
+                temporary.write_text(json.dumps(startup_checks,indent=2)+'\n');temporary.replace(target)
+        def startup_check(started,started_wall,offset,healthy,process,previous_stopped):
+            startup_checks.append(capture_startup(log_path,offset=offset,started_wall=started_wall,
+                elapsed=time.monotonic()-started,exit_code=process.poll(),healthy=healthy,
+                attempt=len(startup_checks)+1,previous_api_stopped=previous_stopped,synthetic=not real))
+            persist_startup()
         def start():
+            offset=os.fstat(log.fileno()).st_size
+            previous_stopped=all(p.poll() is not None for p in api_processes)
             processes.append(subprocess.Popen([java,'-jar',str(runtime_jar)],cwd=ROOT,env=env,stdout=log,stderr=log))
-            deadline=time.monotonic()+30
+            api_processes.append(processes[-1])
+            started=time.monotonic();started_wall=time.time();deadline=started+30
             while time.monotonic()<deadline:
-                try:api('/health');break
+                try:api('/health')
                 except OSError:time.sleep(.2)
-            else:raise AssertionError('API startup failed')
+                else:
+                    startup_check(started,started_wall,offset,True,processes[-1],previous_stopped);break
+            else:
+                startup_check(started,started_wall,offset,False,processes[-1],previous_stopped)
+                raise AssertionError('API startup failed')
             processes.append(subprocess.Popen([__import__('sys').executable,str(ROOT/'worker/worker.py')],cwd=ROOT,env=env,stdout=log,stderr=log))
         def stop():
             for p in reversed(processes):
                 p.terminate()
                 try:p.wait(timeout=12)
                 except subprocess.TimeoutExpired:p.kill();p.wait()
-            processes.clear()
+            for process,row in zip(api_processes,startup_checks):record_cleanup(row,process.poll())
+            persist_startup();processes.clear()
         try:
+            persist_startup()
             start();project=api('/api/projects',{'title':'虚构人物验收空间'})['id'];api(f'/api/projects/{project}/members',{'user_id':'viewer','role':'VIEWER'},method='PUT')
             ids=[]
             for family in ('relationship','celebrity','colleague'):
@@ -368,8 +389,8 @@ def main():
             print('PASS: explicit text-stage budgets, truncated persona never becomes a version, SIGKILL lease-expiry recovery and cancelled task never revives, committed/lost-ack and before-commit completion replay without model regeneration, graceful SIGTERM lease release and restart without duplicate reply, cancelled provider stream closes early and next chat proceeds, grounded context budget, pinned style, relevant recall, unknown experience, user/persona isolation, configured workspace knowledge and citations, three families, two-stage persona generation, publication, private chat/memory, SSE deltas, image/vision/speech gateways, Skill export, restart, deletion'+(' (real text model + fixture image/vision/speech)' if real else ' (HTTP gateway fixtures)'))
         except Exception:
             # Do not print model content, credentials or material from runtime logs.
-            print('Persona E2E failed; temporary runtime logs are cleaned up after process shutdown.')
+            print('Persona E2E failed; only allowlisted synthetic startup observations are retained; raw runtime logs are cleaned up.')
             raise
-        finally:stop();log.close();gateway.shutdown();gateway.server_close()
+        finally:close_startup_fixture(stop,log,gateway)
 
 if __name__=='__main__':main()

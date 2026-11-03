@@ -11,17 +11,19 @@ ROOT = Path(__file__).resolve().parents[1]
 SAFE_KEYS = ('HOME', 'LANG', 'LC_ALL', 'TMPDIR', 'PATH', 'JAVA_HOME', 'JAVA_BIN')
 
 
-def environment(source, root=ROOT):
+def environment(source, root=ROOT, memory_sync_offline=False):
     result = {key: source[key] for key in SAFE_KEYS if key in source}
     result.update(PLATFORM_DB_URL='jdbc:h2:file:' + str(root / 'data/synthetic-demo/platform') + ';DATABASE_TO_LOWER=TRUE',
                   PLATFORM_DB_USER='sa', PLATFORM_DB_PASSWORD='', MODEL_MODE='mock',
                   PLATFORM_DEMO='true', PLATFORM_BIND='127.0.0.1')
+    result['PLATFORM_MEMORY_SYNC_MODE'] = 'offline' if memory_sync_offline else 'disabled'
     return result
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=18080)
+    parser.add_argument('--memory-sync-offline', action='store_true', help='Enable explicit local memory-sync simulation only')
     args = parser.parse_args()
     if not 1 <= args.port <= 65535:
         parser.error('port must be between 1 and 65535')
@@ -29,7 +31,7 @@ def main():
     command = [sys.executable, str(ROOT / 'run_local.py'), '--demo', '--env-file', os.devnull,
                '--port', str(args.port)]
     # run_local owns the child API/Worker shutdown and uses a copied runtime JAR.
-    child = subprocess.Popen(command, cwd=ROOT, env=environment(os.environ))
+    child = subprocess.Popen(command, cwd=ROOT, env=environment(os.environ, memory_sync_offline=args.memory_sync_offline))
     def forward(signum, _frame):
         if child.poll() is None:
             child.send_signal(signum)

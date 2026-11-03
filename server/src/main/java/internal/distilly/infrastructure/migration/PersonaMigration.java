@@ -28,21 +28,25 @@ public class PersonaMigration {
         // before opening the migration transaction or accepting requests.
         boolean h2 = Boolean.TRUE.equals(db.execute((org.springframework.jdbc.core.ConnectionCallback<Boolean>)
                 connection -> "H2".equals(connection.getMetaData().getDatabaseProductName())));
+        var v005 = h2 ? new H2V005Recovery(db,
+                new ClassPathResource("migrations/V005__personality_library.sql")) : null;
         if (h2) db.execute("SET WRITE_DELAY 0");
         db.execute(
                 "CREATE TABLE IF NOT EXISTS persona_schema_version (version INT PRIMARY KEY, applied_at BIGINT NOT NULL)");
+        String[] migrations = { "V001__persona.sql", "V002__reply_deltas.sql", "V003__message_images.sql",
+                "V004__persona_knowledge.sql", "V005__personality_library.sql", "V006__work_chunk_checkpoints.sql", "V007__synthetic_cost_ledger.sql",
+                "V008__text_execution_budget.sql", "V009__chat_submission_receipts.sql",
+                "V010__material_submission_receipts.sql", "V011__synthetic_voice_profiles.sql",
+                "V012__memory_sync_intents.sql", "V013__offline_memory_consumer.sql" };
+        if (v005 != null) v005.preflight(migrations.length);
         tx.executeWithoutResult(status -> {
-            String[] migrations = { "V001__persona.sql", "V002__reply_deltas.sql", "V003__message_images.sql",
-                    "V004__persona_knowledge.sql", "V005__personality_library.sql", "V006__work_chunk_checkpoints.sql", "V007__synthetic_cost_ledger.sql",
-                    "V008__text_execution_budget.sql", "V009__chat_submission_receipts.sql",
-                    "V010__material_submission_receipts.sql", "V011__synthetic_voice_profiles.sql",
-                    "V012__memory_sync_intents.sql" };
             for (int i = 0; i < migrations.length; i++) {
                 int version = i + 1;
                 if (db.queryForObject("SELECT COUNT(*) FROM persona_schema_version WHERE version=?", Integer.class,
                         version) == 0) {
-                    new ResourceDatabasePopulator(new ClassPathResource("migrations/" + migrations[i]))
-                        .execute(java.util.Objects.requireNonNull(db.getDataSource()));
+                    if (version == 5 && v005 != null) v005.resume(migrations.length);
+                    else new ResourceDatabasePopulator(new ClassPathResource("migrations/" + migrations[i]))
+                            .execute(java.util.Objects.requireNonNull(db.getDataSource()));
                     db.update("INSERT INTO persona_schema_version VALUES (?,?)", version, System.currentTimeMillis());
                 }
             }

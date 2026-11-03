@@ -14,13 +14,20 @@ import org.springframework.web.server.ResponseStatusException;
 public final class MemorySyncProcessFixture {
     public static void main(String[] args) throws Exception {
         var root=Path.of(args[0]);String step=args[1];Files.createDirectories(root);
+        var observation=MemoryRecoveryObservation.recorder(root,step);
         var app=new SpringApplication(Application.class);app.setWebApplicationType(WebApplicationType.NONE);
-        try(var context=app.run("--spring.datasource.url=jdbc:h2:file:"+root.resolve("db")+";DB_CLOSE_ON_EXIT=FALSE;DATABASE_TO_LOWER=TRUE",
+        try{
+            observation.mark(MemoryRecoveryObservation.Stage.SPRING_START_BEGIN);
+            var context=app.run("--spring.datasource.url=jdbc:h2:file:"+root.resolve("db")+";DB_CLOSE_ON_EXIT=FALSE;DATABASE_TO_LOWER=TRUE",
                 "--spring.datasource.username=sa","--spring.datasource.password=","--platform.demo=true",
-                "--platform.worker-token=memory-sync-process-synthetic-token-32-characters","--spring.main.banner-mode=off")){
+                "--platform.worker-token=memory-sync-process-synthetic-token-32-characters","--spring.main.banner-mode=off","--platform.memory-sync-mode="+(step.startsWith("consumer_")?"offline":"disabled"));
+            observation.mark(MemoryRecoveryObservation.Stage.SPRING_READY);
+            try(var closing=observation.closing(context)){
             var db=context.getBean(JdbcTemplate.class);var json=context.getBean(JsonCodec.class);
             var memories=context.getBean(MemoryService.class);var sync=context.getBean(MemorySyncService.class);
+            if(step.startsWith("consumer_")){MemorySyncConsumerCrashSteps.run(context,root,step);return;}
             if("prepare".equals(step)){
+                observation.mark(MemoryRecoveryObservation.Stage.PREPARATION_BEGIN);
                 var platform=context.getBean(internal.distilly.modules.workspace.service.WorkspaceService.class);
                 var people=context.getBean(internal.distilly.modules.persona.service.PersonaService.class);
                 String project=platform.createProject("owner","合成进程恢复").get("id").toString();
@@ -36,11 +43,16 @@ public final class MemorySyncProcessFixture {
                 memories.memory("viewer",person,memory,Map.of("status","CONFIRMED","body","合成B"));
                 memories.forget("viewer",person,memory);
                 var latest=sync.inspect("viewer",person,memory).get(0);
+                observation.mark(MemoryRecoveryObservation.Stage.PREPARATION_END);
+                observation.mark(MemoryRecoveryObservation.Stage.RESULT_WRITE_BEGIN);
                 Files.writeString(root.resolve("ready.tmp"),json.encode(Map.of("persona",person,"memory",memory,"source",source,
                         "old_operation",first.operationId().toString(),"old_revision",first.revision(),"latest_operation",latest.get("operation_id"),"latest_revision",latest.get("revision"))));
                 Files.move(root.resolve("ready.tmp"),root.resolve("ready.json"),StandardCopyOption.ATOMIC_MOVE);
+                observation.mark(MemoryRecoveryObservation.Stage.RESULT_WRITE_END);
+                observation.mark(MemoryRecoveryObservation.Stage.WAITING_FOR_FORCE_KILL);
                 new java.util.concurrent.CountDownLatch(1).await();
             }else if("recover".equals(step)){
+                observation.mark(MemoryRecoveryObservation.Stage.RECOVERY_ASSERTIONS_BEGIN);
                 var saved=json.decode(Files.readString(root.resolve("ready.json")));
                 String person=saved.get("persona").toString(),memory=saved.get("memory").toString();
                 var latest=sync.inspect("viewer",person,memory).get(0);
@@ -57,10 +69,17 @@ public final class MemorySyncProcessFixture {
                 require(db.queryForObject("SELECT COUNT(*) FROM persona_memory WHERE id=?",Integer.class,memory)==0,"memory_revived");
                 require(db.queryForObject("SELECT COUNT(*) FROM memory_sync_intent WHERE memory_id=? AND content IS NOT NULL",Integer.class,memory)==0,"obsolete_snapshot_retained");
                 require(db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE id=?",Integer.class,saved.get("source"))==1,"history_removed");
+                observation.mark(MemoryRecoveryObservation.Stage.RECOVERY_ASSERTIONS_END);
+                observation.mark(MemoryRecoveryObservation.Stage.RESULT_WRITE_BEGIN);
                 Files.writeString(root.resolve("recovered.json"),json.encode(Map.of("status","PASS","independent_jvms",2,"forced_kills",1,
                         "operation_id_preserved",true,"unknown_blocks_after_restart",true,"late_ack_current",false,
                         "delete_revision",3,"cached_bodies",0,"original_history_retained",true,"real_provider_calls",0)));
+                observation.mark(MemoryRecoveryObservation.Stage.RESULT_WRITE_END);
             }else throw new IllegalArgumentException("unknown_fixture_step");
+            }
+            observation.mark(MemoryRecoveryObservation.Stage.FIXTURE_COMPLETE);
+        }catch(Exception|Error failure){
+            observation.mark(MemoryRecoveryObservation.Stage.FIXTURE_FAILED);throw failure;
         }
     }
     private static void require(boolean condition,String code){if(!condition)throw new IllegalStateException(code);}
