@@ -1,0 +1,19 @@
+{
+  "candidate_id": "HAN_SPAN_ONE_BRIDGE_V1",
+  "candidate_count": 1,
+  "source_sha256": {
+    "server/src/test/java/internal/distilly/MemorySpanShadowProvider.java": "388fb82efd99696c12c6b05aed3a2aa2711e08b93043011081c5cf2846220085",
+    "server/src/test/java/internal/distilly/MemorySpanShadowProviderTest.java": "470e1b993ccb2733c317346d344d71d47f94d180ea8e525ceea43c286a564f75",
+    "server/src/test/java/internal/distilly/MemoryM0ShadowComparisonTest.java": "900b963b31382ea8d6635f7b9f6d7c57f7b912eee7cefdee9956ed59172da933",
+    "server/src/test/java/internal/distilly/MemoryDiagnosticMetrics.java": "ca7fdb206c08a34f7229f8c0b95ca37e676bb7d6f324b701fe0e12e14497001c",
+    "tests/fixtures/memory_m0_shadow_v1.contract.json": "d40530d7bcf784eb916e0bd7f1e70ab9d2866124838aa442997896d265e44980",
+    "server/src/main/java/internal/distilly/common/search/TextRelevance.java": "5038caeb2ccddc12894c087331851917385a75cf02c1432cbbd9af3bc2d939a4",
+    "server/src/main/java/internal/distilly/modules/memory/service/SqlMemoryProvider.java": "ac9ac37d3cb929f1834bbfb705983f86456bb165ace93db37cd88ab9bf340564",
+    "server/src/main/java/internal/distilly/modules/memory/service/MemoryRetrieval.java": "82a94849501b0db4198ae9ad3e3399778630fb7efd4e083d0baf341b52b5fc98"
+  },
+  "development_sha256": "1aa66ea22b52f101e69f51f12724189aaeb425648c5d21031cd40bab7ce8321a",
+  "holdout_status": "NOT_AUTHORED_NOT_RUN",
+  "frozen_before_comparison": true,
+  "scope": "EXPOSED_DEVELOPMENT_ONLY_NOT_BLIND",
+  "independent_holdout_cases": 0
+}

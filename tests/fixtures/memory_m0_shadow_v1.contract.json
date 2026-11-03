@@ -1,0 +1,40 @@
+{
+  "candidate_id": "HAN_SPAN_ONE_BRIDGE_V1",
+  "candidate_count": 1,
+  "runtime": "test-classpath offline shadow only; no Spring component/config/API",
+  "base": "production SqlMemoryProvider result prefix unchanged; candidate may only append until total12",
+  "normalization": "reuse production recallTerms and lexical score; NFKC/lowercase only to locate existing query terms in query/body",
+  "supplement_rule": [
+    "Original 75 percent lexical coverage fails; do not change its threshold.",
+    "All scored non-Han terms match using the original exact English/alphanumeric token scoring.",
+    "Exactly one distinct scored Han bigram is absent from the body; at least two distinct scored Han bigrams match.",
+    "Every query Han position participating in scored bigrams is covered by a matched bigram; at least four positions participate.",
+    "Within each Han run, maximal contiguous matched-bigram spans must occur contiguously and in order, without overlap, in the normalized body.",
+    "No synonym table, question ID, expected key, entity dictionary, translation or answer is used. No distance window is tuned."
+  ],
+  "supplement_order": "unchanged lexical score descending, created_at descending, id ascending; preserve base prefix; total <=12",
+  "evaluation": {
+    "dataset": "tests/fixtures/memory_m0_dev_v1.json",
+    "sha256": "1aa66ea22b52f101e69f51f12724189aaeb425648c5d21031cd40bab7ce8321a",
+    "scope": "DEVELOPMENT_ONLY_NOT_BLIND",
+    "same_inputs": true,
+    "metrics": [
+      "hit@5",
+      "hit@12",
+      "recall@5",
+      "recall@12",
+      "MRR@12",
+      "precision@12",
+      "negative-return query counts by existing category"
+    ],
+    "strict_support": "Related contradictory sources are not proof of the requested entity/date/attribute; report these errors separately, never as model-answer hallucinations.",
+    "promotion": "NONE; no production/default/quality threshold adoption regardless of development result",
+    "existing_safety": "Current actor/scope/status/source/fingerprint revalidation, deletion and revocation must remain effective."
+  },
+  "holdout": {
+    "status": "NOT_AUTHORED_NOT_RUN",
+    "author": "must be assigned independently after code and evaluation hashes freeze; current executor has seen dev answers and cannot claim blindness",
+    "corpus": "new source/fact families; no dev facts or query templates; immutable gold/hash; candidate fixed before unsealing",
+    "this_batch_cases": 0
+  }
+}
