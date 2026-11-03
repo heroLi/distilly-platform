@@ -15,6 +15,7 @@ commands = [
     [sys.executable, 'tests/synthetic_demo_launcher_test.py'],
     [sys.executable, 'tests/persona_startup_capture_test.py'],
     [sys.executable, 'tests/text_scenarios_test.py'],
+    [sys.executable, 'tests/memory_eval_integrity_test.py'],
     ['mvn', '-B', '-ntp', '-f', 'server/pom.xml', 'package'],
     [sys.executable, '-m', 'unittest', 'discover', '-s', 'worker', '-p', 'test_*.py'],
 ]
