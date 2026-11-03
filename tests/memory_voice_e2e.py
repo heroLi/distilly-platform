@@ -184,6 +184,7 @@ def run(output):
                 fresh=api(f'/api/personas/{persona}/conversations',{})['id']
                 after=job(api(f'/api/conversations/{fresh}/messages',{'message':'海边拍照偏好是什么？'}))
                 assert '我记得你确认过' not in after['answer'] and not api(f'/api/personas/{persona}/memories')
+                assert '检索到的相关已确认记忆原文' not in after['answer'] and corrected not in after['answer']
                 result['checks'].append('native forget after editing removes its card, source access and recall in a fresh conversation without deleting historical messages')
                 assert not result['page_errors'] and not result['external_requests'], 'browser errors or external requests'
             result['status']='PASS';result['stage']='complete'

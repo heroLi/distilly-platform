@@ -166,6 +166,76 @@ class Runtime:
                 'confirmed_memories_removed': 1, 'held_and_queued_cancelled': 2, 'late_assistant_messages': 0,
                 'other_user_job_preserved': True, 'fresh_context_memories': 0, 'browser': 'NOT_RUN'}
 
+    def run_memory_support_boundary_probe(self):
+        """Exposed regression/characterization, separate from frozen 30 and any holdout."""
+        import persona
+        data = json.loads((FIXTURES / 'memory_m0_dev_v1.json').read_text())
+        cases = []
+        for case in data['cases']:
+            if case['category'] == 'strict_support':
+                source = next(row for row in data['memories'] if row.get('family_id') == case['family_id']
+                              and row['scope'] == 'self' and row['status'] == 'CONFIRMED')
+                cases.append((case['id'], 'exposed_strict', case['query'], source['body'], False))
+        cases += [
+            ('REG-MISSING', 'missing_condition', '绒石飞轮样机周六使用雾陶外壳',
+             '合成回归：绒石飞轮样机使用雾陶外壳。', False),
+            ('REG-NEGATED', 'explicit_negation', '绒石飞轮样机使用雾陶外壳',
+             '合成回归：绒石飞轮样机不使用雾陶外壳。', False),
+            ('REG-LEGIT', 'legitimate_control', '绒石飞轮样机使用雾陶外壳',
+             '合成回归：绒石飞轮样机使用雾陶外壳。', True)]
+        project = self.api('/api/projects', {'title': 'Synthetic support boundary regressions'})['id']
+        observations = []
+        for name, category, query, body, supports in cases:
+            person, _ = self.create_persona(project, {'name': 'Synthetic boundary ' + name,
+                'family': 'relationship', 'origin': 'original', 'boundaries': '不把召回当支持'})
+            source = self.api(f'/api/personas/{person}/conversations', {})['id']
+            first = self.api(f'/api/conversations/{source}/messages', {'message': '请记住，' + body})
+            self.execute(first)
+            self.result(first)
+            memories = self.api(f'/api/personas/{person}/memories')
+            require(len(memories) == 1, 'support_probe_single_pending')
+            memory = memories[0]['id']
+            self.api(f'/api/personas/{person}/memories/{memory}', {'status': 'CONFIRMED'}, method='PUT')
+            target = self.api(f'/api/personas/{person}/conversations', {})['id']
+            job = self.api(f'/api/conversations/{target}/messages', {'message': query})
+            lease = self.execute(job)
+            require([row['id'] for row in lease['payload']['memories']] == [memory], 'support_probe_actual_recall')
+            result = self.result(job)
+            require('相关不等于支持' in result['answer'] and '模拟模式不判断' in result['answer'],
+                    'support_probe_mock_reference_notice')
+            require(memories[0]['body'] in result['answer'], 'support_probe_source_preserved')
+            require('我记得你确认过' not in result['answer'] and result['memory_citations'] == [],
+                    'support_probe_no_mock_support_assertion')
+            # Actual Worker validation and Java completion accept valid IDs, not entailment.
+            injected_session = self.api(f'/api/personas/{person}/conversations', {})['id']
+            injected_job = self.api(f'/api/conversations/{injected_session}/messages', {'message': query})
+            held = self.worker.request('/internal/persona-jobs/claim', {})
+            require(held['id'] == injected_job['id'], 'support_probe_injected_identity')
+            class ScriptedOfflineModel:
+                mode = 'gateway'
+                def call(self, system, payload, **kwargs):
+                    require('召回仅提供候选' in system, 'support_probe_prompt_received')
+                    return {'answer': '合成注入断言：' + query + '。', 'memory_candidates': [],
+                            'emotion': {'label': 'calm', 'intensity': .1, 'reason': '合成引用边界探针'},
+                            'memory_citations': [memory], 'citations': [], 'experience_citations': []}
+            output = persona.chat(ScriptedOfflineModel(), held['payload'])
+            self.worker.request('/internal/persona-jobs/' + held['id'] + '/complete',
+                                {'lease_token': held['lease_token'], 'output': output})
+            stored = self.result(injected_job)
+            require(stored['answer'] == output['answer'] and stored['memory_citations'] == [memory],
+                    'support_probe_current_id_only_boundary')
+            observations.append({'id': name, 'category': category, 'selected_candidates': 1,
+                                 'mock_reference_only': True, 'injected_claim_supported_by_fixture': supports,
+                                 'injected_claim_accepted_by_id_checks': True})
+        print('OBSERVED: memory support boundary; mock references ' + str(len(observations))
+              + '; unsupported injected claims accepted ' + str(sum(not row[-1] for row in cases))
+              + '; semantic verifier NOT_IMPLEMENTED; real calls0; holdout NOT_RUN', flush=True)
+        return {'status': 'CHARACTERIZED_NOT_SEMANTIC_ACCEPTANCE', 'cases': observations,
+                'mock_reference_regressions_passed': len(observations), 'exposed_strict_candidates': 3,
+                'unsupported_injected_claims_accepted': sum(not row[-1] for row in cases),
+                'legitimate_control_accepted': 1, 'semantic_verifier': 'NOT_IMPLEMENTED',
+                'real_provider_calls': 0, 'holdout': 'NOT_RUN', 'browser': 'NOT_RUN'}
+
     def run_case(self, case):
         project = self.api('/api/projects', {'title': 'Synthetic ' + case['id']})['id']
         self.api(f'/api/projects/{project}/members', {'user_id': 'viewer', 'role': 'VIEWER'}, method='PUT')
@@ -388,6 +458,7 @@ def run(output):
                         report['completed_chat_turns'] += runtime.chat_count
                         if family == 'relationship':
                             report['additional_source_deletion_probe'] = runtime.run_source_deletion_probe()
+                            report['additional_memory_support_boundary'] = runtime.run_memory_support_boundary_probe()
                     finally:
                         if process.poll() is None:
                             process.terminate()
