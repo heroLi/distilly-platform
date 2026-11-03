@@ -365,6 +365,12 @@ public class PersonaTaskService {
     @Transactional
     public Map<String, Object> complete(String id, String token, Map<String, Object> output) {
         var taskRow = resources.one("persona_job", id);
+        boolean chatMember=true;
+        if("CHAT".equals(taskRow.get("kind"))) {
+            var persona=resources.one("persona",(String)taskRow.get("persona_id"));
+            // Fence revocation before the persona/job locks, including idempotent cached acknowledgements.
+            chatMember=repository.lockChatMembership(taskRow.get("creator"),persona.get("project_id"));
+        }
         // Source deletion and memory mutations take the same lock before rows/jobs.
         // A completion either commits first or validates after their transaction.
         if ("CHAT".equals(taskRow.get("kind")))
@@ -376,11 +382,14 @@ public class PersonaTaskService {
         personaAccess.lock("persona_job", id);
         taskRow = resources.one("persona_job", id);
         if (voiceKind(taskRow)) validateVoiceAccess(taskRow);
-        if ("SUCCEEDED".equals(taskRow.get("status")) && token.equals(taskRow.get("lease_token")))
+        if ("SUCCEEDED".equals(taskRow.get("status")) && token.equals(taskRow.get("lease_token"))) {
+            validateChatCompletionActor(taskRow,chatMember);
             return json.decode(taskRow.get("result"));
+        }
         if (!"RUNNING".equals(taskRow.get("status")) || !token.equals(taskRow.get("lease_token"))
                 || ((Number) taskRow.get("lease_until")).longValue() < now())
             throw error(409, "lease_lost");
+        validateChatCompletionActor(taskRow,chatMember);
         var payload = json.decode(taskRow.get("payload"));
         Map<String, Object> result;
         if ("PERSONA".equals(taskRow.get("kind"))) {
@@ -485,6 +494,12 @@ public class PersonaTaskService {
         var personaRow = resources.one("persona", (String) taskRow.get("persona_id"));
         audits.record((String) personaRow.get("project_id"), "worker", "PERSONA_JOB_COMPLETED", id);
         return result;
+    }
+
+    private void validateChatCompletionActor(Map<String,Object> job,boolean member) {
+        if(!"CHAT".equals(job.get("kind")))return;
+        if(!member)throw error(403,"project_access_denied");
+        personaAccess.conversation((String)job.get("creator"),(String)job.get("conversation_id"));
     }
 
     private boolean voiceKind(Map<String,Object> row) {

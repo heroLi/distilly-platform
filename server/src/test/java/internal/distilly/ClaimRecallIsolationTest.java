@@ -230,4 +230,35 @@ class ClaimRecallIsolationTest {
         assertEquals(tasks.complete(next,token,output),tasks.complete(next,token,output));
         assertEquals(1,db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND role='assistant'",Integer.class,conversation));
     }
+
+    private record Finished(String job,String token,Map<String,Object> result) { }
+    private Finished finishedChat() {
+        String job=queue();String token=tasks.claim().get("lease_token").toString();
+        var result=tasks.complete(job,token,Map.of("answer","合成完成回执","emotion",Map.of("label","calm","intensity",.3,"reason","合成"),"memory_candidates",List.of()));
+        return new Finished(job,token,result);
+    }
+
+    @Test void cachedChatCompletionRechecksMembershipAndRegrantKeepsOriginalAck() {
+        var finished=finishedChat();db.update("DELETE FROM member WHERE project_id=? AND user_id='viewer'",project);
+        assertEquals(403,assertThrows(ResponseStatusException.class,()->tasks.complete(finished.job(),finished.token(),Map.of())).getStatusCode().value());
+        assertEquals("SUCCEEDED",status(finished.job()));
+        platform.member("owner",project,"viewer","VIEWER");
+        assertEquals(finished.result(),tasks.complete(finished.job(),finished.token(),Map.of()));
+        assertEquals(1,db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND role='assistant'",Integer.class,conversation));
+    }
+
+    @Test void cachedChatCompletionRechecksArchivedPersonaWithoutDeletingHistory() {
+        var finished=finishedChat();personas.archive("owner",person);
+        assertEquals(404,assertThrows(ResponseStatusException.class,()->tasks.complete(finished.job(),finished.token(),Map.of())).getStatusCode().value());
+        assertEquals("SUCCEEDED",status(finished.job()));personas.restore("owner",person);
+        assertEquals(finished.result(),tasks.complete(finished.job(),finished.token(),Map.of()));
+        assertEquals(1,db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND role='assistant'",Integer.class,conversation));
+    }
+
+    @Test void wrongLeaseForCachedCompletionRemains409AfterRevocation() {
+        var finished=finishedChat();db.update("DELETE FROM member WHERE project_id=? AND user_id='viewer'",project);
+        assertEquals(409,assertThrows(ResponseStatusException.class,()->tasks.complete(finished.job(),UUID.randomUUID().toString(),Map.of())).getStatusCode().value());
+        assertEquals("SUCCEEDED",status(finished.job()));
+        assertEquals(1,db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND role='assistant'",Integer.class,conversation));
+    }
 }

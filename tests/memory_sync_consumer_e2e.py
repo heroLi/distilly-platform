@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Private local status and explicitly enabled offline sync; never contacts Hindsight."""
-from browser_support import launch_chromium
+from browser_support import launch_chromium, wait_for_browser_condition
 import argparse
 import json
 import os
@@ -98,13 +98,18 @@ def run(output):
                 api(action+'advance',{'bank_id':'rejected'},expected=422);api(action+'advance',{},actor='editor',expected=404)
                 result['checks'].append('explicit offline enable and native bounded advancement reach typed simulated receipt; repeated advance unchanged; caller bank override and another editor rejected')
                 result['stage']='correction and deletion'
+                # One test-only deferred PUT keeps this route-dispatch regression observable.
+                page.evaluate("""()=>{const original=window.fetch;window.fetch=(url,options)=>{
+                    if(options?.method==='PUT'&&String(url).includes('/memories/')){
+                        window.fetch=original;return new Promise((resolve,reject)=>setTimeout(()=>original(url,options).then(resolve,reject),100));
+                    }return original(url,options);}}""")
                 page.locator('[data-memory-body]').fill('合成偏好改为周日海边拍照');page.locator('[data-memory="confirm"]').click()
-                wait(lambda:api(path)['items'][0]['state']=='PENDING');page.locator('[data-memory-sync="advance"]').click()
-                wait(lambda:api(path)['items'][0]['state']=='ACKED');corrected=api(path)['items'][0]
+                wait_for_browser_condition(page,lambda:api(path)['items'][0]['state']=='PENDING');page.locator('[data-memory-sync="advance"]').click()
+                wait_for_browser_condition(page,lambda:api(path)['items'][0]['state']=='ACKED');corrected=api(path)['items'][0]
                 assert corrected['revision']==2 and corrected['operation_id']!=confirmed['operation_id']
                 page.locator('[data-memory="delete"]').click();page.locator('#interaction-form button.primary').click();page.locator('[data-memory-body]').wait_for(state='detached')
-                wait(lambda:api(path)['items'][0]['kind']=='DELETE');page.locator('[data-memory-sync="advance"]').click()
-                wait(lambda:api(path)['items'][0]['state']=='ACKED');deleted=api(path)['items'][0]
+                wait_for_browser_condition(page,lambda:api(path)['items'][0]['kind']=='DELETE');page.locator('[data-memory-sync="advance"]').click()
+                wait_for_browser_condition(page,lambda:api(path)['items'][0]['state']=='ACKED');deleted=api(path)['items'][0]
                 assert deleted['kind']=='DELETE' and deleted['revision']==3 and not api(f'/api/personas/{person}/memories')
                 page.locator('#memory-sync-items').filter(has_text='清理记录').wait_for();page.locator('#memory-sync-panel').screenshot(path=str(output/'offline-delete-complete.png'))
                 result['checks'].append('native correction advances a new revision; forgotten memory disappears but private simulated cleanup tombstone remains observable and can complete')
