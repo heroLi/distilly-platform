@@ -5,10 +5,33 @@ import os
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
-from browser_support import launch_chromium
+from browser_support import launch_chromium, wait_for_browser_condition
 
 
 class BrowserSupportTest(unittest.TestCase):
+    def test_browser_condition_dispatches_callbacks_and_returns_observed_value(self):
+        page=Mock();clock=[0.0];observed=[]
+        def dispatch(milliseconds):
+            clock[0]+=milliseconds/1000;observed.append({'synthetic':'route arrived'})
+        page.wait_for_timeout.side_effect=dispatch
+        with patch('browser_support.time.monotonic',side_effect=lambda:clock[0]):
+            self.assertEqual(wait_for_browser_condition(page,lambda:observed[0] if observed else None),{'synthetic':'route arrived'})
+        page.wait_for_timeout.assert_called_once_with(50)
+
+    def test_browser_condition_keeps_a_bounded_deadline(self):
+        page=Mock();clock=[0.0]
+        page.wait_for_timeout.side_effect=lambda milliseconds:clock.__setitem__(0,clock[0]+milliseconds/1000)
+        with patch('browser_support.time.monotonic',side_effect=lambda:clock[0]):
+            with self.assertRaisesRegex(AssertionError,'bounded condition'):
+                wait_for_browser_condition(page,lambda:False,timeout_seconds=.1)
+        self.assertEqual(page.wait_for_timeout.call_count,2)
+
+    def test_browser_condition_does_not_swallow_assertions(self):
+        page=Mock()
+        with self.assertRaisesRegex(ValueError,'synthetic condition error'):
+            wait_for_browser_condition(page,Mock(side_effect=ValueError('synthetic condition error')))
+        page.wait_for_timeout.assert_not_called()
+
     def test_e2e_launches_cannot_bypass_shared_browser_selection(self):
         for path in Path(__file__).parent.glob('*_e2e.py'):
             tree = ast.parse(path.read_text())

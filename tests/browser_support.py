@@ -1,6 +1,18 @@
 """Synthetic browser fixtures use Playwright's matching browser by default."""
 import os
+import time
 from pathlib import Path
+
+
+def wait_for_browser_condition(page, predicate, timeout_seconds=30):
+    """Pump sync Playwright callbacks while waiting for Python-side route state."""
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        value = predicate()
+        if value:
+            return value
+        page.wait_for_timeout(50)
+    raise AssertionError('synthetic browser bounded condition timed out')
 
 
 def launch_chromium(playwright):

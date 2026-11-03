@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Synthetic long-context disclosure: dedicated H2/default JVM/mock Worker/Chromium."""
-from browser_support import launch_chromium
+from browser_support import launch_chromium, wait_for_browser_condition
 import argparse
 import hashlib
 import json
@@ -146,7 +146,7 @@ def run(output, baseline=False):
                     page.reload(wait_until='networkidle'); page.locator('#messages .context-notice').last.wait_for()
                     held = []; page.route(base + '/api/conversations/' + conversation, lambda route: held.append(route), times=1)
                     old = api('/api/conversations/' + conversation, actor='viewer')
-                    page.locator('#chat-refresh').click(); wait(lambda: bool(held))
+                    page.locator('#chat-refresh').click(); wait_for_browser_condition(page, lambda: bool(held))
                     page.locator('#new-chat').click(); page.wait_for_function("()=>document.querySelector('#messages').textContent.includes('从一句问候开始')")
                     page.locator('#message').fill('合成未发送草稿')
                     held[0].fulfill(status=200, content_type='application/json', body=json.dumps(old))
