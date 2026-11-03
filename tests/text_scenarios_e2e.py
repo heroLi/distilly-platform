@@ -206,6 +206,10 @@ class Runtime:
             require(memories[0]['body'] in result['answer'], 'support_probe_source_preserved')
             require('我记得你确认过' not in result['answer'] and result['memory_citations'] == [],
                     'support_probe_no_mock_support_assertion')
+            reference = self.api(f'/api/personas/{person}/memory-references', {'mode': 'SOURCE_REFERENCE', 'query': query})
+            require(reference['support_status'] == 'NOT_ASSESSED' and 'answer' not in reference
+                    and [r['memory_id'] for r in reference['references']] == [memory]
+                    and reference['references'][0]['record_text'] == memories[0]['body'], 'support_probe_reference_only_mode')
             # Actual Worker validation and Java completion accept valid IDs, not entailment.
             injected_session = self.api(f'/api/personas/{person}/conversations', {})['id']
             injected_job = self.api(f'/api/conversations/{injected_session}/messages', {'message': query})
@@ -235,6 +239,51 @@ class Runtime:
                 'unsupported_injected_claims_accepted': sum(not row[-1] for row in cases),
                 'legitimate_control_accepted': 1, 'semantic_verifier': 'NOT_IMPLEMENTED',
                 'real_provider_calls': 0, 'holdout': 'NOT_RUN', 'browser': 'NOT_RUN'}
+
+    def run_memory_reference_mode_probe(self):
+        """Explicit read-only protocol, not an answer quality or blind evaluation."""
+        project = self.api('/api/projects', {'title': 'Synthetic reference-only protocol'})['id']
+        self.api(f'/api/projects/{project}/members', {'user_id': 'viewer', 'role': 'VIEWER'}, method='PUT')
+        person, _ = self.create_persona(project, {'name': 'Synthetic reference', 'family': 'relationship', 'origin': 'original'})
+        source = self.api(f'/api/personas/{person}/conversations', {}, actor='viewer')['id']
+        first = self.api(f'/api/conversations/{source}/messages', {'message': '请记住，合成参考：绒石灯座不使用青藤电池。'}, actor='viewer')
+        self.execute(first)
+        self.result(first, actor='viewer')
+        rows = self.api(f'/api/personas/{person}/memories', actor='viewer')
+        require(len(rows) == 1, 'reference_probe_pending')
+        memory = rows[0]['id']
+        self.api(f'/api/personas/{person}/memories/{memory}', {'status': 'CONFIRMED'}, actor='viewer', method='PUT')
+        path = f'/api/personas/{person}/memory-references'
+        body = {'mode': 'SOURCE_REFERENCE', 'query': '绒石灯座青藤电池'}
+        sessions_before = self.api(f'/api/personas/{person}/conversations', actor='viewer')
+        messages_before = len(self.api('/api/conversations/' + source, actor='viewer')['messages'])
+        reference = self.api(path, body, actor='viewer')
+        require(set(reference) == {'contract', 'mode', 'support_status', 'notice', 'references'}
+                and reference['contract'] == 'MEMORY_REFERENCE_V1' and reference['support_status'] == 'NOT_ASSESSED', 'reference_probe_contract')
+        require(len(reference['references']) == 1 and reference['references'][0]['record_text'] == rows[0]['body'], 'reference_probe_literal')
+        require(self.api(path, body)['references'] == [], 'reference_probe_owner_cannot_read_viewer_memory')
+        require(self.api(f'/api/personas/{person}/conversations', actor='viewer') == sessions_before
+                and len(self.api('/api/conversations/' + source, actor='viewer')['messages']) == messages_before,
+                'reference_probe_no_conversation_writes')
+        require(self.worker.request('/internal/persona-jobs/claim', {}) is None, 'reference_probe_no_worker_job')
+        self.api(path, {**body, 'stream': True}, actor='viewer', expected=422)
+        self.api(path, {**body, 'answer': 'synthetic injection'}, actor='viewer', expected=422)
+        self.api(f'/api/conversations/{source}/messages', {'message': body['query'], 'mode': 'SOURCE_REFERENCE'}, actor='viewer', expected=422)
+        corrected = rows[0]['body'] + '（合成已纠错）'
+        self.api(f'/api/personas/{person}/memories/{memory}', {'status': 'CONFIRMED', 'body': corrected}, actor='viewer', method='PUT')
+        current = self.api(path, body, actor='viewer')['references'][0]
+        require(current['record_text'] == corrected and current['record_fingerprint'] != reference['references'][0]['record_fingerprint'], 'reference_probe_current_revision')
+        self.api(f'/api/personas/{person}/memories/{memory}', actor='viewer', method='DELETE')
+        require(self.api(path, body, actor='viewer')['references'] == [], 'reference_probe_forget')
+        require(len(self.api('/api/conversations/' + source, actor='viewer')['messages']) == messages_before, 'reference_probe_history_unchanged')
+        self.api(f'/api/personas/{person}', method='DELETE')
+        self.api(path, body, actor='viewer', expected=404)
+        print('PASS: explicit memory-reference JSON protocol; SQL literal records, private scope, refresh/forget, no chat/job/delta channel; support NOT_ASSESSED', flush=True)
+        return {'status': 'PASS_PROTOCOL_NOT_ANSWER_QUALITY', 'contract': 'MEMORY_REFERENCE_V1',
+                'literal_record_checked': True, 'private_scope_checked': True, 'correction_forget_checked': True,
+                'chat_fallback_and_stream_rejected': True, 'no_chat_or_job_writes': True,
+                'archived_persona_denied': True, 'support_status': 'NOT_ASSESSED',
+                'real_provider_calls': 0, 'browser': 'NOT_RUN'}
 
     def run_case(self, case):
         project = self.api('/api/projects', {'title': 'Synthetic ' + case['id']})['id']
@@ -459,6 +508,7 @@ def run(output):
                         if family == 'relationship':
                             report['additional_source_deletion_probe'] = runtime.run_source_deletion_probe()
                             report['additional_memory_support_boundary'] = runtime.run_memory_support_boundary_probe()
+                            report['additional_memory_reference_mode'] = runtime.run_memory_reference_mode_probe()
                     finally:
                         if process.poll() is None:
                             process.terminate()
