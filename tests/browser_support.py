@@ -15,8 +15,13 @@ def wait_for_browser_condition(page, predicate, timeout_seconds=30):
     raise AssertionError('synthetic browser bounded condition timed out')
 
 
-def launch_chromium(playwright):
+def launch_chromium(playwright, *, native_bfcache=False):
     options = {'headless': True, 'args': ['--no-sandbox', '--disable-dev-shm-usage']}
+    if native_bfcache:
+        # Playwright otherwise disables BFCache for route-interception tests.
+        # Use full new-headless Chromium and its normal cache policy. Callers
+        # must not install request routing or disable cache through CDP.
+        options.update(channel='chromium', ignore_default_args=['--disable-back-forward-cache'])
     # Explicit local reuse only. CI installs the browser selected by pinned Playwright.
     executable = os.environ.get('DISTILLY_TEST_CHROMIUM')
     if executable:

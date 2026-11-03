@@ -49,6 +49,14 @@ class BrowserSupportTest(unittest.TestCase):
         playwright.chromium.launch.assert_called_once_with(
             headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
 
+    def test_native_bfcache_keeps_browser_cache_enabled(self):
+        playwright = Mock()
+        with patch.dict(os.environ, {}, clear=True):
+            launch_chromium(playwright, native_bfcache=True)
+        playwright.chromium.launch.assert_called_once_with(
+            headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'],
+            channel='chromium', ignore_default_args=['--disable-back-forward-cache'])
+
     def test_explicit_existing_local_browser_is_used_without_changing_launch_flags(self):
         with tempfile.TemporaryDirectory() as tmp:
             executable = Path(tmp) / 'synthetic-browser'

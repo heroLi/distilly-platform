@@ -40,9 +40,38 @@ function setup(status='FAILED'){
  const p=vm.createContext({window:{},state,$:()=>({textContent:'',checked:false,contains:()=>false}),document:{activeElement:null},api:async path=>path.endsWith('/jobs')?[]:turn('CANCELLED'),renderSession:()=>renders++,loadMemories:async()=>{},loadJobs:async()=>{},denyChat:()=>false});
  vm.runInContext(source.split('\n').find(line=>line.startsWith('async function poll(')),p);await p.poll();assert.equal(renders,1);assert.equal(state.session.latest_chat_job.status,'CANCELLED');count++;
  // Actual page lifecycle invalidates late mutations and restarts one timer on BFCache restore.
- let intervalStarts=0,clears=0,reads=0;const events={},elements={messages:{innerHTML:'old'},memories:{innerHTML:'old'}};
- const l=vm.createContext({window:{addEventListener:(name,fn)=>events[name]=fn},state:{token:'fixture',epoch:1,session:{id:'c1'}},chatRecovery:{reset(){}},chatSubmit:null,$:id=>elements[id],studioReads:{invalidate(){}},stopSpeech(){},recognition:null,clearInterval:()=>clears++,setInterval:()=>{intervalStarts++;return 1;},poll(){},loadSession:async()=>{reads++;},loadMemories:async()=>{},denyChat:()=>false,notice(){}});
+ let intervalStarts=0,clears=0,reads=0;const events={},elements={messages:{innerHTML:'old'},memories:{innerHTML:'old'},workspace:{hidden:false}};
+ let sharedToken='fixture',loginResets=0;
+ const l=vm.createContext({window:{addEventListener:(name,fn)=>events[name]=fn},PlatformSession:{token:()=>sharedToken},clearPersonaLogin:shared=>{assert.equal(shared,false);loginResets++;l.state.token='';l.state.session=null;},state:{token:'fixture',epoch:1,session:{id:'c1'}},chatRecovery:{reset(){}},chatSubmit:null,$:id=>elements[id],studioReads:{invalidate(){}},stopSpeech(){},recognition:null,clearInterval:()=>clears++,setInterval:()=>{intervalStarts++;return 1;},poll(){},loadSession:async()=>{reads++;},loadMemories:async()=>{},denyChat:()=>false,notice(){}});
  for(const line of source.split('\n').filter(line=>line.startsWith("window.addEventListener('page")))vm.runInContext(line,l);
- events.pagehide();assert.equal(l.state.epoch,2);assert.equal(l.state.pageHidden,true);assert.equal(elements.messages.innerHTML,'');events.pageshow({persisted:true});await Promise.resolve();assert.equal(intervalStarts,1);assert.equal(reads,1);assert.equal(clears,2);assert.equal(l.state.pageHidden,false);count++;
+ events.pagehide();assert.equal(l.state.epoch,2);assert.equal(l.state.pageHidden,true);assert.equal(elements.messages.innerHTML,'');assert.equal(elements.workspace.hidden,true,'private title and drafts must stay hidden before current access is verified');events.pageshow({persisted:true});await Promise.resolve();assert.equal(intervalStarts,1);assert.equal(reads,1);assert.equal(clears,2);assert.equal(l.state.pageHidden,false);count++;
+ await new Promise(setImmediate);assert.equal(elements.workspace.hidden,false,'authorized restore becomes visible after successful reads');
+ for(const token of ['', 'different-account']){
+  l.state.token='fixture';l.state.session={id:'c1'};sharedToken=token;const prior=reads,started=intervalStarts;
+  events.pagehide();events.pageshow({persisted:true});await Promise.resolve();
+  assert.equal(reads,prior,'BFCache must not fetch with an identity that was logged out or replaced');assert.equal(intervalStarts,started);assert.equal(l.state.session,null);assert.equal(sharedToken,token,'another page login must survive');count++;
+ }
+ assert.equal(loginResets,2);
+ l.state.token='fixture';l.state.session={id:'c1'};l.PlatformSession.token=()=>{throw Error('synthetic storage unavailable');};const beforeFailure=reads;
+ events.pagehide();events.pageshow({persisted:true});await Promise.resolve();assert.equal(reads,beforeFailure);assert.equal(l.state.session,null);assert.equal(loginResets,3);count++;
+ l.PlatformSession.token=()=> 'fixture';l.state.token='fixture';l.state.session={id:'c1'};let deniedMemoryReads=0;
+ l.loadSession=async()=>{throw Object.assign(Error('synthetic revoked'),{status:403});};l.loadMemories=async()=>deniedMemoryReads++;
+ events.pagehide();events.pageshow({persisted:true});await new Promise(setImmediate);
+ assert.equal(elements.workspace.hidden,true);assert.equal(l.state.session,null);assert.equal(loginResets,4);assert.equal(deniedMemoryReads,0);count++;
+ // Execute the actual login cleanup with the real submission controller.
+ // A restored old page must not erase a new identity's uncertain-send receipt.
+ for(const explicitLogout of [false,true]){
+  const key='platform-chat-submissions-v1',receipt=JSON.stringify({'["new-user","p2","person2","c2"]':{request_id:'11111111-1111-4111-8111-111111111111',digest:'a'.repeat(64)}});
+  const store=new Map([[key,receipt]]),els={};let shared='new-login';
+  const ctx=vm.createContext({window:{},state:{token:'old-login',me:{id:'old-user'},project:{id:'p1'},persona:{id:'person1'},session:turn(),epoch:1,sessionNonce:1},
+   studioReads:{invalidate(){}},stopSpeech(){},clearInterval(){},chatRecovery:{reset(){}},PlatformSession:{clear:()=>shared=''},$:id=>els[id]||(els[id]={innerHTML:'private',value:'private',textContent:'private'})});
+  vm.runInContext(fs.readFileSync(base+'persona-chat-submit.js','utf8'),ctx);
+  ctx.chatSubmit=ctx.window.PersonaChatSubmit.create({context:()=>({userId:ctx.state.me?.id,projectId:ctx.state.project?.id,personaId:ctx.state.persona?.id,session:ctx.state.session,epoch:ctx.state.epoch,nonce:ctx.state.sessionNonce,active:!!ctx.state.token}),api:async()=>{},prepare(){},accepted(){},denied(){},
+   storage:{getItem:k=>store.get(k),setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},crypto:{},elements:Object.fromEntries(['send','status','recheck','retry'].map(k=>[k,{}]))});
+  vm.runInContext(source.split('\n').find(line=>line.startsWith('function clearPersonaLogin(')),ctx);
+  ctx.clearPersonaLogin(explicitLogout);
+  assert.equal(store.get(key),explicitLogout?undefined:receipt,'passive old-page cleanup must preserve other identity receipts');
+  assert.equal(shared,explicitLogout?'':'new-login');assert.equal(els.messages.innerHTML,'');assert.equal(els.memories.innerHTML,'');assert.equal(ctx.state.session,null);count++;
+ }
  console.log('PASS:',count,'actual current-chat recovery/lifecycle scenarios; explicit retry, cancel, lost ack, no auto writes, scoped late responses and BFCache restart');
 })().catch(error=>{console.error(error);process.exitCode=1;});
