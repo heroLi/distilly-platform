@@ -4,6 +4,7 @@
 No real accounts, credentials or providers. An isolated default-JVM file H2,
 mock Worker and native Chromium exercise existing forms and the binding return.
 """
+from browser_support import launch_chromium
 import argparse
 import hashlib
 import json
@@ -109,7 +110,7 @@ def run(output, baseline=False, observe_readiness_gap=False):
             failed=failed_turn('合成首轮失败')
             from playwright.sync_api import sync_playwright
             with sync_playwright() as pw:
-                browser=pw.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
+                browser=launch_chromium(pw)
                 try:
                     page=browser.new_page(viewport={'width':1440,'height':1080})
                     page.add_init_script("window.syntheticPageShow=[];window.addEventListener('pageshow',event=>window.syntheticPageShow.push(event.persisted));")

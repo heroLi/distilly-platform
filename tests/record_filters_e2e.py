@@ -4,6 +4,7 @@
 Uses an isolated default-JVM API, file H2 and mock Worker. No real provider is
 configured. Chromium checks exercise the actual record/correction UI.
 """
+from browser_support import launch_chromium
 import argparse
 from contextlib import ExitStack
 import hashlib
@@ -235,8 +236,7 @@ def run(output):
             result['stage'] = 'native Chromium filters and OWNER correction'
             from playwright.sync_api import sync_playwright
             with sync_playwright() as pw, ExitStack() as browser_cleanup:
-                chromium = pw.chromium.launch(executable_path='/usr/bin/chromium', headless=True,
-                                             args=['--no-sandbox', '--disable-dev-shm-usage'])
+                chromium = launch_chromium(pw)
                 browser_cleanup.callback(chromium.close)
                 def new_page(actor, path):
                     context = chromium.new_context(viewport={'width': 1440, 'height': 1080})

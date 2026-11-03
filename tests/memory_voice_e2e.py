@@ -3,6 +3,7 @@
 
 One isolated file H2, loopback only, no inherited provider configuration or recordings.
 """
+from browser_support import launch_chromium
 import argparse
 import base64
 import io
@@ -86,7 +87,7 @@ def run(output):
             result['checks'].append('mock chat extracts pending memory; private source is linked to the original user message; other editor denied')
             from playwright.sync_api import sync_playwright
             with sync_playwright() as pw:
-                browser=pw.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
+                browser=launch_chromium(pw)
                 page=browser.new_page(viewport={'width':1360,'height':950})
                 page.on('pageerror',lambda error:result['page_errors'].append(str(error)))
                 page.route('**/*',lambda route:route.continue_() if route.request.url.startswith(base+'/') or route.request.url.startswith('data:') else (result['external_requests'].append('blocked external request'),route.abort()))
@@ -168,7 +169,7 @@ def run(output):
                 assert not api(f'/api/personas/{persona}/voice-profiles')
                 tombstone=api(f'/api/personas/{persona}/voice-profiles/{profile_id}');assert tombstone['name']=='' and tombstone['authorization_status']=='DELETED'
                 result['checks'].append('API and mock Worker restart retain corrected memory and revoked consent; closed preview denied, deletion leaves minimal tombstone')
-                browser=pw.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
+                browser=launch_chromium(pw)
                 page=browser.new_page(viewport={'width':1360,'height':950})
                 page.on('pageerror',lambda error:result['page_errors'].append(str(error)))
                 page.route('**/*',lambda route:route.continue_() if route.request.url.startswith(base+'/') or route.request.url.startswith('data:') else (result['external_requests'].append('blocked external request'),route.abort()))

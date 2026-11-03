@@ -4,6 +4,7 @@
 Uses an isolated default-JVM API, file H2 and mock Worker. No real provider is
 configured. Optional Chromium checks exercise the actual record/correction UI.
 """
+from browser_support import launch_chromium
 import argparse
 import hashlib
 import json
@@ -185,8 +186,7 @@ def run(output, browser=False):
             if browser:
                 from playwright.sync_api import sync_playwright
                 with sync_playwright() as pw:
-                    chromium = pw.chromium.launch(executable_path='/usr/bin/chromium', headless=True,
-                                                 args=['--no-sandbox', '--disable-dev-shm-usage'])
+                    chromium = launch_chromium(pw)
                     def new_page(actor, path):
                         context = chromium.new_context(viewport={'width': 1440, 'height': 1080})
                         page = context.new_page()
@@ -299,8 +299,7 @@ def run(output, browser=False):
             second_correction = dict(correction, version_id=next_version, text=refined)
             if browser:
                 with sync_playwright() as pw:
-                    chromium = pw.chromium.launch(executable_path='/usr/bin/chromium', headless=True,
-                                                 args=['--no-sandbox', '--disable-dev-shm-usage'])
+                    chromium = launch_chromium(pw)
                     try:
                         reader = new_page('viewer', '/')
                         reader.locator(f'[data-person="{persona}"]').click()

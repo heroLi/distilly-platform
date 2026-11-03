@@ -4,6 +4,7 @@
 Starts only an isolated loopback API with file H2. All users and ledger amounts
 are synthetic; no Worker, provider, payment or real invoice is involved.
 """
+from browser_support import launch_chromium
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -115,8 +116,7 @@ def run(output):
 
             from playwright.sync_api import sync_playwright
             with sync_playwright() as pw:
-                browser = pw.chromium.launch(executable_path='/usr/bin/chromium', headless=True,
-                                            args=['--no-sandbox', '--disable-dev-shm-usage'])
+                browser = launch_chromium(pw)
 
                 def new_page(actor):
                     context = browser.new_context(viewport={'width': 1440, 'height': 1080})

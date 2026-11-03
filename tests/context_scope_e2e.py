@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Synthetic long-context disclosure: dedicated H2/default JVM/mock Worker/Chromium."""
+from browser_support import launch_chromium
 import argparse
 import hashlib
 import json
@@ -101,7 +102,7 @@ def run(output, baseline=False):
                 result['checks'].append('actual 32 prior messages: 8 outside recent24, plus measured budget omissions; fixed input/version retained; only numeric per-reply metadata returned to conversation owner')
             from playwright.sync_api import sync_playwright
             with sync_playwright() as pw:
-                browser = pw.chromium.launch(executable_path='/usr/bin/chromium', headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+                browser = launch_chromium(pw)
                 try:
                     page = browser.new_page(viewport={'width': 1440, 'height': 1080})
                     page.route('**/*', lambda route: route.continue_() if route.request.url.startswith(base + '/') or route.request.url.startswith(('data:', 'blob:')) else (result['external_requests'].append('blocked external'), route.abort()))

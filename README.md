@@ -84,6 +84,8 @@ python3 run_local.py --port 18080
 
 ## 验证
 
+合成浏览器E2E需要固定测试依赖及匹配Chromium，全新CI和本地准备命令见[浏览器测试依赖](docs/BROWSER_TEST_SETUP.md)。Worker运行依赖仍为Python标准库。
+
 ```bash
 mvn -B -ntp -f server/pom.xml package
 python3 -m unittest discover -s worker -p 'test_*.py'

@@ -2,7 +2,7 @@ name: Platform CI
 on: [push, pull_request]
 jobs:
   platform:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -16,4 +16,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Install pinned browser test dependencies
+        run: python3 -m pip install --index-url https://pypi.org/simple --only-binary=:all: --require-hashes -r requirements-test.txt
+      - name: Install matching Chromium and system dependencies
+        run: python3 -m playwright install --with-deps chromium
       - run: python3 scripts/verify.py --e2e

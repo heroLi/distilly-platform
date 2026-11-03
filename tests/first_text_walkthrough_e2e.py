@@ -4,6 +4,7 @@
 No seeded business objects, real accounts or providers. Account fixtures live
 only in a dedicated temporary H2 instance; this does not test self-registration.
 """
+from browser_support import launch_chromium
 import argparse
 import hashlib
 import json
@@ -90,7 +91,7 @@ def run(output, completion_between_reads=False):
             background_worker = launch('mock-worker', [sys.executable, str(ROOT / 'worker/worker.py')])
             from playwright.sync_api import sync_playwright
             with sync_playwright() as pw:
-                browser = pw.chromium.launch(executable_path='/usr/bin/chromium', headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+                browser = launch_chromium(pw)
                 try:
                     def new_page(actor, path='/'):
                         context = browser.new_context(viewport={'width': 1440, 'height': 1080})

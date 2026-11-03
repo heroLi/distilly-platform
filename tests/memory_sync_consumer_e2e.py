@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Private local status and explicitly enabled offline sync; never contacts Hindsight."""
+from browser_support import launch_chromium
 import argparse
 import json
 import os
@@ -78,7 +79,7 @@ def run(output):
             result['checks'].append('default closed blocks manual consume; GET is private and content-free, does not dispatch; SQL memory remains available')
             from playwright.sync_api import sync_playwright
             with sync_playwright() as pw:
-                browser=pw.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
+                browser=launch_chromium(pw)
                 page=browser.new_page(viewport={'width':1360,'height':1000});posts=[]
                 page.on('pageerror',lambda e:result['page_errors'].append(str(e)))
                 page.on('request',lambda r:posts.append(r.method) if '/sync/' in r.url and r.method=='POST' else None)
@@ -110,7 +111,7 @@ def run(output):
                 result['stage']='restart and denied status'
                 page.locator('#logout').click();page.close();browser.close();stop(server)
                 server=launch('restart-offline-api',[safe.get('JAVA_BIN','java'),'-jar',str(jar)]);wait(healthy);assert api(path)['items'][0]==deleted
-                browser=pw.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--disable-dev-shm-usage']);page=browser.new_page(viewport={'width':1360,'height':1000})
+                browser=launch_chromium(pw);page=browser.new_page(viewport={'width':1360,'height':1000})
                 page.on('pageerror',lambda e:result['page_errors'].append(str(e)))
                 page.goto(base);page.locator('#token').fill('demo-owner');page.locator('#login-form button').click();page.locator('#projects').select_option(project);page.locator(f'[data-person="{person}"]').click();page.locator('[data-view="chat"]').click()
                 page.locator('#memory-sync-items').filter(has_text='非真实同步').wait_for()

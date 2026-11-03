@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Actual isolated file-H2/API/Worker: blocked real text egress and one TXT mock flow."""
+from browser_support import launch_chromium
 import argparse,hashlib,json,os,shutil,socket,subprocess,sys,tempfile,time
 from pathlib import Path
 import urllib.error,urllib.request
@@ -68,7 +69,7 @@ def run(output,browser=False):
    if browser:
     from playwright.sync_api import sync_playwright
     with sync_playwright() as pw:
-     chromium=pw.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--disable-dev-shm-usage']);page=chromium.new_page(viewport={'width':1440,'height':1080})
+     chromium=launch_chromium(pw);page=chromium.new_page(viewport={'width':1440,'height':1080})
      def restrict(route):
       if route.request.url.startswith(base+'/') or route.request.url.startswith(('data:','blob:')):route.continue_()
       else:result['external_browser_requests'].append('blocked external request');route.abort()
