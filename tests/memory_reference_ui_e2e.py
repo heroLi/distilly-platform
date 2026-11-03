@@ -170,6 +170,10 @@ def run(output):
                 pending[0][0].fulfill(response=pending[0][1]); page.wait_for_timeout(100)
                 assert quote.text_content() == newer, 'closed_request_overwrote_current_quote'
                 result['checks'].append('close clears private state and a real late old snapshot cannot overwrite reopened current source; chat draft preserved')
+                # Isolate this explicit reference-refresh denial. Automatic current-chat
+                # denial now correctly closes private dialogs; multi_tab_access_e2e
+                # verifies that path with the real poll timer left running.
+                page.evaluate('clearInterval(state.timer)'); page.wait_for_function('()=>!state.pollBusy')
                 api('/api/personas/' + selected, method='DELETE'); page.locator('#memory-reference-refresh').click()
                 expect(page.locator('#memory-reference-error')).to_contain_text('不可访问'); expect(quote).to_have_count(0)
                 expect(page.locator('#memory-reference-query')).to_have_value('')
