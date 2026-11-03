@@ -2,6 +2,7 @@ package internal.distilly.modules.conversation.repository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -40,8 +41,32 @@ public class ConversationRepository {
 
     public List<Map<String, Object>> findActiveTasks(String conversationId) {
         return db.queryForList(
-                "SELECT id,status,error_code,partial_reply FROM persona_job WHERE conversation_id=? AND status IN ('QUEUED','RUNNING') ORDER BY created_at DESC",
+                "SELECT id,status,error_code,partial_reply,attempt AS read_attempt,lease_token AS read_claim FROM persona_job WHERE conversation_id=? AND status IN ('QUEUED','RUNNING') ORDER BY created_at DESC",
                 conversationId);
+    }
+
+    /** Final statement checkpoint; no write locks, including inside existing write transactions. */
+    public List<Map<String, Object>> publicationState(String actor, String conversationId,
+            List<Map<String, Object>> selectedActive) {
+        var args = new ArrayList<Object>();
+        var pairs = new ArrayList<String>();
+        for (var row : selectedActive) {
+            boolean hasPartial = row.get("partial_reply") instanceof String text && !text.isEmpty();
+            pairs.add(hasPartial ? "(j.id=? AND j.attempt=? AND j.lease_token=?)" : "j.id=?");
+            args.add(row.get("id"));
+            if (hasPartial) {
+                args.add(row.get("read_attempt"));
+                args.add(row.get("read_claim"));
+            }
+        }
+        String activeCount = selectedActive.isEmpty() ? "0"
+                : "(SELECT COUNT(*) FROM persona_job j WHERE j.conversation_id=c.id AND j.persona_id=c.persona_id AND j.creator=c.user_id AND j.status IN ('QUEUED','RUNNING','SUCCEEDED') AND ("
+                        + String.join(" OR ", pairs) + "))";
+        args.add(conversationId);
+        args.add(actor);
+        return db.queryForList("SELECT c.id,c.persona_id,c.user_id,c.version_id," + activeCount
+                + " AS read_active_count FROM persona_conversation c JOIN persona p ON p.id=c.persona_id JOIN member a ON a.project_id=p.project_id AND a.user_id=c.user_id WHERE c.id=? AND c.user_id=? AND p.deleted=FALSE",
+                args.toArray());
     }
 
     public List<Map<String, Object>> findLatestChatTask(String conversationId) {

@@ -10,6 +10,7 @@ import internal.distilly.modules.task.service.PersonaTaskService;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import static internal.distilly.common.support.Identifiers.id;
@@ -90,9 +91,23 @@ public class ConversationService {
                 m.put("context_scope", scopes.get(m.get("id")));
             return m;
         }).toList());
-        out.put("active_job", repository.findActiveTasks(id));
+        var active = repository.findActiveTasks(id);
+        out.put("active_job", active.stream().map(row -> {
+            var copy = new LinkedHashMap<String, Object>();
+            for (String key : List.of("id", "status", "error_code", "partial_reply")) copy.put(key, row.get(key));
+            return copy;
+        }).toList());
         var latest = repository.findLatestChatTask(id);
         out.put("latest_chat_job", latest.isEmpty() ? null : latest.get(0));
+        var current = repository.publicationState(actor, id, active);
+        if (current.size() != 1) {
+            personaAccess.conversation(actor, id);
+            throw error(409, "private_read_changed");
+        }
+        for (String key : List.of("id", "persona_id", "user_id", "version_id"))
+            if (!Objects.equals(c.get(key), current.get(0).get(key))) throw error(409, "private_read_changed");
+        if (((Number) current.get(0).get("read_active_count")).intValue() != active.size())
+            throw error(409, "private_read_changed");
         return out;
     }
 

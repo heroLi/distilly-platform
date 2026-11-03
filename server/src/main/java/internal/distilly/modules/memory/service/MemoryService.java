@@ -6,6 +6,7 @@ import internal.distilly.modules.persona.service.PersonaAccessService;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.LinkedHashMap;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import static internal.distilly.common.support.Identifiers.id;
@@ -34,7 +35,23 @@ public class MemoryService {
 
     public List<Map<String, Object>> memories(String actorId, String id) {
         personaAccess.persona(actorId, id);
-        return repository.findByPersonaAndUser(id, actorId).stream().map(row -> {
+        var selected = repository.findByPersonaAndUser(id, actorId);
+        var guarded = repository.findForPublication(id, actorId);
+        if (guarded.isEmpty()) {
+            personaAccess.persona(actorId, id);
+            throw error(409, "private_read_changed");
+        }
+        var current = new LinkedHashMap<Object, Map<String, Object>>();
+        for (var row : guarded) if (row.get("id") != null) {
+            var copy = new LinkedHashMap<String, Object>(row);
+            copy.remove("read_authorized_persona");
+            current.put(row.get("id"), copy);
+        }
+        // New rows may arrive normally. Every selected row must still be current;
+        // deleted, corrected, rejected or relinked rows cannot escape this checkpoint.
+        for (var row : selected)
+            if (!row.equals(current.get(row.get("id")))) throw error(409, "private_read_changed");
+        return selected.stream().map(row -> {
             row.put("revision", revision(row));
             return row;
         }).toList();
@@ -48,7 +65,16 @@ public class MemoryService {
         personaAccess.persona(actorId, id);
         var rows = repository.findSource(id, actorId, memoryId);
         if (rows.isEmpty()) throw error(404, "memory_source_unavailable");
-        return rows.get(0);
+        var current = repository.findSourceForPublication(id, actorId, memoryId);
+        if (current.isEmpty()) {
+            personaAccess.persona(actorId, id);
+            throw error(404, "memory_source_unavailable");
+        }
+        if (!rows.get(0).equals(current.get(0))) throw error(409, "private_read_changed");
+        var result = new LinkedHashMap<String, Object>();
+        for (String key : List.of("message_id", "conversation_id", "body", "created_at", "title"))
+            result.put(key, rows.get(0).get(key));
+        return result;
     }
 
     @Transactional

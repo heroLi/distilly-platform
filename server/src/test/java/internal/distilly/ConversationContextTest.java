@@ -608,7 +608,12 @@ class ConversationContextTest {
     void completionVisibleBetweenSessionReadsDoesNotMislabelNewReplyAsLegacy() {
         var repository = org.mockito.Mockito.mock(internal.distilly.modules.conversation.repository.ConversationRepository.class);
         var access = org.mockito.Mockito.mock(internal.distilly.modules.persona.service.PersonaAccessService.class);
-        org.mockito.Mockito.when(access.conversation("viewer", conversation)).thenReturn(Map.of("emotion", "{}"));
+        var selectedConversation = Map.<String, Object>of("id", conversation, "persona_id", "synthetic-persona",
+                "user_id", "viewer", "version_id", "synthetic-version", "emotion", "{}");
+        org.mockito.Mockito.when(access.conversation("viewer", conversation)).thenReturn(selectedConversation);
+        org.mockito.Mockito.when(repository.publicationState("viewer", conversation, List.of())).thenReturn(List.of(
+                Map.of("id", conversation, "persona_id", "synthetic-persona", "user_id", "viewer",
+                        "version_id", "synthetic-version", "read_active_count", 0)));
         var committed = new java.util.concurrent.atomic.AtomicBoolean();
         org.mockito.Mockito.when(repository.findMessages(conversation)).thenAnswer(invocation -> {
             committed.set(true); // The atomic completion is visible when this SELECT sees the reply.
@@ -623,6 +628,7 @@ class ConversationContextTest {
                 org.mockito.Mockito.mock(internal.distilly.modules.task.service.PersonaTaskService.class),
                 org.mockito.Mockito.mock(internal.distilly.modules.memory.service.MemoryService.class));
         assertTrue(items(service.session("viewer", conversation).get("messages")).get(0).containsKey("context_scope"));
+        org.mockito.Mockito.verify(repository).publicationState("viewer", conversation, List.of());
     }
 
     @Test

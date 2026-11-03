@@ -21,6 +21,13 @@ public class MemoryRepository {
                 userId);
     }
 
+    /** One non-locking statement checks current membership together with the records. */
+    public List<Map<String, Object>> findForPublication(String personaId, String userId) {
+        return db.queryForList(
+                "SELECT p.id AS read_authorized_persona,m.* FROM persona p JOIN member a ON a.project_id=p.project_id AND a.user_id=? LEFT JOIN persona_memory m ON m.persona_id=p.id AND m.user_id=a.user_id WHERE p.id=? AND p.deleted=FALSE ORDER BY m.created_at DESC,m.id",
+                userId, personaId);
+    }
+
     public void scanConfirmedForRecall(String personaId, String userId, Consumer<Map<String, Object>> onRow) {
         db.query(connection -> {
             var statement = connection.prepareStatement(
@@ -40,8 +47,13 @@ public class MemoryRepository {
     }
 
     public List<Map<String, Object>> findSource(String personaId, String userId, String memoryId) {
-        return db.queryForList("SELECT s.id AS message_id,s.conversation_id,s.body,s.created_at,c.title FROM persona_memory m JOIN persona_message s ON s.id=m.source_id JOIN persona_conversation c ON c.id=s.conversation_id WHERE m.id=? AND m.persona_id=? AND m.user_id=? AND c.persona_id=? AND c.user_id=? AND s.role='user'",
+        return db.queryForList("SELECT s.id AS message_id,s.conversation_id,s.body,s.created_at,c.title,c.version_id AS read_source_version FROM persona_memory m JOIN persona_message s ON s.id=m.source_id JOIN persona_conversation c ON c.id=s.conversation_id WHERE m.id=? AND m.persona_id=? AND m.user_id=? AND c.persona_id=? AND c.user_id=? AND s.role='user'",
                 memoryId, personaId, userId, personaId, userId);
+    }
+
+    public List<Map<String, Object>> findSourceForPublication(String personaId, String userId, String memoryId) {
+        return db.queryForList("SELECT s.id AS message_id,s.conversation_id,s.body,s.created_at,c.title,c.version_id AS read_source_version FROM persona p JOIN member a ON a.project_id=p.project_id AND a.user_id=? JOIN persona_memory m ON m.persona_id=p.id AND m.user_id=a.user_id JOIN persona_message s ON s.id=m.source_id JOIN persona_conversation c ON c.id=s.conversation_id WHERE p.id=? AND p.deleted=FALSE AND m.id=? AND c.persona_id=p.id AND c.user_id=a.user_id AND s.role='user'",
+                userId, personaId, memoryId);
     }
 
     public int cancelPendingChatsForUser(String personaId, String creator) {
