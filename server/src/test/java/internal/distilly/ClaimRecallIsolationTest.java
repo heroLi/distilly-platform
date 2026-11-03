@@ -17,6 +17,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import internal.distilly.modules.memory.repository.MemoryRepository;
 import java.util.List;
+import org.springframework.web.server.ResponseStatusException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -195,5 +196,38 @@ class ClaimRecallIsolationTest {
         clearInvocations(sql);var claimed=tasks.claim();assertEquals(job,claimed.get("id"));
         verify(sql,never()).recall(any(),anyString());
         assertTrue(((List<?>)((Map<?,?>)claimed.get("payload")).get("memories")).isEmpty());
+    }
+
+    @Test void revokedCurrentLeaseCannotWriteDeltaAndClearsPreviousPartial() {
+        String job=queue();var lease=tasks.claim();String token=lease.get("lease_token").toString();
+        tasks.delta(job,token,"合成授权期间片段");
+        db.update("DELETE FROM member WHERE project_id=? AND user_id='viewer'",project);
+        var denied=assertThrows(ResponseStatusException.class,()->tasks.delta(job,token,"合成撤权后片段"));
+        assertEquals(403,denied.getStatusCode().value());assertEquals("CANCELLED",status(job));
+        assertEquals("",db.queryForObject("SELECT partial_reply FROM persona_job WHERE id=?",String.class,job));
+        assertEquals("{}",db.queryForObject("SELECT payload FROM persona_job WHERE id=?",String.class,job));
+    }
+
+    @Test void staleDeltaCannotCancelReplacementButRevokedCurrentLeaseIsCancelled() {
+        String job=queue();var first=tasks.claim();String old=first.get("lease_token").toString();
+        db.update("UPDATE persona_job SET lease_until=0 WHERE id=?",job);
+        var replacement=tasks.claim();String current=replacement.get("lease_token").toString();assertNotEquals(old,current);
+        db.update("DELETE FROM member WHERE project_id=? AND user_id='viewer'",project);
+        assertEquals(409,assertThrows(ResponseStatusException.class,()->tasks.delta(job,old,"合成旧租约片段")).getStatusCode().value());
+        assertEquals("RUNNING",status(job));assertEquals(current,db.queryForObject("SELECT lease_token FROM persona_job WHERE id=?",String.class,job));
+        assertEquals(403,assertThrows(ResponseStatusException.class,()->tasks.delta(job,current,"合成撤权片段")).getStatusCode().value());
+        assertEquals("CANCELLED",status(job));
+    }
+
+    @Test void correctionStopsCurrentDeltaAndFreshTaskCanStreamAndCompleteOnce() {
+        String job=queue();var old=tasks.claim();String previous=old.get("lease_token").toString();
+        memories.memory("viewer",person,memory,Map.of("status","CONFIRMED","body","合成岚桥风铃偏好已纠正"));
+        assertEquals(409,assertThrows(ResponseStatusException.class,()->tasks.delta(job,previous,"合成旧来源片段")).getStatusCode().value());
+        String next=queue();var fresh=tasks.claim();String token=fresh.get("lease_token").toString();
+        tasks.delta(next,token,"合成合法新片段");
+        assertEquals("合成合法新片段",db.queryForObject("SELECT partial_reply FROM persona_job WHERE id=?",String.class,next));
+        var output=Map.<String,Object>of("answer","合成合法完成","emotion",Map.of("label","calm","intensity",.3,"reason","合成"),"memory_candidates",List.of());
+        assertEquals(tasks.complete(next,token,output),tasks.complete(next,token,output));
+        assertEquals(1,db.queryForObject("SELECT COUNT(*) FROM persona_message WHERE conversation_id=? AND role='assistant'",Integer.class,conversation));
     }
 }

@@ -331,12 +331,35 @@ public class PersonaTaskService {
             throw error(409, "lease_lost");
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void delta(String id, String token, String partial) {
         if (partial == null || partial.length() > 12000)
             throw error(422, "invalid_partial_reply");
+        // Commit revocation cleanup before returning its error; never roll the cleanup back with that error.
+        var denied=claims.execute(status->saveAuthorizedDelta(id,token,partial));
+        if(denied!=null)throw denied;
+    }
+
+    private ResponseStatusException saveAuthorizedDelta(String id,String token,String partial) {
+        var rows=repository.findTask(id);if(rows.isEmpty())throw error(409,"lease_lost");
+        var job=rows.get(0);var persona=resources.one("persona",(String)job.get("persona_id"));
+        boolean member=repository.lockChatMembership(job.get("creator"),persona.get("project_id"));
+        // Memory edits/source deletion hold this persona lock before cancelling active chats.
+        personaAccess.lock("persona",(String)job.get("persona_id"));personaAccess.lock("persona_job",id);
+        rows=repository.findTask(id);if(rows.isEmpty())throw error(409,"lease_lost");
+        job=rows.get(0);
+        if(!"CHAT".equals(job.get("kind"))||!"RUNNING".equals(job.get("status"))||!token.equals(job.get("lease_token"))
+                ||!(job.get("lease_until") instanceof Number until)||until.longValue()<now())throw error(409,"lease_lost");
+        // Only the current lease may cancel itself. A stale worker cannot clear a replacement lease.
+        if(!member){repository.cancelClaim(id,token);return error(403,"project_access_denied");}
+        try{personaAccess.conversation((String)job.get("creator"),(String)job.get("conversation_id"));}
+        catch(ResponseStatusException unavailable){
+            int code=unavailable.getStatusCode().value();if(code!=403&&code!=404)throw unavailable;
+            repository.cancelClaim(id,token);return unavailable;
+        }
         if (repository.saveReplyDelta(partial, id, token, now()) != 1)
             throw error(409, "lease_lost");
+        return null;
     }
 
     @Transactional
