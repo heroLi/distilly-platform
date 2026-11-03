@@ -5,6 +5,8 @@ import internal.distilly.modules.task.domain.TaskFailurePolicy;
 import internal.distilly.modules.conversation.domain.ExperienceRecall;
 import internal.distilly.modules.conversation.service.ContextAssembler;
 import internal.distilly.modules.memory.service.MemoryRetrieval;
+import internal.distilly.modules.memory.domain.MemoryProvider;
+import internal.distilly.modules.memory.repository.MemoryRepository;
 import internal.distilly.common.persistence.ResourceRepository;
 import internal.distilly.config.PlatformProperties;
 import internal.distilly.modules.knowledge.service.PersonaKnowledgeService;
@@ -23,6 +25,9 @@ import java.util.Objects;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import static internal.distilly.common.support.Identifiers.id;
 import static internal.distilly.common.support.Identifiers.now;
@@ -60,11 +65,15 @@ public class PersonaTaskService {
 
     private final MemoryRetrieval memories;
 
+    private final MemoryRepository memorySources;
+
     private final TaskAdmissionService admission;
+
+    private final TransactionTemplate claims;
 
     public PersonaTaskService(PlatformProperties properties, PersonaTaskRepository repository, JsonCodec json,
             ResourceRepository resources, WorkspaceAccessService access, AuditService audits,
-            PersonaAccessService personaAccess, PersonaKnowledgeService knowledge, ContextAssembler contexts, MemoryRetrieval memories, TaskAdmissionService admission, VoiceProfileRepository voices) {
+            PersonaAccessService personaAccess, PersonaKnowledgeService knowledge, ContextAssembler contexts, MemoryRetrieval memories, TaskAdmissionService admission, VoiceProfileRepository voices, PlatformTransactionManager manager, MemoryRepository memorySources) {
         this.properties = properties;
         this.repository = repository;
         this.json = json;
@@ -75,8 +84,10 @@ public class PersonaTaskService {
         this.knowledge = knowledge;
         this.contexts = contexts;
         this.memories = memories;
+        this.memorySources = memorySources;
         this.admission = admission;
         this.voices = voices;
+        this.claims = new TransactionTemplate(manager);
     }
 
     @Transactional
@@ -143,84 +154,158 @@ public class PersonaTaskService {
         }).toList();
     }
 
-    @Transactional
-    public Map<String, Object> claim() {
-        long timestamp = now();
-        repository.failExhaustedLeases(timestamp, properties.getMaxAttempts());
-        var rows = repository.findClaimableTasks(timestamp, properties.getMaxAttempts(),
-                timestamp - properties.getTaskAgingSeconds() * 1000);
-        for (var taskRow : rows) {
-            // Memory mutations lock the same persona before cancellation. Do not
-            // assemble an old context while their commit is still pending.
-            if ("CHAT".equals(taskRow.get("kind")) && !repository.tryLockChatContext(taskRow.get("persona_id")))
-                continue;
-            if ("CHAT".equals(taskRow.get("kind"))) {
-                try {
-                    personaAccess.conversation((String) taskRow.get("creator"), (String) taskRow.get("conversation_id"));
-                } catch (ResponseStatusException unavailable) {
-                    int status = unavailable.getStatusCode().value();
-                    if (status != 403 && status != 404) throw unavailable;
-                    repository.cancelUnavailableChat(taskRow.get("id"));
-                    continue;
+    private record PreparedClaim(Map<String,Object> row,String token,String project,String version,
+            String query,boolean memoryEnabled) { }
+
+    /** No claim transaction or persona/job write lock spans the original read-only retrieval. */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public Map<String,Object> claim() {
+        long timestamp=now();
+        claims.executeWithoutResult(status->repository.failExhaustedLeases(timestamp,properties.getMaxAttempts()));
+        var candidates=repository.findClaimableTasks(timestamp,properties.getMaxAttempts(),
+                timestamp-properties.getTaskAgingSeconds()*1000);
+        for(var candidate:candidates) {
+            var prepared=claims.execute(status->prepareClaim(candidate.get("id")));
+            if(prepared==null)continue;
+            var row=prepared.row();
+            if(!"CHAT".equals(row.get("kind")))
+                return claimed(row,prepared.token(),json.decode(row.get("payload")));
+            try {
+                var selected=prepared.memoryEnabled()
+                        ?memories.retrieve((String)row.get("creator"),(String)row.get("persona_id"),prepared.query())
+                        :List.<Map<String,Object>>of();
+                var result=claims.execute(status->finishChatClaim(prepared,selected));
+                if(result!=null)return result;
+            } catch(ResponseStatusException unavailable) {
+                int code=unavailable.getStatusCode().value();
+                if(code!=403&&code!=404) {
+                    releasePrepared(prepared);throw unavailable;
                 }
+                claims.executeWithoutResult(status->repository.cancelClaim(row.get("id"),prepared.token()));
+            } catch(RuntimeException failure) {
+                releasePrepared(prepared);throw failure;
             }
-            if (voiceKind(taskRow)) {
-                if (!repository.tryLockChatContext(taskRow.get("persona_id"))) continue;
-                try { validateVoiceAccess(taskRow); }
-                catch (ResponseStatusException unavailable) {
-                    int status = unavailable.getStatusCode().value();
-                    if (status != 403 && status != 404 && status != 409) throw unavailable;
-                    voices.cancelJob(taskRow.get("id"));
-                    continue;
-                }
-            }
-            String token = id();
-            if (repository.acquireLease(token, timestamp + properties.getLeaseSeconds() * 1000, taskRow.get("id"),
-                    timestamp, properties.getMaxAttempts()) != 1)
-                continue;
-            var payload = json.decode(taskRow.get("payload"));
-            if ("CHAT".equals(taskRow.get("kind"))) {
-                var conversationRow = resources.one("persona_conversation", (String) taskRow.get("conversation_id"));
-                var persona = json.decode(resources.one("persona_version", (String) conversationRow.get("version_id")).get("content"));
-                var history = repository.findRecentMessages(conversationRow.get("id"), payload.get("message_id"));
-                long outsideWindow = Math.max(0, repository.countOtherMessages(conversationRow.get("id"), payload.get("message_id")) - history.size());
-                Collections.reverse(history);
-                var message = resources.one("persona_message", (String) payload.get("message_id"));
-                String query = (String) message.get("body");
-                String recallQuery = query;
-                if (query.matches(".*(那次|那件|这件|上次的|那个地方).*"))
-                    for (int i = history.size() - 1; i >= 0; i--)
-                        if ("user".equals(history.get(i).get("role"))) {
-                            recallQuery += " " + history.get(i).get("body"); break;
-                        }
-                boolean enabled = Boolean.TRUE.equals(conversationRow.get("memory_enabled"));
-                var recalled = enabled ? memories.retrieve((String) taskRow.get("creator"), (String) taskRow.get("persona_id"), recallQuery) : List.<Map<String, Object>>of();
-                var experiences = ExperienceRecall.retrieve(persona, recallQuery);
-                var sources = knowledge.retrieve((String) taskRow.get("creator"), (String) taskRow.get("persona_id"), query);
-                try {
-                    var assembled = contexts.assemble(persona, (String) conversationRow.get("version_id"), query,
-                            json.decode(conversationRow.get("emotion")), enabled, history, recalled, experiences, sources,
-                            message.get("image") != null, outsideWindow);
-                    var metadata = new LinkedHashMap<String, Object>();
-                    metadata.put("message_id", payload.get("message_id"));
-                    metadata.put("context_budget", assembled.get("context_budget"));
-                    metadata.put("memory_ids", items(assembled.get("memories")).stream().map(x -> x.get("id")).toList());
-                    metadata.put("experience_ids", items(assembled.get("experiences")).stream().map(x -> x.get("id")).toList());
-                    if (repository.saveContextMetadata(json.encode(metadata), taskRow.get("id"), token) != 1
-                            || repository.saveKnowledgeSnapshot(json.encode(assembled.get("knowledge")), taskRow.get("id"), token) != 1)
-                        continue;
-                    payload = assembled;
-                    if (message.get("image") != null) payload.put("image", message.get("image"));
-                }
-                catch (IllegalArgumentException oversized) {
-                    repository.rejectOversizedContext(taskRow.get("id"), token);
-                    continue;
-                }
-            }
-            return Map.of("id", taskRow.get("id"), "kind", taskRow.get("kind"), "payload", payload, "lease_token",
-                    token, "lease_seconds", properties.getLeaseSeconds());
         }
         return null;
+    }
+
+    private PreparedClaim prepareClaim(Object id) {
+        var rows=repository.findTask(id);if(rows.isEmpty())return null;
+        var taskRow=rows.get(0);
+        boolean chat="CHAT".equals(taskRow.get("kind"));
+        if((chat||voiceKind(taskRow))&&!repository.tryLockChatContext(taskRow.get("persona_id")))return null;
+        if(chat) {
+            try { personaAccess.conversation((String)taskRow.get("creator"),(String)taskRow.get("conversation_id")); }
+            catch(ResponseStatusException unavailable) {
+                int code=unavailable.getStatusCode().value();if(code!=403&&code!=404)throw unavailable;
+                repository.cancelUnavailableChat(id);return null;
+            }
+        }
+        if(voiceKind(taskRow)) {
+            try {validateVoiceAccess(taskRow);}
+            catch(ResponseStatusException unavailable) {
+                int code=unavailable.getStatusCode().value();if(code!=403&&code!=404&&code!=409)throw unavailable;
+                voices.cancelJob(id);return null;
+            }
+        }
+        long timestamp=now();String token=id();
+        if(repository.acquireLease(token,timestamp+properties.getLeaseSeconds()*1000,id,timestamp,properties.getMaxAttempts())!=1)return null;
+        if(!chat)return new PreparedClaim(taskRow,token,null,null,null,false);
+        var payload=json.decode(taskRow.get("payload"));
+        var conversationRow=resources.one("persona_conversation",(String)taskRow.get("conversation_id"));
+        var history=repository.findRecentMessages(conversationRow.get("id"),payload.get("message_id"));
+        Collections.reverse(history);
+        var message=resources.one("persona_message",(String)payload.get("message_id"));
+        String recallQuery=recallQuery((String)message.get("body"),history);
+        var persona=resources.one("persona",(String)taskRow.get("persona_id"));
+        return new PreparedClaim(taskRow,token,(String)persona.get("project_id"),(String)conversationRow.get("version_id"),
+                recallQuery,Boolean.TRUE.equals(conversationRow.get("memory_enabled")));
+    }
+
+    private Map<String,Object> finishChatClaim(PreparedClaim prepared,List<Map<String,Object>> selected) {
+        var original=prepared.row();String token=prepared.token();
+        // Same membership -> persona ordering as explicit reference reads. Mutations may commit during selection.
+        if(!repository.lockChatMembership(original.get("creator"),prepared.project())) {
+            repository.cancelClaim(original.get("id"),token);return null;
+        }
+        personaAccess.lock("persona",(String)original.get("persona_id"));
+        personaAccess.lock("persona_conversation",(String)original.get("conversation_id"));
+        personaAccess.lock("persona_job",(String)original.get("id"));
+        var rows=repository.findTask(original.get("id"));if(rows.isEmpty())return null;
+        var taskRow=rows.get(0);
+        if(!"RUNNING".equals(taskRow.get("status"))||!token.equals(taskRow.get("lease_token"))
+                ||!(taskRow.get("lease_until") instanceof Number until)||until.longValue()<now())return null;
+        var conversationRow=personaAccess.conversation((String)taskRow.get("creator"),(String)taskRow.get("conversation_id"));
+        if(!prepared.version().equals(conversationRow.get("version_id"))) {
+            repository.cancelClaim(taskRow.get("id"),token);return null;
+        }
+        var payload=json.decode(taskRow.get("payload"));
+        var version=resources.one("persona_version",(String)conversationRow.get("version_id"));
+        if(!taskRow.get("persona_id").equals(version.get("persona_id"))) {
+            repository.cancelClaim(taskRow.get("id"),token);return null;
+        }
+        var persona=json.decode(version.get("content"));
+        var history=repository.findRecentMessages(conversationRow.get("id"),payload.get("message_id"));
+        long outsideWindow=Math.max(0,repository.countOtherMessages(conversationRow.get("id"),payload.get("message_id"))-history.size());
+        Collections.reverse(history);
+        var message=resources.one("persona_message",(String)payload.get("message_id"));
+        String query=(String)message.get("body"),recallQuery=recallQuery(query,history);
+        if(!prepared.query().equals(recallQuery)) {
+            repository.releaseLease((String)taskRow.get("id"),token,now());return null;
+        }
+        boolean enabled=Boolean.TRUE.equals(conversationRow.get("memory_enabled"));
+        var recalled=enabled?currentMemories(taskRow,selected):List.<Map<String,Object>>of();
+        var experiences = ExperienceRecall.retrieve(persona, recallQuery);
+        var sources = knowledge.retrieve((String) taskRow.get("creator"), (String) taskRow.get("persona_id"), query);
+        try {
+            var assembled = contexts.assemble(persona, (String) conversationRow.get("version_id"), query,
+                    json.decode(conversationRow.get("emotion")), enabled, history, recalled, experiences, sources,
+                    message.get("image") != null, outsideWindow);
+            var metadata = new LinkedHashMap<String, Object>();
+            metadata.put("message_id", payload.get("message_id"));
+            metadata.put("context_budget", assembled.get("context_budget"));
+            metadata.put("memory_ids", items(assembled.get("memories")).stream().map(x -> x.get("id")).toList());
+            metadata.put("experience_ids", items(assembled.get("experiences")).stream().map(x -> x.get("id")).toList());
+            if (repository.saveContextMetadata(json.encode(metadata), taskRow.get("id"), token) != 1
+                    || repository.saveKnowledgeSnapshot(json.encode(assembled.get("knowledge")), taskRow.get("id"), token) != 1)
+                return null;
+            payload = assembled;
+            if (message.get("image") != null) payload.put("image", message.get("image"));
+        }
+        catch (IllegalArgumentException oversized) {
+            repository.rejectOversizedContext(taskRow.get("id"), token);
+            return null;
+        }
+
+        return claimed(taskRow,token,payload);
+    }
+
+    private List<Map<String,Object>> currentMemories(Map<String,Object> job,List<Map<String,Object>> selected) {
+        var current=new ArrayList<Map<String,Object>>();
+        for(var row:selected) {
+            var reference=MemoryProvider.reference(row);
+            var sources=memorySources.findConfirmedSource(reference.memoryId(),(String)job.get("persona_id"),(String)job.get("creator"));
+            if(sources.size()!=1||!reference.equals(MemoryProvider.reference(sources.get(0))))continue;
+            var source=sources.get(0);
+            current.add(Map.of("id",source.get("id"),"body",source.get("body"),"source_id",source.get("source_id"),"origin","confirmed_interaction"));
+        }
+        return List.copyOf(current);
+    }
+
+    private String recallQuery(String query,List<Map<String,Object>> history) {
+        if(query.matches(".*(那次|那件|这件|上次的|那个地方).*"))
+            for(int i=history.size()-1;i>=0;i--)
+                if("user".equals(history.get(i).get("role")))return query+" "+history.get(i).get("body");
+        return query;
+    }
+
+    private Map<String,Object> claimed(Map<String,Object> row,String token,Map<String,Object> payload) {
+        return Map.of("id",row.get("id"),"kind",row.get("kind"),"payload",payload,"lease_token",token,
+                "lease_seconds",properties.getLeaseSeconds());
+    }
+
+    private void releasePrepared(PreparedClaim prepared) {
+        claims.executeWithoutResult(status->repository.releaseLease((String)prepared.row().get("id"),prepared.token(),now()));
     }
 
     @Transactional
