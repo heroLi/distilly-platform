@@ -1,0 +1,17 @@
+{
+  "dataset_id": "MEMORY_M0_E0_DEV_V1",
+  "sha256": "1aa66ea22b52f101e69f51f12724189aaeb425648c5d21031cd40bab7ce8321a",
+  "frozen_before_baseline_execution": true,
+  "development_only": true,
+  "family_count": 8,
+  "case_count": 32,
+  "positive_queries": 16,
+  "negative_queries": 16,
+  "future_holdout_status": "NOT_AUTHORED_NOT_RUN",
+  "quality_thresholds_adopted": false,
+  "preserved_legacy_sha256": {
+    "tests/fixtures/memory_provider_zh_v1.json": "69d43c2e13a1711e86f820c8c415f79594f42d418917e3e7701b9653125b6603",
+    "tests/fixtures/memory_provider_zh_v1.lock.json": "91b1f6bf1fafb1712c84476ef1114f6279281f4fa8aeb60e24d31bb226e9480f",
+    "tests/fixtures/memory_provider_known_failures_v1.json": "0399b0200ca11ef70415a781a803b5cd1ad5f2197a2469dd4f7000d594b27402"
+  }
+}

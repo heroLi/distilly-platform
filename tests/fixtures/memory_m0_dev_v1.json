@@ -1,0 +1,521 @@
+{
+  "dataset_id": "MEMORY_M0_E0_DEV_V1",
+  "synthetic": true,
+  "historical_corpus_restored": false,
+  "split": "development",
+  "blind_holdout": false,
+  "production_algorithm_changed": false,
+  "quality_thresholds_adopted": false,
+  "families": [
+    {
+      "family_id": "D01",
+      "source_group_id": "synthetic-source-d01",
+      "split": "development"
+    },
+    {
+      "family_id": "D02",
+      "source_group_id": "synthetic-source-d02",
+      "split": "development"
+    },
+    {
+      "family_id": "D03",
+      "source_group_id": "synthetic-source-d03",
+      "split": "development"
+    },
+    {
+      "family_id": "D04",
+      "source_group_id": "synthetic-source-d04",
+      "split": "development"
+    },
+    {
+      "family_id": "D05",
+      "source_group_id": "synthetic-source-d05",
+      "split": "development"
+    },
+    {
+      "family_id": "D06",
+      "source_group_id": "synthetic-source-d06",
+      "split": "development"
+    },
+    {
+      "family_id": "D07",
+      "source_group_id": "synthetic-source-d07",
+      "split": "development"
+    },
+    {
+      "family_id": "D08",
+      "source_group_id": "synthetic-source-d08",
+      "split": "development"
+    }
+  ],
+  "memories": [
+    {
+      "key": "paper",
+      "family_id": "D01",
+      "source_group_id": "synthetic-source-d01",
+      "scope": "self",
+      "status": "CONFIRMED",
+      "body": "合成记录：折纸风车使用银纹薄纸。"
+    },
+    {
+      "key": "optics",
+      "family_id": "D02",
+      "source_group_id": "synthetic-source-d02",
+      "scope": "self",
+      "status": "CONFIRMED",
+      "body": "合成记录：星台的滤镜采用雾银片。"
+    },
+    {
+      "key": "sewing",
+      "family_id": "D03",
+      "source_group_id": "synthetic-source-d03",
+      "scope": "self",
+      "status": "CONFIRMED",
+      "body": "合成记录：绣针收纳盒贴着深蓝标签。"
+    },
+    {
+      "key": "puzzle",
+      "family_id": "D04",
+      "source_group_id": "synthetic-source-d04",
+      "scope": "self",
+      "status": "CONFIRMED",
+      "body": "合成记录：蓝桥拼图约在周四整理。"
+    },
+    {
+      "key": "clay",
+      "family_id": "D05",
+      "source_group_id": "synthetic-source-d05",
+      "scope": "self",
+      "status": "CONFIRMED",
+      "body": "合成记录：陶土圆盘使用月牙印章。"
+    },
+    {
+      "key": "seedling",
+      "family_id": "D06",
+      "source_group_id": "synthetic-source-d06",
+      "scope": "self",
+      "status": "CONFIRMED",
+      "body": "合成记录：苔园育苗盒的编号为 BOX-274。"
+    },
+    {
+      "key": "calibration",
+      "family_id": "D07",
+      "source_group_id": "synthetic-source-d07",
+      "scope": "self",
+      "status": "CONFIRMED",
+      "body": "合成记录：钟摆校准频率设为 37Hz。"
+    },
+    {
+      "key": "display",
+      "family_id": "D08",
+      "source_group_id": "synthetic-source-d08",
+      "scope": "self",
+      "status": "CONFIRMED",
+      "body": "合成记录：拼接展板采用斜纹卡扣。"
+    },
+    {
+      "key": "guard_user",
+      "family_id": "D03",
+      "source_group_id": "synthetic-guard-guard_user",
+      "scope": "other_user",
+      "status": "CONFIRMED",
+      "body": "合成隔离记录：紫晶密封盒。"
+    },
+    {
+      "key": "guard_persona",
+      "family_id": "D05",
+      "source_group_id": "synthetic-guard-guard_persona",
+      "scope": "other_persona",
+      "status": "CONFIRMED",
+      "body": "合成隔离记录：黄铜隔音罩。"
+    },
+    {
+      "key": "guard_rejected",
+      "family_id": "D05",
+      "source_group_id": "synthetic-guard-guard_rejected",
+      "scope": "self",
+      "status": "REJECTED",
+      "body": "合成隔离记录：白玉定位环。"
+    },
+    {
+      "key": "guard_project",
+      "family_id": "D06",
+      "source_group_id": "synthetic-guard-guard_project",
+      "scope": "other_project",
+      "status": "CONFIRMED",
+      "body": "合成隔离记录：绯红刻度尺。"
+    },
+    {
+      "key": "guard_pending",
+      "family_id": "D06",
+      "source_group_id": "synthetic-guard-guard_pending",
+      "scope": "self",
+      "status": "PENDING",
+      "body": "合成隔离记录：翠绿装配夹。"
+    },
+    {
+      "key": "guard_source_user",
+      "family_id": "D07",
+      "source_group_id": "synthetic-guard-guard_source_user",
+      "scope": "source_other_user",
+      "status": "CONFIRMED",
+      "body": "合成隔离记录：蓝铜分流阀。"
+    },
+    {
+      "key": "guard_source_persona",
+      "family_id": "D08",
+      "source_group_id": "synthetic-guard-guard_source_persona",
+      "scope": "source_other_persona",
+      "status": "CONFIRMED",
+      "body": "合成隔离记录：紫锆导流管。"
+    }
+  ],
+  "cases": [
+    {
+      "id": "D01-Q1",
+      "family_id": "D01",
+      "source_group_id": "synthetic-source-d01",
+      "split": "development",
+      "query": "银纹薄纸",
+      "category": "literal",
+      "expected": [
+        "paper"
+      ]
+    },
+    {
+      "id": "D01-Q2",
+      "family_id": "D01",
+      "source_group_id": "synthetic-source-d01",
+      "split": "development",
+      "query": "折叠风车时用什么材料",
+      "category": "paraphrase",
+      "expected": [
+        "paper"
+      ]
+    },
+    {
+      "id": "D01-Q3",
+      "family_id": "D01",
+      "source_group_id": "synthetic-source-d01",
+      "split": "development",
+      "query": "折纸风车使用金纹薄纸",
+      "category": "strict_support",
+      "expected": []
+    },
+    {
+      "id": "D01-Q4",
+      "family_id": "D01",
+      "source_group_id": "synthetic-source-d01",
+      "split": "development",
+      "query": "沙漠雷达电池",
+      "category": "no_answer",
+      "expected": []
+    },
+    {
+      "id": "D02-Q1",
+      "family_id": "D02",
+      "source_group_id": "synthetic-source-d02",
+      "split": "development",
+      "query": "雾银片",
+      "category": "literal",
+      "expected": [
+        "optics"
+      ]
+    },
+    {
+      "id": "D02-Q2",
+      "family_id": "D02",
+      "source_group_id": "synthetic-source-d02",
+      "split": "development",
+      "query": "星台滤镜",
+      "category": "composition",
+      "expected": [
+        "optics"
+      ]
+    },
+    {
+      "id": "D02-Q3",
+      "family_id": "D02",
+      "source_group_id": "synthetic-source-d02",
+      "split": "development",
+      "query": "星河台的滤镜采用雾银片",
+      "category": "strict_support",
+      "expected": []
+    },
+    {
+      "id": "D02-Q4",
+      "family_id": "D02",
+      "source_group_id": "synthetic-source-d02",
+      "split": "development",
+      "query": "海港灯塔高度",
+      "category": "no_answer",
+      "expected": []
+    },
+    {
+      "id": "D03-Q1",
+      "family_id": "D03",
+      "source_group_id": "synthetic-source-d03",
+      "split": "development",
+      "query": "深蓝标签",
+      "category": "literal",
+      "expected": [
+        "sewing"
+      ]
+    },
+    {
+      "id": "D03-Q2",
+      "family_id": "D03",
+      "source_group_id": "synthetic-source-d03",
+      "split": "development",
+      "query": "缝纫工具盒外贴的是什么颜色",
+      "category": "paraphrase",
+      "expected": [
+        "sewing"
+      ]
+    },
+    {
+      "id": "D03-Q3",
+      "family_id": "D03",
+      "source_group_id": "synthetic-source-d03",
+      "split": "development",
+      "query": "紫晶密封盒",
+      "category": "hard_access",
+      "expected": []
+    },
+    {
+      "id": "D03-Q4",
+      "family_id": "D03",
+      "source_group_id": "synthetic-source-d03",
+      "split": "development",
+      "query": "银色织带",
+      "category": "no_answer",
+      "expected": []
+    },
+    {
+      "id": "D04-Q1",
+      "family_id": "D04",
+      "source_group_id": "synthetic-source-d04",
+      "split": "development",
+      "query": "蓝桥拼图",
+      "category": "literal",
+      "expected": [
+        "puzzle"
+      ]
+    },
+    {
+      "id": "D04-Q2",
+      "family_id": "D04",
+      "source_group_id": "synthetic-source-d04",
+      "split": "development",
+      "query": "哪天收拾那套蓝桥拼板",
+      "category": "paraphrase",
+      "expected": [
+        "puzzle"
+      ]
+    },
+    {
+      "id": "D04-Q3",
+      "family_id": "D04",
+      "source_group_id": "synthetic-source-d04",
+      "split": "development",
+      "query": "蓝桥拼图约在周五整理",
+      "category": "strict_support",
+      "expected": []
+    },
+    {
+      "id": "D04-Q4",
+      "family_id": "D04",
+      "source_group_id": "synthetic-source-d04",
+      "split": "development",
+      "query": "火山岩样本",
+      "category": "no_answer",
+      "expected": []
+    },
+    {
+      "id": "D05-Q1",
+      "family_id": "D05",
+      "source_group_id": "synthetic-source-d05",
+      "split": "development",
+      "query": "月牙印章",
+      "category": "literal",
+      "expected": [
+        "clay"
+      ]
+    },
+    {
+      "id": "D05-Q2",
+      "family_id": "D05",
+      "source_group_id": "synthetic-source-d05",
+      "split": "development",
+      "query": "clay disk stamp",
+      "category": "cross_language",
+      "expected": [
+        "clay"
+      ]
+    },
+    {
+      "id": "D05-Q3",
+      "family_id": "D05",
+      "source_group_id": "synthetic-source-d05",
+      "split": "development",
+      "query": "黄铜隔音罩",
+      "category": "hard_access",
+      "expected": []
+    },
+    {
+      "id": "D05-Q4",
+      "family_id": "D05",
+      "source_group_id": "synthetic-source-d05",
+      "split": "development",
+      "query": "白玉定位环",
+      "category": "hard_access",
+      "expected": []
+    },
+    {
+      "id": "D06-Q1",
+      "family_id": "D06",
+      "source_group_id": "synthetic-source-d06",
+      "split": "development",
+      "query": "BOX-274",
+      "category": "literal",
+      "expected": [
+        "seedling"
+      ]
+    },
+    {
+      "id": "D06-Q2",
+      "family_id": "D06",
+      "source_group_id": "synthetic-source-d06",
+      "split": "development",
+      "query": "幼苗容器上的识别码",
+      "category": "paraphrase",
+      "expected": [
+        "seedling"
+      ]
+    },
+    {
+      "id": "D06-Q3",
+      "family_id": "D06",
+      "source_group_id": "synthetic-source-d06",
+      "split": "development",
+      "query": "绯红刻度尺",
+      "category": "hard_access",
+      "expected": []
+    },
+    {
+      "id": "D06-Q4",
+      "family_id": "D06",
+      "source_group_id": "synthetic-source-d06",
+      "split": "development",
+      "query": "翠绿装配夹",
+      "category": "hard_access",
+      "expected": []
+    },
+    {
+      "id": "D07-Q1",
+      "family_id": "D07",
+      "source_group_id": "synthetic-source-d07",
+      "split": "development",
+      "query": "37Hz",
+      "category": "literal",
+      "expected": [
+        "calibration"
+      ]
+    },
+    {
+      "id": "D07-Q2",
+      "family_id": "D07",
+      "source_group_id": "synthetic-source-d07",
+      "split": "development",
+      "query": "摆锤一秒振动多少次",
+      "category": "paraphrase",
+      "expected": [
+        "calibration"
+      ]
+    },
+    {
+      "id": "D07-Q3",
+      "family_id": "D07",
+      "source_group_id": "synthetic-source-d07",
+      "split": "development",
+      "query": "蓝铜分流阀",
+      "category": "hard_access",
+      "expected": []
+    },
+    {
+      "id": "D07-Q4",
+      "family_id": "D07",
+      "source_group_id": "synthetic-source-d07",
+      "split": "development",
+      "query": "赤铜分流阀",
+      "category": "no_answer",
+      "expected": []
+    },
+    {
+      "id": "D08-Q1",
+      "family_id": "D08",
+      "source_group_id": "synthetic-source-d08",
+      "split": "development",
+      "query": "斜纹卡扣",
+      "category": "literal",
+      "expected": [
+        "display"
+      ]
+    },
+    {
+      "id": "D08-Q2",
+      "family_id": "D08",
+      "source_group_id": "synthetic-source-d08",
+      "split": "development",
+      "query": "展板卡扣",
+      "category": "composition",
+      "expected": [
+        "display"
+      ]
+    },
+    {
+      "id": "D08-Q3",
+      "family_id": "D08",
+      "source_group_id": "synthetic-source-d08",
+      "split": "development",
+      "query": "雪原气象基站",
+      "category": "no_answer",
+      "expected": []
+    },
+    {
+      "id": "D08-Q4",
+      "family_id": "D08",
+      "source_group_id": "synthetic-source-d08",
+      "split": "development",
+      "query": "紫锆导流管",
+      "category": "hard_access",
+      "expected": []
+    }
+  ],
+  "contract": {
+    "gold": "Source keys eligible to support the exact requested fact/constraints, not every topically related source.",
+    "strict_support_negatives": "Related contradictory entity/date/attribute records may be returned by lexical recall; report separately as strict-support mismatches, not generated-answer hallucinations.",
+    "hard_access_negatives": "Must return no source; scope/status/source ownership are existing safety invariants.",
+    "quality": "Report every miss/extra source; do not assert or label quality acceptance. No model answer is generated.",
+    "stage_names": [
+      "sql_source_eligibility",
+      "lexical_coverage",
+      "provider_top12",
+      "canonical_revalidation",
+      "context_budget"
+    ],
+    "normal_context": "Existing default budget, empty history/knowledge/experience for this retrieval-only measurement.",
+    "separate_probes": "Top12 cap and small-budget probes are synthetic controls, not production threshold changes."
+  },
+  "future_holdout": {
+    "status": "NOT_AUTHORED_NOT_RUN",
+    "reserved_family_ids": [
+      "H01",
+      "H02",
+      "H03",
+      "H04"
+    ],
+    "case_count": 0,
+    "protocol": "A different reviewer authors independent source/fact families after this development contract. Freeze queries, gold and SHA before access; freeze candidate code before unsealing. If seen and tuned on, relabel as regression and author a new set. Do not reuse current dev source groups or question templates as claimed blind evidence."
+  }
+}
