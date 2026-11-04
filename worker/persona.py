@@ -104,6 +104,22 @@ def validate_context_budget(payload, system):
         raise ValueError('context budget exceeded')
 
 
+def _utf16_units(value):
+    """Match the existing Java String.length boundary, including supplementary Unicode."""
+    return sum(2 if ord(char) > 0xffff else 1 for char in value)
+
+
+def _memory_source_quote(message):
+    chars, units = [], 0
+    for char in message:
+        width = 2 if ord(char) > 0xffff else 1
+        if units + width > 300:
+            break
+        chars.append(char)
+        units += width
+    return ''.join(chars)
+
+
 def chat(model, payload, on_partial=None, should_cancel=None):
     if should_cancel and should_cancel():
         from worker import ModelCancelled
@@ -115,7 +131,7 @@ def chat(model, payload, on_partial=None, should_cancel=None):
         label = 'concerned' if sad else 'happy' if warm else 'curious'
         memories = []
         if payload.get('memory_enabled') and '记住' in message and len(message) >= 4:
-            memories = [{'body': message, 'quote': message[:300]}]
+            memories = [{'body': message, 'quote': _memory_source_quote(message)}]
         remembered = (' 检索到的相关已确认记忆原文（相关不等于支持；模拟模式不判断本题条件是否满足）：'
                       + payload['memories'][0]['body'] + ' 请核对原文，条件不足时补充信息。') if payload['memories'] else ''
         knowledge=payload.get('knowledge',[])
@@ -144,7 +160,7 @@ def chat(model, payload, on_partial=None, should_cancel=None):
     if not isinstance(candidates, list) or len(candidates) > 3:
         raise ValueError('invalid memories')
     for item in candidates:
-        if not isinstance(item, dict) or not isinstance(item.get('quote'), str) or not 4 <= len(item['quote']) <= 300 or item['quote'] not in payload['message']:
+        if not isinstance(item, dict) or not isinstance(item.get('quote'), str) or not 4 <= _utf16_units(item['quote']) <= 300 or item['quote'] not in payload['message']:
             raise ValueError('unverified memory')
     citations=output.get('citations',[])
     allowed={s['id'] for s in payload.get('knowledge',[])}

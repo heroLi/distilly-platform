@@ -285,6 +285,53 @@ class Runtime:
                 'archived_persona_denied': True, 'support_status': 'NOT_ASSESSED',
                 'real_provider_calls': 0, 'browser': 'NOT_RUN'}
 
+    def run_memory_candidate_limits_probe(self):
+        """Actual mock -> callback -> pending SQL; outside frozen quality cases."""
+        project = self.api('/api/projects', {'title': 'Synthetic candidate length boundaries'})['id']
+        self.api(f'/api/projects/{project}/members', {'user_id': 'viewer', 'role': 'VIEWER'}, method='PUT')
+        person, _ = self.create_persona(project, {'name': 'Synthetic candidate boundary',
+            'family': 'relationship', 'origin': 'original', 'boundaries': '仅合成资料'})
+        suffix = '仅在预约成功时有效。'
+        cases = [('UTF16_EDGE', '请记住🙂：' + '合成填充' * 75 + '但从未执行。'),
+                 ('UTF16_MANY', '请记住：' + '🙂' * 155 + '仅在预约成功时参加。'),
+                 ('BODY_1000', '请记住：' + '甲' * (1000 - len('请记住：') - len(suffix)) + suffix)]
+        for name, message in cases:
+            conversation = self.api(f'/api/personas/{person}/conversations', {}, actor='viewer')['id']
+            job = self.api(f'/api/conversations/{conversation}/messages', {'message': message}, actor='viewer')
+            self.execute(job)
+            self.result(job, actor='viewer')
+            rows = self.api(f'/api/personas/{person}/memories', actor='viewer')
+            selected = [row for row in rows if row['body'] == message]
+            require(len(selected) == 1 and selected[0]['status'] == 'PENDING', 'candidate_limits_pending_full_body_' + name)
+            memory = selected[0]['id']
+            require(self.api(f'/api/personas/{person}/memories') == [], 'candidate_limits_private_scope')
+            self.api(f'/api/personas/{person}/memories/{memory}', {'status': 'CONFIRMED'}, method='PUT', expected=403)
+            self.api(f'/api/personas/{person}/memories/{memory}', {'status': 'CONFIRMED'}, actor='viewer', method='PUT')
+            require(next(row for row in self.api(f'/api/personas/{person}/memories', actor='viewer')
+                         if row['id'] == memory)['body'] == message, 'candidate_limits_status_only_preserves_body')
+            source = f'/api/personas/{person}/memories/{memory}/source'
+            require(self.api(source, actor='viewer')['body'] == message, 'candidate_limits_original_source')
+            self.api(source, expected=404)
+            self.api(f'/api/personas/{person}/memories/{memory}',
+                     {'status': 'CONFIRMED', 'body': '用户主动改为合成午后安排。'}, actor='viewer', method='PUT')
+            require(next(row for row in self.api(f'/api/personas/{person}/memories', actor='viewer')
+                         if row['id'] == memory)['body'] == '用户主动改为合成午后安排。', 'candidate_limits_explicit_edit')
+            require(self.api(source, actor='viewer')['body'] == message, 'candidate_limits_edit_keeps_original')
+        before = len(self.api(f'/api/personas/{person}/memories', actor='viewer'))
+        conversation = self.api(f'/api/personas/{person}/conversations', {}, actor='viewer')['id']
+        message = '请记住：' + '甲' * (1001 - len('请记住：') - len(suffix)) + suffix
+        job = self.api(f'/api/conversations/{conversation}/messages', {'message': message}, actor='viewer')
+        self.execute(job)
+        self.result(job, actor='viewer', status='FAILED')
+        require(len(self.api(f'/api/personas/{person}/memories', actor='viewer')) == before, 'candidate_limits_overflow_no_truncated_row')
+        detail = self.api(f'/api/conversations/{conversation}', actor='viewer')
+        require(len(detail['messages']) == 1 and detail['messages'][0]['body'] == message,
+                'candidate_limits_overflow_completion_atomic')
+        print('PASS: memory-candidate limits 4 HTTP/mock groups; UTF-16 quote, full body, explicit edit, provenance/private scope, atomic overflow; model calls0', flush=True)
+        return {'status': 'PASS_BOUNDARY_NOT_SEMANTIC_QUALITY', 'groups': 4,
+                'actual_worker_mock': True, 'gateway_output_injected': False,
+                'real_provider_calls': 0, 'browser': 'NOT_RUN'}
+
     def run_case(self, case):
         project = self.api('/api/projects', {'title': 'Synthetic ' + case['id']})['id']
         self.api(f'/api/projects/{project}/members', {'user_id': 'viewer', 'role': 'VIEWER'}, method='PUT')
@@ -509,6 +556,7 @@ def run(output):
                             report['additional_source_deletion_probe'] = runtime.run_source_deletion_probe()
                             report['additional_memory_support_boundary'] = runtime.run_memory_support_boundary_probe()
                             report['additional_memory_reference_mode'] = runtime.run_memory_reference_mode_probe()
+                            report['additional_memory_candidate_limits'] = runtime.run_memory_candidate_limits_probe()
                     finally:
                         if process.poll() is None:
                             process.terminate()
