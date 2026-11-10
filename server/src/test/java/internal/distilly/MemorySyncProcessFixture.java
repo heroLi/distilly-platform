@@ -15,6 +15,7 @@ public final class MemorySyncProcessFixture {
     public static void main(String[] args) throws Exception {
         var root=Path.of(args[0]);String step=args[1];Files.createDirectories(root);
         var observation=MemoryRecoveryObservation.recorder(root,step);
+        try(observation;var sampling=ConsumerRecoveryDiagnostics.start(root,step)){
         var app=new SpringApplication(Application.class);app.setWebApplicationType(WebApplicationType.NONE);
         try{
             observation.mark(MemoryRecoveryObservation.Stage.SPRING_START_BEGIN);
@@ -25,8 +26,8 @@ public final class MemorySyncProcessFixture {
             try(var closing=observation.closing(context)){
             var db=context.getBean(JdbcTemplate.class);var json=context.getBean(JsonCodec.class);
             var memories=context.getBean(MemoryService.class);var sync=context.getBean(MemorySyncService.class);
-            if(step.startsWith("consumer_")){MemorySyncConsumerCrashSteps.run(context,root,step);return;}
-            if("prepare".equals(step)){
+            if(step.startsWith("consumer_")){MemorySyncConsumerCrashSteps.run(context,root,step,observation);}
+            else if("prepare".equals(step)){
                 observation.mark(MemoryRecoveryObservation.Stage.PREPARATION_BEGIN);
                 var platform=context.getBean(internal.distilly.modules.workspace.service.WorkspaceService.class);
                 var people=context.getBean(internal.distilly.modules.persona.service.PersonaService.class);
@@ -80,6 +81,7 @@ public final class MemorySyncProcessFixture {
             observation.mark(MemoryRecoveryObservation.Stage.FIXTURE_COMPLETE);
         }catch(Exception|Error failure){
             observation.mark(MemoryRecoveryObservation.Stage.FIXTURE_FAILED);throw failure;
+        }
         }
     }
     private static void require(boolean condition,String code){if(!condition)throw new IllegalStateException(code);}

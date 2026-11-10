@@ -16,6 +16,22 @@ class MemoryRecoveryObservationTest {
     @TempDir Path directory;
     Path root;
     @BeforeEach void setup()throws IOException {root=Files.createTempDirectory(directory,"distilly-memory-sync-process-");}
+    private final List<Recorder> recorders=new ArrayList<>();
+    private Recorder trackedRecorder(java.util.function.LongSupplier clock,Sink sink){var r=new Recorder(clock,sink);recorders.add(r);return r;}
+    private Recorder trackedStep(Path path,String step){var r=recorder(path,step);recorders.add(r);return r;}
+    private void drained(Recorder recorder){
+        long until=System.nanoTime()+TimeUnit.SECONDS.toNanos(2);
+        while(recorder.pendingEvents()>0&&System.nanoTime()<until)java.util.concurrent.locks.LockSupport.parkNanos(100_000);
+        assertEquals(0,recorder.pendingEvents(),"unit diagnostic writes did not drain after release");
+    }
+    @AfterEach void closeWriters(){
+        recorders.forEach(Recorder::close);
+        for(var r:recorders){
+            drained(r);long until=System.nanoTime()+TimeUnit.SECONDS.toNanos(2);
+            while(r.writerAlive()&&System.nanoTime()<until)java.util.concurrent.locks.LockSupport.parkNanos(100_000);
+            assertFalse(r.writerAlive(),"unit phase writer still alive after release and close");
+        }
+    }
     Path trace(){return root.resolve("recover-progress.tsv");}
     Process process(AtomicBoolean alive)throws Exception {
         var process=mock(Process.class);
@@ -25,34 +41,34 @@ class MemoryRecoveryObservationTest {
     }
 
     @Test void childClockIsRelativeMonotonicAndOnlyFixedStagesArePersisted()throws Exception {
-        var clock=new AtomicLong(100);var text=new StringBuilder();var recorder=new Recorder(clock::get,text::append);
+        var clock=new AtomicLong(100);var text=new StringBuilder();var recorder=trackedRecorder(clock::get,text::append);
         recorder.mark(Stage.MAIN_ENTERED);clock.set(120);recorder.mark(Stage.SPRING_START_BEGIN);
-        clock.set(150);recorder.mark(Stage.SPRING_READY);Files.writeString(trace(),text);
+        clock.set(150);recorder.mark(Stage.SPRING_READY);drained(recorder);Files.writeString(trace(),text);
         var result=read(root,Step.RECOVER);
         assertEquals("READ",result.status());assertEquals(List.of(0L,20L,50L),result.events().stream().map(Event::elapsedNanos).toList());
     }
     @Test void businessFailureStillClosesAndOriginalFailureSurvives()throws Exception {
-        var text=new StringBuilder();var recorder=new Recorder(System::nanoTime,text::append);var closed=new AtomicBoolean();
+        var text=new StringBuilder();var recorder=trackedRecorder(System::nanoTime,text::append);var closed=new AtomicBoolean();
         var failure=new IllegalStateException("synthetic-private-canary");
         assertSame(failure,assertThrows(IllegalStateException.class,()->{
             try(var closing=recorder.closing(()->closed.set(true))){throw failure;}
         }));
-        assertTrue(closed.get());assertTrue(text.toString().contains("CONTEXT_CLOSE_BEGIN\t"));
+        drained(recorder);assertTrue(closed.get());assertTrue(text.toString().contains("CONTEXT_CLOSE_BEGIN\t"));
         assertTrue(text.toString().contains("CONTEXT_CLOSE_END\t"));assertFalse(text.toString().contains(failure.getMessage()));
     }
     @Test void closeFailureIsRecordedAndPropagatedWithoutItsMessage(){
-        var text=new StringBuilder();var recorder=new Recorder(System::nanoTime,text::append);
+        var text=new StringBuilder();var recorder=trackedRecorder(System::nanoTime,text::append);
         assertThrows(IOException.class,()->recorder.closing(()->{throw new IOException("synthetic-private-canary");}).close());
-        assertTrue(text.toString().contains("CONTEXT_CLOSE_FAILED\t"));assertFalse(text.toString().contains("CONTEXT_CLOSE_END\t"));
+        drained(recorder);assertTrue(text.toString().contains("CONTEXT_CLOSE_FAILED\t"));assertFalse(text.toString().contains("CONTEXT_CLOSE_END\t"));
         assertFalse(text.toString().contains("canary"));
     }
     @Test void traceIoFailureDoesNotSuppressResourceCloseOrBusinessFailure(){
-        var recorder=new Recorder(System::nanoTime,line->{throw new IOException("synthetic-private-canary");});
+        var recorder=trackedRecorder(System::nanoTime,line->{throw new IOException("synthetic-private-canary");});
         var closed=new AtomicBoolean();var original=new IllegalStateException("business assertion");
         assertSame(original,assertThrows(IllegalStateException.class,()->{
             try(var closing=recorder.closing(()->closed.set(true))){throw original;}
         }));
-        assertTrue(closed.get());assertEquals(2,recorder.writeFailures());
+        drained(recorder);assertTrue(closed.get());assertEquals(2,recorder.writeFailures());
     }
     @Test void deadlineSnapshotPrecedesKillAndCleanupDoesNotRewriteIt()throws Exception {
         Files.writeString(trace(),"MAIN_ENTERED\t1\nCONTEXT_CLOSE_BEGIN\t7\n");
@@ -107,5 +123,34 @@ class MemoryRecoveryObservationTest {
         assertEquals("REFUSED_PATH",read(directory,Step.RECOVER).status());
         Path link=directory.resolve("distilly-memory-sync-process-link");Files.createSymbolicLink(link,root);
         assertEquals("REFUSED_PATH",read(link,Step.RECOVER).status());
+    }
+    @Test void consumerStepsHaveIndependentWhitelistedTracesAndCannotUseOtherRootKinds()throws Exception {
+        Path consumer=Files.createTempDirectory(directory,"distilly-memory-consumer-process-");
+        for(var step:List.of(Step.CONSUMER_PREPARE,Step.CONSUMER_RECOVER_BEFORE,Step.CONSUMER_RECOVER_AFTER)){
+            var writing=trackedStep(consumer,step.name().toLowerCase(Locale.ROOT));writing.mark(Stage.SPRING_READY);drained(writing);
+            assertEquals(List.of(Stage.MAIN_ENTERED,Stage.SPRING_READY),read(consumer,step).events().stream().map(Event::stage).toList());
+            assertEquals("REFUSED_PATH",read(root,step).status());
+        }
+        assertEquals("REFUSED_PATH",read(consumer,Step.RECOVER).status());
+        trackedStep(consumer,"untrusted-step").mark(Stage.FIXTURE_FAILED);
+        assertFalse(Files.exists(consumer.resolve("untrusted-step-progress.tsv")));
+    }
+    @Test void consumerDeadlineRemainsFailedEvenWhenChildPublishesSuccessDuringCleanup()throws Exception {
+        Path consumer=Files.createTempDirectory(directory,"distilly-memory-consumer-process-");
+        var recorder=trackedStep(consumer,"consumer_recover_after");recorder.mark(Stage.SPRING_START_BEGIN);drained(recorder);
+        var alive=new AtomicBoolean(true);var child=process(alive);Path before=directory.resolve("consumer-before.json"),after=directory.resolve("consumer-after.json");
+        assertTrue(capture(consumer,Step.CONSUMER_RECOVER_AFTER,child,System.nanoTime(),Outcome.DEADLINE_EXCEEDED,before));
+        String frozen=Files.readString(before);
+        doAnswer(call->{recorder.mark(Stage.FIXTURE_COMPLETE);alive.set(false);return child;}).when(child).destroyForcibly();
+        stop(consumer,Step.CONSUMER_RECOVER_AFTER,child,System.nanoTime(),true,before,after);
+        assertEquals(frozen,Files.readString(before));
+        assertEquals("DEADLINE_EXCEEDED",new ObjectMapper().readTree(frozen).get("status").asText());
+    }
+    @Test void securityFailureInDiagnosticSinkCannotReplaceBusinessFailure()throws Exception {
+        var recorder=trackedRecorder(System::nanoTime,line->{throw new SecurityException("SYNTHETIC_PRIVATE_CANARY");});
+        var failure=new IllegalStateException("original");var closed=new AtomicBoolean();
+        assertSame(failure,assertThrows(IllegalStateException.class,()->{
+            try(var closing=recorder.closing(()->closed.set(true))){throw failure;}
+        }));drained(recorder);assertTrue(closed.get());assertEquals(2,recorder.writeFailures());
     }
 }

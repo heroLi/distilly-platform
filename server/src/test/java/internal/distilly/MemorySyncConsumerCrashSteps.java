@@ -17,7 +17,7 @@ final class MemorySyncConsumerCrashSteps {
     static void save(JsonCodec json,Path root,String name,Map<String,Object> values)throws Exception{
         Files.writeString(root.resolve(name+".tmp"),json.encode(values));Files.move(root.resolve(name+".tmp"),root.resolve(name+".json"),StandardCopyOption.ATOMIC_MOVE);
     }
-    static void run(ConfigurableApplicationContext context,Path root,String step)throws Exception{
+    static void run(ConfigurableApplicationContext context,Path root,String step,MemoryRecoveryObservation.Recorder observation)throws Exception{
         var db=context.getBean(JdbcTemplate.class);var json=context.getBean(JsonCodec.class);var sync=context.getBean(MemorySyncService.class);
         var memories=context.getBean(MemoryService.class);var target=context.getBean(OfflineMemorySyncTarget.class);
         var applies=new AtomicInteger();var reconciles=new AtomicInteger();
@@ -27,6 +27,7 @@ final class MemorySyncConsumerCrashSteps {
         };
         var consumer=new MemorySyncConsumer(sync,counted,context.getBean(PlatformProperties.class));
         if("consumer_prepare".equals(step)){
+            observation.mark(MemoryRecoveryObservation.Stage.PREPARATION_BEGIN);
             var platform=context.getBean(internal.distilly.modules.workspace.service.WorkspaceService.class);
             var people=context.getBean(internal.distilly.modules.persona.service.PersonaService.class);
             String project=platform.createProject("owner","合成消费者崩溃").get("id").toString();platform.member("owner",project,"viewer","VIEWER");
@@ -37,9 +38,14 @@ final class MemorySyncConsumerCrashSteps {
             db.update("INSERT INTO persona_message(id,conversation_id,role,body,created_at) VALUES (?,?,'user','合成来源保留',1)",source,conversation);
             db.update("INSERT INTO persona_memory VALUES (?,?,'viewer','合成A',?,'PENDING',1)",memory,person,source);
             memories.memory("viewer",person,memory,Map.of("status","CONFIRMED","body","合成A"));var intent=sync.stageFixture("viewer",person,memory);
+            observation.mark(MemoryRecoveryObservation.Stage.PREPARATION_END);
+            observation.mark(MemoryRecoveryObservation.Stage.RESULT_WRITE_BEGIN);
             save(json,root,"consumer-ready-1",Map.of("project",project,"person",person,"memory",memory,"source",source,"operation",intent.operationId().toString()));
+            observation.mark(MemoryRecoveryObservation.Stage.RESULT_WRITE_END);
+            observation.mark(MemoryRecoveryObservation.Stage.WAITING_FOR_FORCE_KILL);
             new java.util.concurrent.CountDownLatch(1).await();return;
         }
+        observation.mark(MemoryRecoveryObservation.Stage.RECOVERY_ASSERTIONS_BEGIN);
         var saved=json.decode(Files.readString(root.resolve("consumer-ready-1.json")));
         String person=saved.get("person").toString(),memory=saved.get("memory").toString();
         if("consumer_recover_before".equals(step)){
@@ -54,7 +60,11 @@ final class MemorySyncConsumerCrashSteps {
             check("ACKED".equals(sync.inspect("viewer",person,memory).get(0).get("state")),"explicit_retry_failed");
             memories.memory("viewer",person,memory,Map.of("status","CONFIRMED","body","合成B"));var intent=sync.stageFixture("viewer",person,memory);
             target.apply(intent); // Commit simulated side effect, deliberately omit the journal receipt.
+            observation.mark(MemoryRecoveryObservation.Stage.RECOVERY_ASSERTIONS_END);
+            observation.mark(MemoryRecoveryObservation.Stage.RESULT_WRITE_BEGIN);
             save(json,root,"consumer-ready-2",Map.of("operation",intent.operationId().toString(),"revision",intent.revision()));
+            observation.mark(MemoryRecoveryObservation.Stage.RESULT_WRITE_END);
+            observation.mark(MemoryRecoveryObservation.Stage.WAITING_FOR_FORCE_KILL);
             new java.util.concurrent.CountDownLatch(1).await();return;
         }
         var after=json.decode(Files.readString(root.resolve("consumer-ready-2.json")));
@@ -69,7 +79,10 @@ final class MemorySyncConsumerCrashSteps {
         check(db.queryForObject("SELECT COUNT(*) FROM memory_sync_intent WHERE memory_id=? AND content IS NOT NULL",Integer.class,memory)==0,"cached_text_retained");
         check(db.queryForObject("SELECT COUNT(*) FROM persona_memory WHERE id=?",Integer.class,memory)==0,"memory_revived");
         check(((List<?>)consumer.status("owner",person).get("items")).isEmpty(),"owner_observed_private_sync");
+        observation.mark(MemoryRecoveryObservation.Stage.RECOVERY_ASSERTIONS_END);
+        observation.mark(MemoryRecoveryObservation.Stage.RESULT_WRITE_BEGIN);
         save(json,root,"consumer-recovered",Map.of("status","PASS","independent_jvms",3,"forced_kills",2,"stage_before_apply_fenced",true,
                 "late_apply_honors_fence",true,"after_apply_reconciled_without_replay",true,"committed_projection_persistent",true,"simulated_delete_completed",true,"cached_bodies",0,"real_provider_calls",0));
+        observation.mark(MemoryRecoveryObservation.Stage.RESULT_WRITE_END);
     }
 }

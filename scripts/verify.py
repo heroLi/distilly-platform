@@ -38,6 +38,7 @@ if args.e2e:
     commands.append([sys.executable, 'tests/memory_reference_ui_e2e.py'])
     commands.append([sys.executable, 'tests/bfcache_return_e2e.py'])
     commands.append([sys.executable, 'tests/multi_tab_access_e2e.py'])
+    commands.append([sys.executable, 'tests/long_memory_source_e2e.py'])
 commands.append(['git', 'diff', '--check'])
 for command in commands:
     print('RUN:', ' '.join(command), flush=True)
