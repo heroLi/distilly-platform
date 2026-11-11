@@ -2,6 +2,7 @@
 """Native synthetic source readability; actual mock, no excerpt/semantic claims.
 
 Only test data enters the loopback API. A clean child imports Worker/browser code.
+Default runs retain a fresh subdirectory; --output uses the exact requested path.
 """
 import argparse
 import importlib.util
@@ -16,6 +17,14 @@ import tempfile
 import time
 
 ROOT=Path(__file__).resolve().parents[1]
+
+
+def select_output(requested):
+    if requested is not None:
+        return requested.resolve()
+    base=ROOT/'server/target/long-memory-source-e2e'
+    base.mkdir(parents=True,exist_ok=True)
+    return Path(tempfile.mkdtemp(prefix='run-',dir=base))
 
 
 def run(output):
@@ -144,12 +153,16 @@ def run(output):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output',type=Path,default=ROOT/'server/target/long-memory-source-e2e')
+    parser.add_argument('--output',type=Path,help='Exact evidence directory; default retains a fresh run subdirectory')
     parser.add_argument('--isolated-child',action='store_true',help=argparse.SUPPRESS)
     args=parser.parse_args()
-    if args.isolated_child:return run(args.output.resolve())
+    if args.isolated_child:
+        if args.output is None:parser.error('--isolated-child requires --output')
+        return run(args.output.resolve())
+    output=select_output(args.output)
+    print('EVIDENCE: long-memory-source '+str(output),flush=True)
     safe={k:os.environ[k] for k in ('HOME','LANG','LC_ALL','TMPDIR','PATH','JAVA_HOME','JAVA_BIN','DISTILLY_TEST_CHROMIUM') if k in os.environ}
-    return subprocess.run([sys.executable,str(Path(__file__).resolve()),'--isolated-child','--output',str(args.output.resolve())],cwd=ROOT,env=safe).returncode
+    return subprocess.run([sys.executable,str(Path(__file__).resolve()),'--isolated-child','--output',str(output)],cwd=ROOT,env=safe).returncode
 
 
 if __name__=='__main__':
