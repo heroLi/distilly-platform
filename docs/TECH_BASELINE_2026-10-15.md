@@ -124,6 +124,7 @@ DISTILLY_TEST_CHROMIUM=/usr/bin/chromium python3 scripts/verify.py --e2e
 | S14 | 本地11/10 `data/resume-20261110/context-retention-ab/REPORT.md`、`diagnostic-summary.json` | 单次有限A/B不重放完整前置状态、不排除所有内存/调度/IO原因 |
 | S15 | [浏览器规范](BROWSER_TEST_SETUP.md)、[依赖声明](../requirements-test.txt)、S04中Actions拒绝回执 | 本地覆盖是既有规范；没有新访问恢复证据，不重试CI |
 | S16 | [长来源及11/10收口](MEMORY_SOURCE_WRAP_2026-11-04.md)、[读取服务](../server/src/main/java/internal/distilly/modules/memory/service/MemoryRetrieval.java)、[Provider接口](../server/src/main/java/internal/distilly/modules/memory/domain/MemoryProvider.java) | 已有功能和观测限制；新文档不等于重新通过这些测试 |
+| S17 | [SUP-001离线设计](MEMORY_SUPPORT_CONTRACT_DESIGN_2026-11-11.md)、[设计JSON](contracts/memory_support_reference_v1.design.json)，源码基线70f20db0 | 14项设计场景/机械边界清单，不是运行时分类器、模型实验、独立评测或默认协议变更 |
 
 ## 本地原始证据指纹
 
@@ -133,3 +134,7 @@ DISTILLY_TEST_CHROMIUM=/usr/bin/chromium python3 scripts/verify.py --e2e
 - `data/resume-20261110/final-candidate-default/ci-blocked-receipt.json`：SHA-256 `ae1b6287d481902197f47ee7fd0e247889e8f0cbda6bcb10776b9353b0895690`。
 - `data/resume-20261110/context-retention-ab/diagnostic-summary.json`：SHA-256 `a7e54ff6bbf779a6bfd21b390fd5e4b51592f31404643358d241e590983da38d`。
 - `data/resume-20261027/hindsight-isolated-poc/EXPERIMENT_REPORT.md`：SHA-256 `c55f014aa3837cc8fd1949913cefb19383abc8568e4e065b900a020a7f7e6090`。
+
+## 2026-11-11 SUP-001设计续做
+
+基线70f20db0的现行源码、既有5个不受支持断言和参考API快照合同已只读核对；离线设计及14项场景一致性清单形成，见S17。默认聊天和运行时支持判定均未改变，旧5/5、12/21、0/4及真实质量未测状态继续保留。本轮仅做设计/文档检查，无Colab、模型、应用或恢复测试。
