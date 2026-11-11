@@ -14,7 +14,7 @@
 | 同日首次入口 | 2.221秒在浏览器预检失败，未进入Java/Worker/前端/E2E；指定仓库支持的既有浏览器后才完整通过 | 隐去失败、把两次入口写成首次即成功 |
 | 精确SHA远端核验 | 原独立分支正常push与Git只读核对一致 | Git访问证明Actions API已恢复 |
 | Actions读取 | 11/10精确head_sha的请求返回Forbidden，未获得run数据；后续未重试 | CI运行成功、失败或当前正在运行 |
-| 本轮2026-11-11 | 只重建四文档并做新的文档检查 | 新跑了467项、浏览器、模型或恢复测试 |
+| 文档重建回合2026-11-11 | 只重建四文档并做新的文档检查 | 新跑了467项、浏览器、模型或恢复测试 |
 
 本地实际Java17.0.20.1、Python3.12.14、Node24.19.0、Playwright1.62.0和系统Chromium154.0.8037.57；CI定义Java17/Python3.11/Node22并安装匹配浏览器（既有记录为151.0.7922.34）。本地覆盖浏览器不等于CI匹配浏览器验收。见S04、S15、S16。
 
@@ -125,6 +125,7 @@ DISTILLY_TEST_CHROMIUM=/usr/bin/chromium python3 scripts/verify.py --e2e
 | S15 | [浏览器规范](BROWSER_TEST_SETUP.md)、[依赖声明](../requirements-test.txt)、S04中Actions拒绝回执 | 本地覆盖是既有规范；没有新访问恢复证据，不重试CI |
 | S16 | [长来源及11/10收口](MEMORY_SOURCE_WRAP_2026-11-04.md)、[读取服务](../server/src/main/java/internal/distilly/modules/memory/service/MemoryRetrieval.java)、[Provider接口](../server/src/main/java/internal/distilly/modules/memory/domain/MemoryProvider.java) | 已有功能和观测限制；新文档不等于重新通过这些测试 |
 | S17 | [SUP-001离线设计](MEMORY_SUPPORT_CONTRACT_DESIGN_2026-11-11.md)、[设计JSON](contracts/memory_support_reference_v1.design.json)，源码基线70f20db0 | 14项设计场景/机械边界清单，不是运行时分类器、模型实验、独立评测或默认协议变更 |
+| S18 | [SUP-001兼容评审](MEMORY_SUPPORT_COMPATIBILITY_REVIEW_2026-11-11.md)，源码基线8674c1ef | 本轮后端11项和前端模拟DOM26项通过；复用已有参考，无新增运行时/语义判定，不是原生浏览器或完整验收 |
 
 ## 本地原始证据指纹
 
@@ -138,3 +139,7 @@ DISTILLY_TEST_CHROMIUM=/usr/bin/chromium python3 scripts/verify.py --e2e
 ## 2026-11-11 SUP-001设计续做
 
 基线70f20db0的现行源码、既有5个不受支持断言和参考API快照合同已只读核对；离线设计及14项场景一致性清单形成，见S17。默认聊天和运行时支持判定均未改变，旧5/5、12/21、0/4及真实质量未测状态继续保留。本轮仅做设计/文档检查，无Colab、模型、应用或恢复测试。
+
+## 2026-11-11 SUP-001兼容评审续做
+
+源码基线8674c1ef的默认CHAT、参考API/SQL/前端和既有错误路径已核对，结论复用现有SOURCE_REFERENCE、NOT_ASSESSED及授权快照，不新增运行时代码。后端MemoryReferenceTest 11/11、前端实际模块在模拟DOM中26项通过；没有运行模型、Colab、原生浏览器、恢复实验或完整统一入口。记录指纹只覆盖记忆ID/来源ID/正文，不冒称完整来源会话版本证明。旧自由回答5/5支持缺口及中文质量边界未解决，详见S18。
