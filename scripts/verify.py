@@ -18,6 +18,7 @@ commands = [
     [sys.executable, 'tests/memory_eval_integrity_test.py'],
     [sys.executable, 'tests/finite_fact_support_experiment_test.py'],
     [sys.executable, 'tests/long_memory_source_output_test.py'],
+    [sys.executable, 'tests/synthetic_preview_package_test.py'],
     ['mvn', '-B', '-ntp', '-f', 'server/pom.xml', 'package'],
     [sys.executable, '-m', 'unittest', 'discover', '-s', 'worker', '-p', 'test_*.py'],
 ]
@@ -41,6 +42,7 @@ if args.e2e:
     commands.append([sys.executable, 'tests/bfcache_return_e2e.py'])
     commands.append([sys.executable, 'tests/multi_tab_access_e2e.py'])
     commands.append([sys.executable, 'tests/long_memory_source_e2e.py'])
+    commands.append([sys.executable, 'tests/synthetic_preview_browser.py'])
 commands.append(['git', 'diff', '--check'])
 for command in commands:
     print('RUN:', ' '.join(command), flush=True)

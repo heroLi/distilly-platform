@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Distilly · 小禾合成文字体验</title>
+  <link rel="stylesheet" href="preview.css">
+  <script src="demo-state.js" defer></script>
+  <script src="preview.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="#chat">D<span>Distilly<small>虚拟人 · 合成文字体验</small></span></a><div class="top-actions"><span class="badge">离线模拟</span><button id="reset" type="button">重置演示</button></div></header>
+  <div class="demo-notice"><strong>这是一个可操作的静态演示。</strong> 回答来自预设脚本，未连接真实模型或长期记忆服务；只使用下方虚构示例。输入仅留在本页内存，刷新即清空，不上传、不跨设备同步。</div>
+  <main id="experience" class="layout">
+    <aside class="sidebar" aria-label="演示步骤">
+      <p class="eyebrow">TRY A SMALL CONVERSATION</p><h2>从一句话开始</h2><p class="muted">聊一聊，再决定留下什么。</p>
+      <ol class="steps"><li>发送合成散步示例</li><li>核对来源并确认记忆</li><li>切到再次交流，询问安排</li><li>纠错或遗忘，再问一次</li></ol>
+      <label for="visitor">隔离场景（模拟访客）</label><select id="visitor"><option value="A">合成访客 A</option><option value="B">合成访客 B · 独立记录</option></select>
+      <p class="muted small">这里的切换只是浏览器内隔离示例，不是服务端登录或鉴权验收。</p>
+      <button id="exit" type="button">清空并离开演示</button>
+      <details><summary>体验范围</summary><p>可操作：发送、停止、重试、候选确认、固定示例纠错、遗忘、来源版本失效。</p><p>未接通：真实模型、Hindsight、真实语义召回、账号和跨端同步、TXT上传、声音。现有后端能力没有在这个静态包中运行。</p><p>记忆遗忘仅停止这条记录参与后续脚本回应；原聊天仍保留。本演示没有替正式产品决定历史删除规则。</p></details>
+    </aside>
+    <section class="content">
+      <div class="persona-hero panel"><div class="portrait" aria-hidden="true"><span>禾</span></div><div class="persona-summary"><span class="badge">原创合成人物 · AI 身份</span><h1>小禾</h1><p class="muted">一个安静、认真倾听的虚拟伙伴。你决定哪些记录留下，随时可以纠正或遗忘。</p></div></div>
+      <nav class="view-tabs" aria-label="体验页面"><button id="chat-tab" type="button" aria-pressed="true">文字交流</button><button id="memory-tab" type="button" aria-pressed="false">记忆 <span id="memory-count">0</span></button></nav>
+      <div class="chat-layout">
+        <section id="chat" class="panel chat-panel" aria-label="与小禾文字交流">
+          <div class="section-head"><label for="conversation">当前交流<select id="conversation"><option value="first">初次交流</option><option value="again">再次交流</option></select></label><span class="small muted">预设脚本 · 真实模型调用 0</span></div>
+          <div id="messages" class="messages" aria-label="交流消息"></div>
+          <p id="status" class="status muted" role="status" aria-live="polite">可以先打个招呼，或发送下方的合成示例。</p>
+          <div class="examples" aria-label="合成示例"><button id="greeting" type="button">打个招呼</button><button id="intro" type="button">发送散步示例</button><button id="recall" type="button">询问散步安排</button></div>
+          <form id="chat-form"><label for="message">想对小禾说什么？</label><textarea id="message" rows="3" maxlength="1000" placeholder="仅试用虚构文字，请勿填写私人资料。" required></textarea><div class="actions"><button id="send" class="primary" type="submit">发送 ↗</button><button id="stop" type="button" hidden>停止回应</button><button id="retry" type="button" hidden>重试本次回应</button></div></form>
+        </section>
+        <aside id="memory" class="panel memory-panel" aria-label="合成记忆管理"><div class="section-head"><h2>留下的记忆</h2><span class="small muted">当前访客</span></div><p class="muted small">候选须由你确认，才可在再次交流中使用。记录与来源可核对，不等于语义支持已判定。</p><div id="memories"></div></aside>
+      </div>
+      <footer>纯合成 · 浏览器内存 · 不上传 · 刷新即清空。手机与 PC 共用此页面，不代表已有跨设备同步。</footer>
+    </section>
+  </main>
+  <section id="left" class="panel left-panel" hidden><h1>已清空本页演示</h1><p>合成访客记录、输入和在途回应均已清除。</p><button id="restart" class="primary" type="button">重新进入</button></section>
+  <dialog id="source-dialog" aria-labelledby="source-title"><div class="section-head"><h2 id="source-title">合成来源上下文</h2><button id="close-source" type="button">关闭</button></div><p class="muted small">这是当前合成来源原文。记忆确认或纠错后的记录可能不同；引用存在不等于支持关系已判定。</p><p id="source-meta" class="muted small"></p><pre id="source-body"></pre><button id="change-source" type="button">模拟来源纠错 → 原确认失效</button></dialog>
+</body>
+</html>
