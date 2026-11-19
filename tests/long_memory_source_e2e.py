@@ -27,6 +27,11 @@ def select_output(requested):
     return Path(tempfile.mkdtemp(prefix='run-',dir=base))
 
 
+def launch_server(env, jar, log):
+    return subprocess.Popen([env.get('JAVA_BIN', 'java'), '-jar', str(jar)],
+                            env=env, stdout=log, stderr=subprocess.STDOUT)
+
+
 def run(output):
     OUT=output
     OUT.mkdir(parents=True,exist_ok=True)
@@ -63,7 +68,7 @@ def run(output):
         model.call=forbid_gateway;runtime=scenarios.Runtime(base,Worker(model))
         env=dict(os.environ,PLATFORM_DEMO='true',PLATFORM_WORKER_TOKEN=scenarios.TOKEN,MODEL_MODE='mock',
             PLATFORM_PORT=str(port),PLATFORM_BIND='127.0.0.1',PLATFORM_DB_URL='jdbc:h2:file:'+str(folder/'db')+';DATABASE_TO_LOWER=TRUE',PLATFORM_DB_USER='sa',PLATFORM_DB_PASSWORD='')
-        log=(OUT/'server.log').open('x');server=subprocess.Popen([env['JAVA_BIN'],'-jar',str(folder/'runtime.jar')],env=env,stdout=log,stderr=subprocess.STDOUT)
+        log=(OUT/'server.log').open('x');server=launch_server(env,folder/'runtime.jar',log)
         try:
             start=time.monotonic()
             while time.monotonic()-start<30:
