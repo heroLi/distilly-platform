@@ -126,7 +126,7 @@ DISTILLY_TEST_CHROMIUM=/usr/bin/chromium python3 scripts/verify.py --e2e
 | S16 | [长来源及11/10收口](MEMORY_SOURCE_WRAP_2026-11-04.md)、[读取服务](../server/src/main/java/internal/distilly/modules/memory/service/MemoryRetrieval.java)、[Provider接口](../server/src/main/java/internal/distilly/modules/memory/domain/MemoryProvider.java) | 已有功能和观测限制；新文档不等于重新通过这些测试 |
 | S17 | [SUP-001离线设计](MEMORY_SUPPORT_CONTRACT_DESIGN_2026-11-11.md)、[设计JSON](contracts/memory_support_reference_v1.design.json)，源码基线70f20db0 | 14项设计场景/机械边界清单，不是运行时分类器、模型实验、独立评测或默认协议变更 |
 | S18 | [SUP-001兼容评审](MEMORY_SUPPORT_COMPATIBILITY_REVIEW_2026-11-11.md)，源码基线8674c1ef | 本轮后端11项和前端模拟DOM26项通过；复用已有参考，无新增运行时/语义判定，不是原生浏览器或完整验收 |
-| S19 | 2026-11-19按精确SHA核对的[Platform CI push run 43877821239](https://github.com/heroLi/distilly-platform/actions/runs/43877821239)；本地`data/resume-20261119/ci-java-path/`失败摘录、红绿回归和默认全套证据 | 24bf1520的远端失败为夹具缺可选JAVA_BIN；本地PATH回退通过不代表修复提交远端CI通过，旧拒绝和语义边界分别保留 |
+| S19 | 2026-11-19按精确SHA核对的[旧失败run 43877821239](https://github.com/heroLi/distilly-platform/actions/runs/43877821239)及[修复通过run 44443517910](https://github.com/heroLi/distilly-platform/actions/runs/44443517910)；本地`data/resume-20261119/ci-java-path/`与`ci-evidence-close/` | 旧24bf1520缺可选JAVA_BIN失败；b5c2d82c44df256771fa459b5b19f7ccda90498d的push工作流、platform job及正式入口均success；后续SHA、语义和独立评测另验 |
 
 ## 本地原始证据指纹
 
@@ -150,3 +150,9 @@ DISTILLY_TEST_CHROMIUM=/usr/bin/chromium python3 scripts/verify.py --e2e
 本轮获准GitHub连接器的工作流GET实际成功，按完整SHA且不带PR事件过滤取得24bf1520f23c49fa49a4c7c3683db1cac1345df9的push运行失败证据，见S19。失败发生在长来源测试启动Java时：CI经PATH提供Java，但夹具直接索引可选JAVA_BIN。夹具现沿用其他测试的PATH回退，保留显式覆盖和原JVM/30秒门槛；生产代码和默认聊天不变。
 
 新增缺变量回归先失败后通过，6项启动/输出隔离检查通过；未设置JAVA_BIN的长来源4组原生桌面/手机场景通过。本轮`python3 scripts/verify.py --e2e`在既有本地Java17工具链与浏览器覆盖下退出0，用时585.478秒，Java484、Worker103、前端语法20和Node29套及全部E2E通过。修复提交远端CI仍待精确核验，不以本地Python3.12/Node24和系统Chromium替代CI的Python3.11/Node22及匹配浏览器。旧12/21、0/4、自由回答支持缺口、独立评测未运行和生产PG未验状态不变。
+
+## 2026-11-19 精确提交远端CI收口
+
+北京时间10:57，经获准连接器核实修复提交b5c2d82c44df256771fa459b5b19f7ccda90498d的push run 44443517910整体completed/success，platform job 135289952661和`python3 scripts/verify.py --e2e`步骤均success；Java/Python/Node配置和匹配浏览器安装步骤均成功。上节“待核”是推送时状态，现由本节精确提交证据补全。CI-001据此记为RECORDED_REMOTE_PASS，只适用于上述SHA，不自动继承到本次或后续文档/代码提交。
+
+本次仅更新现有基线与Markdown/CSV清单，检查17项内容一致性、来源、差异和保护哈希，不重复运行已完成的全套。没有事项将CI-001列为缺失依赖；独立负责人/封存隔离、模型来源许可和资源、事实接入及遗忘语义仍需各自证据。工程CI通过不改写12/21、0/4、5/5支持缺口、真实模型未测或旧247未恢复等状态。
