@@ -8,6 +8,8 @@ import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -73,17 +75,35 @@ class ClaimRecallIsolationTest {
         } finally {release.countDown();future.get(10,TimeUnit.SECONDS);executor.shutdownNow();assertTrue(executor.awaitTermination(10,TimeUnit.SECONDS));}
     }
 
-    @Test void anotherConversationOfSamePersonaCanClaimWhileFirstRecallPaused() throws Exception {
-        personas.chat("viewer",conversation,"岚桥风铃偏好");
-        String other=personas.start("owner",person,null).get("id").toString();
-        String second=personas.chat("owner",other,"合成另一个独立问题").get("id").toString();
+    @ParameterizedTest
+    @CsvSource({"1,2", "2,1", "1,1"})
+    void anotherConversationOfSamePersonaCanClaimWhileFirstRecallPaused(long firstCreatedAt,long secondCreatedAt) throws Exception {
+        String first=personas.chat("viewer",conversation,"岚桥风铃偏好").get("id").toString();
+        db.update("UPDATE persona_job SET created_at=? WHERE id=?",firstCreatedAt,first);
         var entered=new CountDownLatch(1);var release=new CountDownLatch(1);pause(entered,release);
         var executor=Executors.newSingleThreadExecutor();var future=executor.submit(tasks::claim);
         try {
             assertTrue(entered.await(10,TimeUnit.SECONDS));
+            assertEquals("RUNNING",status(first));
+            assertFalse(future.isDone(),"the first claim must still be paused");
+            // Establish the first lease before adding a competitor; enqueue order is not a clock guarantee.
+            String other=personas.start("owner",person,null).get("id").toString();
+            String second=personas.chat("owner",other,"合成另一个独立问题").get("id").toString();
+            db.update("UPDATE persona_job SET created_at=? WHERE id=?",secondCreatedAt,second);
             var claimed=tasks.claim();assertNotNull(claimed,"unrelated conversation must not be skipped for the duration of recall");
             assertEquals(second,claimed.get("id"));
-        } finally {release.countDown();assertNotNull(future.get(10,TimeUnit.SECONDS));executor.shutdownNow();assertTrue(executor.awaitTermination(10,TimeUnit.SECONDS));}
+            assertTrue(((List<?>)((Map<?,?>)claimed.get("payload")).get("memories")).isEmpty(),"the owner's other conversation must not receive the viewer's memory");
+            assertEquals(1,release.getCount());assertFalse(future.isDone());
+            assertEquals("RUNNING",status(first));
+            assertEquals(1,db.queryForObject("SELECT attempt FROM persona_job WHERE id=?",Integer.class,first));
+        } finally {
+            release.countDown();
+            try {
+                var resumed=future.get(10,TimeUnit.SECONDS);assertNotNull(resumed);assertEquals(first,resumed.get("id"));
+                var refs=(List<?>)((Map<?,?>)resumed.get("payload")).get("memories");
+                assertEquals(1,refs.size());assertEquals(memory,((Map<?,?>)refs.get(0)).get("id"));
+            } finally {executor.shutdownNow();assertTrue(executor.awaitTermination(10,TimeUnit.SECONDS));}
+        }
     }
 
     private Map<String,Object> claimAcross(Runnable change) throws Exception {
